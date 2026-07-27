@@ -20,6 +20,11 @@ from .storage import DatasetStore
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="quantos", description="QuantOS research tooling")
     commands = parser.add_subparsers(dest="module", required=True)
+    register_parser(commands)
+    return parser
+
+
+def register_parser(commands: Any) -> None:
     data = commands.add_parser("data", help="manage immutable market datasets")
     data_commands = data.add_subparsers(dest="command", required=True)
 
@@ -40,51 +45,52 @@ def build_parser() -> argparse.ArgumentParser:
     query.add_argument("--end", type=_datetime)
     query.add_argument("--limit", type=int, default=100)
 
-    return parser
+
+def run(args: argparse.Namespace) -> int:
+    if args.module == "data" and args.command == "download":
+        result = download_dataset(
+            symbol=args.symbol,
+            interval=Interval.parse(args.interval),
+            start=args.start,
+            end=args.end,
+            data_root=args.data_root,
+            base_url=args.base_url,
+        )
+        _print_json(
+            {
+                "dataset": str(result.path),
+                "manifest": str(result.path / "manifest.json"),
+                "dataset_version": result.manifest.dataset_version,
+                "rows": result.manifest.row_count,
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "validate":
+        store = DatasetStore(args.dataset)
+        report = store.verify(args.dataset)
+        _print_json(report.to_dict())
+        return 0
+    if args.module == "data" and args.command == "query":
+        rows = query_klines(
+            args.dataset,
+            start=args.start,
+            end=args.end,
+            limit=args.limit,
+        )
+        for row in rows:
+            _print_json(row)
+        return 0
+    raise MarketDataError("unsupported data command")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        if args.module == "data" and args.command == "download":
-            result = download_dataset(
-                symbol=args.symbol,
-                interval=Interval.parse(args.interval),
-                start=args.start,
-                end=args.end,
-                data_root=args.data_root,
-                base_url=args.base_url,
-            )
-            _print_json(
-                {
-                    "dataset": str(result.path),
-                    "manifest": str(result.path / "manifest.json"),
-                    "dataset_version": result.manifest.dataset_version,
-                    "rows": result.manifest.row_count,
-                }
-            )
-            return 0
-        if args.module == "data" and args.command == "validate":
-            store = DatasetStore(args.dataset)
-            report = store.verify(args.dataset)
-            _print_json(report.to_dict())
-            return 0
-        if args.module == "data" and args.command == "query":
-            rows = query_klines(
-                args.dataset,
-                start=args.start,
-                end=args.end,
-                limit=args.limit,
-            )
-            for row in rows:
-                _print_json(row)
-            return 0
+        return run(args)
     except MarketDataError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    parser.error("unsupported command")
-    return 2
 
 
 def _datetime(value: str) -> datetime:

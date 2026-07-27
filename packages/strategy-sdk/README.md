@@ -1,4 +1,6 @@
 # Strategy SDK
 
-Will define lifecycle callbacks and signal output contracts shared by backtest,
-paper, and future live environments. Exchange APIs are forbidden dependencies.
+Defines the `initialize`, `on_bar`, `on_fill`, and `finalize` lifecycle shared by
+research runtimes. A strategy receives a read-only symbol/interval context and
+events, and may only return `SignalEvent`; exchange and portfolio APIs are not
+available.

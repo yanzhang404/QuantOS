@@ -9,8 +9,8 @@ form one reproducible research loop.
 
 ## Status
 
-The project is in architecture design and V0.1 initialization. The current
-milestone builds the repository foundation; paper and live trading are not
+The project is implementing V0.1. The historical market-data and event-driven
+EMA Cross backtest slices are available; paper and live trading are not
 implemented.
 
 ## V0.1 capabilities
@@ -23,8 +23,8 @@ implemented.
 - Produce returns, Sharpe ratio, maximum drawdown, trades, and an equity curve.
 - Persist parameters, data versions, metrics, artifacts, and Markdown/HTML reports.
 
-The market-data slice is implemented. Strategy, backtest, and experiment
-tracking capabilities remain V0.1 targets.
+The listed V0.1 research loop is implemented with Markdown reports. Further
+validation, review tooling, and HTML presentation remain before V0.1 release.
 
 ## Architecture at a glance
 
@@ -75,8 +75,19 @@ uv run quantos data download \
 ```
 
 See [`docs/market-data`](docs/market-data/README.md) for validation and DuckDB
-query commands. Docker Compose remains reserved for dependencies introduced by
-later phases:
+query commands. Run a backtest against the printed immutable dataset path:
+
+```bash
+uv run quantos backtest run \
+  --dataset "<dataset-version-path>" \
+  --strategy ema-cross \
+  --fast 20 \
+  --slow 50
+```
+
+See [`docs/backtest`](docs/backtest/README.md) for execution assumptions and
+artifact details. Docker Compose remains reserved for dependencies introduced
+by later phases:
 
 ```bash
 docker compose config

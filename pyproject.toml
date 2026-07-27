@@ -3,9 +3,9 @@ requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
 [project]
-name = "quantos-market-data"
-version = "0.1.0"
-description = "Reproducible market-data foundation for QuantOS"
+name = "quantos-research"
+version = "0.2.0"
+description = "Reproducible market-data and backtest foundation for QuantOS"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-quantos = "quantos_market_data.cli:main"
+quantos = "quantos_cli:main"
 
 [dependency-groups]
 dev = [
@@ -28,7 +28,14 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["services/market-data/src/quantos_market_data"]
+packages = [
+  "apps/worker/src/quantos_cli",
+  "packages/event-schema/src/quantos_events",
+  "packages/metrics/src/quantos_metrics",
+  "packages/strategy-sdk/src/quantos_strategy",
+  "services/backtest/src/quantos_backtest",
+  "services/market-data/src/quantos_market_data",
+]
 
 [tool.pytest.ini_options]
 addopts = "-q --strict-config --strict-markers"
@@ -43,7 +50,14 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.coverage.run]
 branch = true
-source = ["quantos_market_data"]
+source = [
+  "quantos_backtest",
+  "quantos_cli",
+  "quantos_events",
+  "quantos_market_data",
+  "quantos_metrics",
+  "quantos_strategy",
+]
 
 [tool.coverage.report]
 show_missing = true

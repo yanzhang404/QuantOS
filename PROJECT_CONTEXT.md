@@ -8,9 +8,10 @@ short-term trading automation.
 
 ## Current phase
 
-Phase 0 architecture initialization is complete. V0.1 implementation has begun
-with the reproducible Binance Kline → validation → Parquet → DuckDB data slice.
-The next product increment is the event-driven EMA cross backtest.
+Phase 0 architecture initialization is complete. The V0.1 core loop now covers
+Binance Kline → validation → Parquet → DuckDB → event-driven EMA Cross backtest
+→ metrics → versioned experiment artifacts and Markdown report. The next
+increment is research-quality review and broader validation.
 
 ## Product principles
 

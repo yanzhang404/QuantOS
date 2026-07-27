@@ -18,3 +18,4 @@ Accepted decisions:
 - [ADR-0001: Start with a modular monolith](0001-modular-monolith.md)
 - [ADR-0002: Split platform and research responsibilities between Go and Python](0002-go-python-boundary.md)
 - [ADR-0003: Store historical analytical data in Parquet and query it with DuckDB](0003-parquet-duckdb.md)
+- [ADR-0004: Execute close-generated signals at the next Kline open](0004-next-bar-open-execution.md)
