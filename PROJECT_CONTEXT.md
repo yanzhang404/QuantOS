@@ -8,9 +8,9 @@ short-term trading automation.
 
 ## Current phase
 
-The repository is in Phase 0: architecture initialization. The next product
-milestone is V0.1, a local research loop for Binance Klines, EMA cross
-backtesting, experiment tracking, and report generation.
+Phase 0 architecture initialization is complete. V0.1 implementation has begun
+with the reproducible Binance Kline → validation → Parquet → DuckDB data slice.
+The next product increment is the event-driven EMA cross backtest.
 
 ## Product principles
 

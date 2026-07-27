@@ -23,8 +23,8 @@ implemented.
 - Produce returns, Sharpe ratio, maximum drawdown, trades, and an equity curve.
 - Persist parameters, data versions, metrics, artifacts, and Markdown/HTML reports.
 
-These capabilities describe the V0.1 target. Phase 0 currently provides the
-architecture and delivery scaffold needed to implement them safely.
+The market-data slice is implemented. Strategy, backtest, and experiment
+tracking capabilities remain V0.1 targets.
 
 ## Architecture at a glance
 
@@ -55,13 +55,28 @@ tests/          Cross-module and acceptance tests
 
 ## Quick start
 
-Phase 0 has no runtime service to start yet. Validate the repository foundation:
+Create the locked Python environment and validate the repository:
 
 ```bash
+uv sync --all-groups
 bash scripts/validate_structure.sh
+uv run ruff check .
+uv run pytest --cov
 ```
 
-Docker Compose is reserved for dependencies introduced by later phases:
+Download a closed historical Kline range:
+
+```bash
+uv run quantos data download \
+  --symbol BTCUSDT \
+  --interval 1h \
+  --start 2024-01-01T00:00:00Z \
+  --end 2024-01-08T00:00:00Z
+```
+
+See [`docs/market-data`](docs/market-data/README.md) for validation and DuckDB
+query commands. Docker Compose remains reserved for dependencies introduced by
+later phases:
 
 ```bash
 docker compose config
