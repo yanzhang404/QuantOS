@@ -89,6 +89,9 @@ The event clock is controlled by the engine. Strategy code may only observe the
 current and past state. Fills apply configured fees, slippage, and later funding
 rules before portfolio updates.
 
+V0.1 strategies observe a bar at its close and approved targets execute at the
+next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).
+
 ## Future live flow
 
 Live trading is not implemented. If introduced after paper-trading validation,

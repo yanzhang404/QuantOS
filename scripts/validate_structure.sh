@@ -14,6 +14,7 @@ required_files=(
   docs/adr/0001-modular-monolith.md
   docs/adr/0002-go-python-boundary.md
   docs/adr/0003-parquet-duckdb.md
+  docs/adr/0004-next-bar-open-execution.md
   docs/market-data/kline-schema.md
 )
 
@@ -21,17 +22,22 @@ required_directories=(
   apps/web
   apps/api
   apps/worker
+  apps/worker/src/quantos_cli
   services/market-data
   services/market-data/src/quantos_market_data
+  services/backtest/src/quantos_backtest
   services/research
   services/backtest
   services/execution
   services/risk
   services/agent
   packages/strategy-sdk
+  packages/strategy-sdk/src/quantos_strategy
   packages/event-schema
+  packages/event-schema/src/quantos_events
   packages/exchange-sdk
   packages/metrics
+  packages/metrics/src/quantos_metrics
   packages/common
   docs/vision
   docs/architecture
@@ -39,8 +45,10 @@ required_directories=(
   deployments/docker
   deployments/compose
   examples
+  examples/backtest
   tests
   tests/market_data
+  tests/backtest
 )
 
 failed=0

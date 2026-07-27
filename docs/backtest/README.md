@@ -1,5 +1,40 @@
 # Backtest
 
-The initial engine operates on Kline events with a deterministic clock. It must
-model fees and fixed slippage, prevent look-ahead access, and emit trades,
-portfolio state, metrics, and an equity curve.
+The V0.1 engine replays one immutable Kline dataset through explicit Market,
+Signal, Risk, Order, Fill, Portfolio, and Metric events.
+
+## Execution semantics
+
+- Strategies see a Kline only after it closes.
+- A close-generated signal is risk-checked immediately.
+- An approved target executes at the next Kline open.
+- Buys pay positive fixed slippage; sells pay negative fixed slippage.
+- Fees are proportional to executed notional.
+- The portfolio is long-only and cannot spend more cash than it owns.
+- The final position is liquidated by default and the assumption is reported.
+
+See [ADR-0004](../adr/0004-next-bar-open-execution.md).
+
+## Run
+
+```bash
+uv run quantos backtest run \
+  --dataset "<immutable-dataset-version>" \
+  --strategy ema-cross \
+  --fast 20 \
+  --slow 50 \
+  --initial-cash 100000 \
+  --fee-bps 10 \
+  --slippage-bps 5
+```
+
+The command writes a content-addressed experiment directory containing:
+
+- `run.json` with dataset, strategy, engine, parameter, and metric versions;
+- `metrics.json`;
+- `fills.csv`;
+- `equity.csv`;
+- `report.md`.
+
+Running the same dataset, strategy, parameters, engine, and cost assumptions
+reuses the same run ID.

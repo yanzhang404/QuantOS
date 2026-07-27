@@ -1,4 +1,5 @@
 # Event Schema
 
-Will define versioned Market, Signal, Risk, Order, Fill, Portfolio, and Metric
-events. Compatibility tests will protect cross-runtime consumers.
+Defines immutable, versioned Market, Signal, Risk, Order, Fill, Portfolio, and
+Metric events in `quantos_events`. Events carry decisions and observations
+between modules without exposing mutable portfolio or exchange state.

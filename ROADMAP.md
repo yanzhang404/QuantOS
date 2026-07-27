@@ -5,6 +5,9 @@ Dates are intentionally omitted until implementation capacity is known.
 
 ## V0.1 — Reproducible research loop
 
+Implementation status: the core vertical slice is complete; broader validation
+and release hardening remain.
+
 - Complete Phase 0 repository, CI, and local development foundation.
 - Download Binance BTCUSDT/ETHUSDT Klines at 1h and 4h.
 - Validate and persist versioned Parquet datasets.
