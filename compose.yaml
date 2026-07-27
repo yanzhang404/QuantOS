@@ -1,0 +1,9 @@
+name: quantos
+
+# Phase 0 intentionally provisions no persistent infrastructure. This opt-in
+# smoke service keeps the Compose contract testable without running by default.
+services:
+  foundation-check:
+    image: alpine:3.20
+    profiles: ["tools"]
+    command: ["/bin/sh", "-c", "echo 'QuantOS Phase 0 foundation is ready'"]

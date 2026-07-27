@@ -1,0 +1,38 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+
+# Go
+bin/
+coverage.out
+
+# JavaScript
+node_modules/
+.next/
+
+# Data and local analytical state
+data/
+artifacts/
+reports/generated/
+*.duckdb
+*.duckdb.wal
+*.parquet
+
+# Tooling and operating systems
+.DS_Store
+.idea/
+.vscode/
+coverage/
+dist/
+build/
