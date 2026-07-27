@@ -20,3 +20,17 @@ jobs:
 
       - name: Validate Docker Compose
         run: docker compose config
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install locked Python environment
+        run: uv sync --locked --all-groups
+
+      - name: Lint Python
+        run: uv run ruff check .
+
+      - name: Test Python
+        run: uv run pytest --cov --cov-report=term-missing

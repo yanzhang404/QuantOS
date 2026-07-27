@@ -10,9 +10,11 @@ required_files=(
   CONTRIBUTING.md
   LICENSE
   compose.yaml
+  pyproject.toml
   docs/adr/0001-modular-monolith.md
   docs/adr/0002-go-python-boundary.md
   docs/adr/0003-parquet-duckdb.md
+  docs/market-data/kline-schema.md
 )
 
 required_directories=(
@@ -20,6 +22,7 @@ required_directories=(
   apps/api
   apps/worker
   services/market-data
+  services/market-data/src/quantos_market_data
   services/research
   services/backtest
   services/execution
@@ -37,6 +40,7 @@ required_directories=(
   deployments/compose
   examples
   tests
+  tests/market_data
 )
 
 failed=0
