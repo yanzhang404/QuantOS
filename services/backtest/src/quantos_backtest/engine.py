@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from quantos_events import (
@@ -40,6 +41,9 @@ class BacktestResult:
     strategy_parameters: dict[str, Any]
     symbol: str
     interval: str
+    data_start: datetime
+    data_end: datetime
+    bar_count: int
     config: BacktestConfig
     metrics: PerformanceMetrics
     fills: tuple[FillEvent, ...]
@@ -155,6 +159,9 @@ class BacktestEngine:
             strategy_parameters=dict(strategy_parameters),
             symbol=first.symbol,
             interval=first.interval.value,
+            data_start=first.open_time,
+            data_end=klines[-1].open_time,
+            bar_count=len(klines),
             config=config,
             metrics=metrics,
             fills=tuple(fills),

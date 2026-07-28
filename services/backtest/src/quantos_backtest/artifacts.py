@@ -65,6 +65,11 @@ class ExperimentStore:
                     "schema_version": dataset.schema_version,
                     "symbol": dataset.symbol,
                     "interval": dataset.interval,
+                    "evaluation": {
+                        "data_start": _isoformat(result.data_start),
+                        "data_end": _isoformat(result.data_end),
+                        "bar_count": result.bar_count,
+                    },
                 },
                 "strategy": {
                     "name": result.strategy_name,
@@ -96,6 +101,9 @@ def _run_id(result: BacktestResult, dataset: DatasetManifest) -> str:
     identity = {
         "dataset_version": dataset.dataset_version,
         "dataset_content_sha256": dataset.content_sha256,
+        "evaluation_data_start": _isoformat(result.data_start),
+        "evaluation_data_end": _isoformat(result.data_end),
+        "evaluation_bar_count": result.bar_count,
         "strategy_name": result.strategy_name,
         "strategy_version": result.strategy_version,
         "strategy_parameters": result.strategy_parameters,
@@ -160,6 +168,8 @@ def _markdown_report(
 - Dataset version: `{dataset.dataset_version}`
 - Dataset content SHA-256: `{dataset.content_sha256}`
 - Symbol / interval: `{result.symbol}` / `{result.interval}`
+- Evaluation range: `{_isoformat(result.data_start)}` to `{_isoformat(result.data_end)}`
+- Bars evaluated: `{result.bar_count}`
 - Strategy: `{result.strategy_name}` `{result.strategy_version}`
 - Engine: `{result.engine_version}`
 - Metrics: `{result.metrics_version}`

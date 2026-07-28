@@ -9,9 +9,8 @@ form one reproducible research loop.
 
 ## Status
 
-The project is implementing V0.1. The historical market-data and event-driven
-EMA Cross backtest slices are available; paper and live trading are not
-implemented.
+The V0.1 core loop and the first V0.2 research-quality slice are available.
+Paper and live trading are not implemented.
 
 ## V0.1 capabilities
 
@@ -22,9 +21,12 @@ implemented.
 - Model fees and fixed slippage.
 - Produce returns, Sharpe ratio, maximum drawdown, trades, and an equity curve.
 - Persist parameters, data versions, metrics, artifacts, and Markdown/HTML reports.
+- Select EMA parameters with chronological train/validation/test splits.
+- Evaluate only the validation winner on an untouched holdout and doubled costs.
+- Compare experiment runs and generate automated validity findings.
 
-The listed V0.1 research loop is implemented with Markdown reports. Further
-validation, review tooling, and HTML presentation remain before V0.1 release.
+The research loop is implemented with Markdown reports. Feature lineage,
+walk-forward validation, broader market datasets, and HTML presentation remain.
 
 ## Architecture at a glance
 
@@ -92,6 +94,19 @@ by later phases:
 ```bash
 docker compose config
 ```
+
+Run a chronological parameter study:
+
+```bash
+uv run quantos experiment sweep \
+  --dataset "<dataset-version-path>" \
+  --fast 10,20 \
+  --slow 40,50 \
+  --min-bars 100
+```
+
+See [`docs/research`](docs/research/README.md) for study, comparison, and review
+commands.
 
 ## Roadmap
 

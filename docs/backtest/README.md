@@ -36,5 +36,7 @@ The command writes a content-addressed experiment directory containing:
 - `equity.csv`;
 - `report.md`.
 
-Running the same dataset, strategy, parameters, engine, and cost assumptions
-reuses the same run ID.
+Run identity also includes the actual evaluation start, end, and bar count, so
+train, validation, and test slices cannot collide. Running the same dataset
+slice, strategy, parameters, engine, and cost assumptions reuses the same run
+ID.
