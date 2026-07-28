@@ -15,6 +15,7 @@ required_files=(
   docs/adr/0002-go-python-boundary.md
   docs/adr/0003-parquet-duckdb.md
   docs/adr/0004-next-bar-open-execution.md
+  docs/adr/0005-chronological-out-of-sample-selection.md
   docs/market-data/kline-schema.md
 )
 
@@ -27,6 +28,7 @@ required_directories=(
   services/market-data/src/quantos_market_data
   services/backtest/src/quantos_backtest
   services/research
+  services/research/src/quantos_research
   services/backtest
   services/execution
   services/risk
@@ -49,6 +51,7 @@ required_directories=(
   tests
   tests/market_data
   tests/backtest
+  tests/research
 )
 
 failed=0

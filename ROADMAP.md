@@ -24,10 +24,10 @@ from data download through report generation.
 ## V0.2 — Research quality and review
 
 - Feature registry and dataset lineage.
-- Parameter sweeps and train/validation/out-of-sample splits.
+- Parameter sweeps and train/validation/out-of-sample splits. **Implemented.**
 - Funding-rate and open-interest datasets.
-- Bias, leakage, and sensitivity review checks.
-- Richer experiment comparison and artifact browsing.
+- Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
+- Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 
 Exit criterion: researchers can compare runs and identify common validity risks.
 

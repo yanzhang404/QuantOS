@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quantos-research"
-version = "0.2.0"
-description = "Reproducible market-data and backtest foundation for QuantOS"
+version = "0.3.0"
+description = "Reproducible market-data, backtest, and research workflows for QuantOS"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -35,6 +35,7 @@ packages = [
   "packages/strategy-sdk/src/quantos_strategy",
   "services/backtest/src/quantos_backtest",
   "services/market-data/src/quantos_market_data",
+  "services/research/src/quantos_research",
 ]
 
 [tool.pytest.ini_options]
@@ -56,6 +57,7 @@ source = [
   "quantos_events",
   "quantos_market_data",
   "quantos_metrics",
+  "quantos_research",
   "quantos_strategy",
 ]
 

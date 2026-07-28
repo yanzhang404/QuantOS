@@ -19,3 +19,4 @@ Accepted decisions:
 - [ADR-0002: Split platform and research responsibilities between Go and Python](0002-go-python-boundary.md)
 - [ADR-0003: Store historical analytical data in Parquet and query it with DuckDB](0003-parquet-duckdb.md)
 - [ADR-0004: Execute close-generated signals at the next Kline open](0004-next-bar-open-execution.md)
+- [ADR-0005: Select parameters chronologically before holdout evaluation](0005-chronological-out-of-sample-selection.md)
