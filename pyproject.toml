@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quantos-research"
-version = "0.3.0"
-description = "Reproducible market-data, backtest, and research workflows for QuantOS"
+version = "0.4.0"
+description = "Reproducible crypto strategy research workflows for QuantOS"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

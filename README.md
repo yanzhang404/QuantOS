@@ -24,6 +24,7 @@ Paper and live trading are not implemented.
 - Select EMA parameters with chronological train/validation/test splits.
 - Evaluate only the validation winner on an untouched holdout and doubled costs.
 - Compare experiment runs and generate automated validity findings.
+- Run Buy & Hold and a formal Donchian ATR trend strategy.
 
 The research loop is implemented with Markdown reports. Feature lineage,
 walk-forward validation, broader market datasets, and HTML presentation remain.
@@ -107,6 +108,10 @@ uv run quantos experiment sweep \
 
 See [`docs/research`](docs/research/README.md) for study, comparison, and review
 commands.
+
+The first predeclared strategy study and its reproducible result artifact are
+available in
+[`docs/research/donchian-atr-study.md`](docs/research/donchian-atr-study.md).
 
 ## Roadmap
 
