@@ -16,11 +16,14 @@ required_files=(
   docs/adr/0003-parquet-duckdb.md
   docs/adr/0004-next-bar-open-execution.md
   docs/adr/0005-chronological-out-of-sample-selection.md
+  docs/adr/0006-read-only-research-workspace.md
+  apps/web/package.json
   docs/market-data/kline-schema.md
 )
 
 required_directories=(
   apps/web
+  apps/web/app
   apps/api
   apps/worker
   apps/worker/src/quantos_cli

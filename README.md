@@ -113,6 +113,18 @@ The first predeclared strategy study and its reproducible result artifact are
 available in
 [`docs/research/donchian-atr-study.md`](docs/research/donchian-atr-study.md).
 
+Start the read-only research workspace:
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+The first dashboard presents the committed BTC/ETH strategy study, cost stress,
+research findings, and immutable evidence identities. See
+[`docs/frontend`](docs/frontend/README.md).
+
 ## Roadmap
 
 Delivery proceeds from a small reproducible research loop toward guarded

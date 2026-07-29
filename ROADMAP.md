@@ -34,7 +34,7 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 
 ## V0.3 — Product workspace
 
-- Dashboard and project navigation.
+- Dashboard and project navigation. **First read-only strategy workspace implemented.**
 - Dataset, strategy, backtest, and experiment views.
 - Task orchestration and progress streaming.
 - Tool-driven AI research assistant for querying and reviewing artifacts.
