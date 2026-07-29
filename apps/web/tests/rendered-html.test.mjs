@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render() {
@@ -34,4 +35,17 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Research mode/);
   assert.match(html, /Live trading disabled/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("ships an accessible Chinese and English language switch", async () => {
+  const source = await readFile(
+    new URL("../app/page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /切换至中文/);
+  assert.match(source, /Switch to English/);
+  assert.match(source, /量化研究操作系统/);
+  assert.match(source, /document\.documentElement\.lang/);
+  assert.match(source, /aria-label=\{t\.switchLanguage\}/);
 });

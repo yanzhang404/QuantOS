@@ -4,6 +4,10 @@ The first product workspace presents reproducible strategy evidence from the
 committed Donchian ATR study. It is intentionally read-only: no live trading,
 credentials, or order actions are exposed.
 
+The workspace supports English and Simplified Chinese. Use the language control
+in the top-right corner to switch all research labels and conclusions without
+changing the selected asset, observation window, or underlying evidence.
+
 ## Local development
 
 ```bash

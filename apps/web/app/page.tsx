@@ -1,33 +1,181 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   type Asset,
   getDataset,
   getRuns,
   getStressRun,
   type Period,
-  strategyNames,
   studyAsOf,
 } from "./research-data";
 
-const percent = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+type Locale = "en" | "zh";
 
-const number = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+const copy = {
+  en: {
+    workspace: "Workspace",
+    nav: ["Research", "Strategies", "Data lineage"],
+    researchMode: "Research mode",
+    liveDisabled: "Live trading disabled",
+    strategyReview: "Strategy review / 001",
+    evidenceAsOf: "Evidence as of",
+    switchLanguage: "切换至中文",
+    languageLabel: "中文",
+    verdict: "Fixed evaluation verdict",
+    drawdownControlled: "Drawdown controlled.",
+    returnEdge: "Return edge",
+    unproven: "unproven",
+    modest: "modest",
+    hero:
+      "The strategy preserved substantially more capital than passive exposure. It remains a research candidate—not a production signal.",
+    tags: ["Long only", "Next-open fills", "20% vol target"],
+    filters: "Research filters",
+    market: "Market",
+    observation: "Observation window",
+    periods: { evaluation: "evaluation", development: "development" },
+    selectedMetrics: "Selected strategy metrics",
+    totalReturn: "Total return",
+    returnNote: "after 10 bps fee + 5 bps slippage",
+    sharpe: "Sharpe ratio",
+    sharpeNote: "annualized from 4h observations",
+    maxDrawdown: "Maximum drawdown",
+    belowPassive: "below passive",
+    versusPassive: "versus passive benchmark",
+    completedTrades: "Completed trades",
+    totalFills: "total fills",
+    outcomeMatrix: "Outcome matrix",
+    sameMarket: "Same market. Same costs.",
+    columns: ["Strategy", "Net return", "Sharpe", "Drawdown"],
+    trades: "trades",
+    strategies: {
+      "buy-and-hold": "Buy & Hold",
+      "ema-cross": "EMA 20 / 50",
+      "donchian-atr": "Donchian ATR",
+    },
+    costSensitivity: "Cost sensitivity",
+    frictionTest: "2× friction test",
+    baseCosts: "Base costs",
+    stressReturn: "return at 20 bps fee + 10 bps slippage",
+    base: "Base",
+    doubledCosts: "2× costs",
+    btcStress:
+      "BTC turns more negative under stress. Turnover remains the primary risk.",
+    ethStress:
+      "ETH remains positive under stress, but the margin is not large enough for a production claim.",
+    feesDevelopment: "simulated fees paid in the development window",
+    stressReserved:
+      "Stress results are reserved for the fixed evaluation period to keep development and final evidence clearly separated.",
+    researchReview: "Research review",
+    evidenceSays: "What the evidence says",
+    findingsCount: "03 findings",
+    findings: [
+      [
+        "Risk-control hypothesis supported",
+        "Drawdown and Sharpe behavior improved versus passive exposure on both evaluation assets.",
+      ],
+      [
+        "No broad return claim",
+        "BTC remained approximately flat before stress. Two assets and one interval are insufficient evidence.",
+      ],
+      [
+        "Turnover needs work",
+        "Dynamic volatility sizing adds fills and makes the result sensitive to execution friction.",
+      ],
+    ],
+    evidenceTrail: "Evidence trail",
+    reproducible: "Reproducible by design",
+    verified: "Verified",
+    dataset: "Dataset",
+    bars: "Bars",
+    strategyRun: "Strategy run",
+    contentHash: "Content hash",
+    provenance:
+      "Binance Spot · UTC · closed Klines · immutable source identity",
+    product: "QuantOS / Research operating system",
+    disclaimer: "Historical simulation · Not investment advice",
+  },
+  zh: {
+    workspace: "工作台",
+    nav: ["研究", "策略", "数据血缘"],
+    researchMode: "研究模式",
+    liveDisabled: "实盘交易已禁用",
+    strategyReview: "策略评审 / 001",
+    evidenceAsOf: "证据更新至",
+    switchLanguage: "Switch to English",
+    languageLabel: "EN",
+    verdict: "固定样本外评估结论",
+    drawdownControlled: "回撤得到控制。",
+    returnEdge: "收益优势",
+    unproven: "尚未证实",
+    modest: "较为有限",
+    hero:
+      "相比被动持有，该策略保留了更多资本。目前仍是研究候选，不是可直接使用的生产信号。",
+    tags: ["仅做多", "下一根开盘成交", "20% 波动率目标"],
+    filters: "研究筛选条件",
+    market: "市场",
+    observation: "观察区间",
+    periods: { evaluation: "评估期", development: "开发期" },
+    selectedMetrics: "所选策略指标",
+    totalReturn: "总收益率",
+    returnNote: "已计入 10 bps 手续费 + 5 bps 滑点",
+    sharpe: "夏普比率",
+    sharpeNote: "基于 4 小时数据年化",
+    maxDrawdown: "最大回撤",
+    belowPassive: "低于被动持有",
+    versusPassive: "对比被动持有基准",
+    completedTrades: "完成交易",
+    totalFills: "次成交",
+    outcomeMatrix: "结果矩阵",
+    sameMarket: "同一市场，同一成本。",
+    columns: ["策略", "净收益", "夏普", "回撤"],
+    trades: "笔交易",
+    strategies: {
+      "buy-and-hold": "买入并持有",
+      "ema-cross": "EMA 20 / 50",
+      "donchian-atr": "唐奇安 ATR",
+    },
+    costSensitivity: "成本敏感度",
+    frictionTest: "2 倍摩擦压力测试",
+    baseCosts: "基础成本",
+    stressReturn: "20 bps 手续费 + 10 bps 滑点下的收益",
+    base: "基础成本",
+    doubledCosts: "2 倍成本",
+    btcStress: "BTC 在压力测试下亏损扩大，换手率仍是主要风险。",
+    ethStress: "ETH 在压力测试下仍为正收益，但优势不足以支持生产级结论。",
+    feesDevelopment: "开发期模拟支付的手续费",
+    stressReserved:
+      "压力测试只用于固定评估期，以清晰区分开发阶段与最终证据。",
+    researchReview: "研究评审",
+    evidenceSays: "证据说明了什么",
+    findingsCount: "03 项发现",
+    findings: [
+      [
+        "风险控制假设得到支持",
+        "在两个评估资产上，回撤和夏普表现均优于被动持有。",
+      ],
+      [
+        "不能声称普遍高收益",
+        "BTC 在压力测试前接近持平；两个资产和一个周期不足以形成普遍结论。",
+      ],
+      [
+        "换手率仍需优化",
+        "动态波动率仓位增加了成交次数，使结果对交易摩擦更加敏感。",
+      ],
+    ],
+    evidenceTrail: "证据链",
+    reproducible: "可复现设计",
+    verified: "已验证",
+    dataset: "数据集",
+    bars: "K 线",
+    strategyRun: "策略运行",
+    contentHash: "内容哈希",
+    provenance: "Binance 现货 · UTC · 已收盘 K 线 · 不可变来源标识",
+    product: "QuantOS / 量化研究操作系统",
+    disclaimer: "历史模拟 · 不构成投资建议",
+  },
+} as const;
 
 function metricTone(value: number): string {
   if (value > 0.001) return "positive";
@@ -38,6 +186,39 @@ function metricTone(value: number): string {
 export default function Home() {
   const [asset, setAsset] = useState<Asset>("btc");
   const [period, setPeriod] = useState<Period>("evaluation");
+  const [locale, setLocale] = useState<Locale>("en");
+  const t = copy[locale];
+  const localeTag = locale === "zh" ? "zh-CN" : "en-US";
+  const percent = useMemo(
+    () =>
+      new Intl.NumberFormat(localeTag, {
+        style: "percent",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [localeTag],
+  );
+  const number = useMemo(
+    () =>
+      new Intl.NumberFormat(localeTag, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [localeTag],
+  );
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat(localeTag, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }),
+    [localeTag],
+  );
+
+  useEffect(() => {
+    document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+  }, [locale]);
 
   const runs = useMemo(() => getRuns(asset, period), [asset, period]);
   const donchian = runs.find((run) => run.strategy === "donchian-atr");
@@ -60,22 +241,22 @@ export default function Home() {
           <span className="brand-mark">Q</span>
           <span>QuantOS</span>
         </div>
-        <nav aria-label="Workspace">
+        <nav aria-label={t.workspace}>
           <a className="nav-item active" href="#research">
-            <span>01</span> Research
+            <span>01</span> {t.nav[0]}
           </a>
           <a className="nav-item" href="#strategies">
-            <span>02</span> Strategies
+            <span>02</span> {t.nav[1]}
           </a>
           <a className="nav-item" href="#provenance">
-            <span>03</span> Data lineage
+            <span>03</span> {t.nav[2]}
           </a>
         </nav>
         <div className="rail-status">
           <span className="status-dot" />
           <div>
-            <strong>Research mode</strong>
-            <span>Live trading disabled</span>
+            <strong>{t.researchMode}</strong>
+            <span>{t.liveDisabled}</span>
           </div>
         </div>
       </aside>
@@ -83,12 +264,23 @@ export default function Home() {
       <section className="content" id="research">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Strategy review / 001</p>
+            <p className="eyebrow">{t.strategyReview}</p>
             <h1>Donchian ATR</h1>
           </div>
-          <div className="as-of">
-            <span>Evidence as of</span>
-            <strong>{studyAsOf}</strong>
+          <div className="header-actions">
+            <div className="as-of">
+              <span>{t.evidenceAsOf}</span>
+              <strong>{studyAsOf}</strong>
+            </div>
+            <button
+              aria-label={t.switchLanguage}
+              className="language-switch"
+              onClick={() => setLocale(locale === "en" ? "zh" : "en")}
+              type="button"
+            >
+              <span aria-hidden="true">文/A</span>
+              {t.languageLabel}
+            </button>
           </div>
         </header>
 
@@ -96,27 +288,25 @@ export default function Home() {
           <article className="verdict-card">
             <div className="card-label">
               <span className="pulse" />
-              Fixed evaluation verdict
+              {t.verdict}
             </div>
             <h2>
-              Drawdown controlled.
+              {t.drawdownControlled}
               <br />
-              Return edge <em>{asset === "btc" ? "unproven" : "modest"}.</em>
+              {t.returnEdge}{" "}
+              <em>{asset === "btc" ? t.unproven : t.modest}.</em>
             </h2>
-            <p>
-              The strategy preserved substantially more capital than passive
-              exposure. It remains a research candidate—not a production signal.
-            </p>
+            <p>{t.hero}</p>
             <div className="verdict-meta">
-              <span>Long only</span>
-              <span>Next-open fills</span>
-              <span>20% vol target</span>
+              {t.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
             </div>
           </article>
 
-          <article className="control-card" aria-label="Research filters">
+          <article className="control-card" aria-label={t.filters}>
             <div className="control-group">
-              <span className="control-label">Market</span>
+              <span className="control-label">{t.market}</span>
               <div className="segment">
                 {(["btc", "eth"] as const).map((value) => (
                   <button
@@ -133,7 +323,7 @@ export default function Home() {
               </div>
             </div>
             <div className="control-group">
-              <span className="control-label">Observation window</span>
+              <span className="control-label">{t.observation}</span>
               <div className="segment">
                 {(["evaluation", "development"] as const).map((value) => (
                   <button
@@ -144,7 +334,7 @@ export default function Home() {
                     type="button"
                   >
                     {value === "evaluation" ? "2025—26" : "2022—24"}
-                    <small>{value}</small>
+                    <small>{t.periods[value]}</small>
                   </button>
                 ))}
               </div>
@@ -152,32 +342,34 @@ export default function Home() {
           </article>
         </section>
 
-        <section className="metric-strip" aria-label="Selected strategy metrics">
+        <section className="metric-strip" aria-label={t.selectedMetrics}>
           <div>
-            <span>Total return</span>
+            <span>{t.totalReturn}</span>
             <strong className={metricTone(donchian?.total_return ?? 0)}>
               {percent.format(donchian?.total_return ?? 0)}
             </strong>
-            <small>after 10 bps fee + 5 bps slippage</small>
+            <small>{t.returnNote}</small>
           </div>
           <div>
-            <span>Sharpe ratio</span>
+            <span>{t.sharpe}</span>
             <strong>{number.format(donchian?.sharpe_ratio ?? 0)}</strong>
-            <small>annualized from 4h observations</small>
+            <small>{t.sharpeNote}</small>
           </div>
           <div>
-            <span>Maximum drawdown</span>
+            <span>{t.maxDrawdown}</span>
             <strong>{percent.format(donchian?.max_drawdown ?? 0)}</strong>
             <small>
               {drawdownDelta
-                ? `${percent.format(drawdownDelta)} below passive`
-                : "versus passive benchmark"}
+                ? `${percent.format(drawdownDelta)} ${t.belowPassive}`
+                : t.versusPassive}
             </small>
           </div>
           <div>
-            <span>Completed trades</span>
+            <span>{t.completedTrades}</span>
             <strong>{donchian?.trade_count ?? 0}</strong>
-            <small>{donchian?.fill_count ?? 0} total fills</small>
+            <small>
+              {donchian?.fill_count ?? 0} {t.totalFills}
+            </small>
           </div>
         </section>
 
@@ -185,17 +377,16 @@ export default function Home() {
           <article className="panel comparison" id="strategies">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Outcome matrix</p>
-                <h3>Same market. Same costs.</h3>
+                <p className="eyebrow">{t.outcomeMatrix}</p>
+                <h3>{t.sameMarket}</h3>
               </div>
-              <span className="badge">{period}</span>
+              <span className="badge">{t.periods[period]}</span>
             </div>
 
             <div className="comparison-head" aria-hidden="true">
-              <span>Strategy</span>
-              <span>Net return</span>
-              <span>Sharpe</span>
-              <span>Drawdown</span>
+              {t.columns.map((column) => (
+                <span key={column}>{column}</span>
+              ))}
             </div>
             {runs.map((run) => {
               const barStyle = {
@@ -212,8 +403,10 @@ export default function Home() {
                   key={run.run_id}
                 >
                   <div className="strategy-name">
-                    <span>{strategyNames[run.strategy]}</span>
-                    <small>{run.trade_count} trades</small>
+                    <span>{t.strategies[run.strategy]}</span>
+                    <small>
+                      {run.trade_count} {t.trades}
+                    </small>
                   </div>
                   <div className="return-cell">
                     <span className={metricTone(run.total_return)}>
@@ -234,8 +427,10 @@ export default function Home() {
           <article className="panel stress-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Cost sensitivity</p>
-                <h3>{period === "evaluation" ? "2× friction test" : "Base costs"}</h3>
+                <p className="eyebrow">{t.costSensitivity}</p>
+                <h3>
+                  {period === "evaluation" ? t.frictionTest : t.baseCosts}
+                </h3>
               </div>
               <span className={stress ? "badge warning" : "badge"}>ATR 55 / 20</span>
             </div>
@@ -245,34 +440,29 @@ export default function Home() {
                   <span className={metricTone(stress.total_return)}>
                     {percent.format(stress.total_return)}
                   </span>
-                  <small>return at 20 bps fee + 10 bps slippage</small>
+                  <small>{t.stressReturn}</small>
                 </div>
                 <div className="stress-scale">
                   <div>
-                    <span>Base</span>
+                    <span>{t.base}</span>
                     <strong>{percent.format(donchian.total_return)}</strong>
                   </div>
                   <div>
-                    <span>2× costs</span>
+                    <span>{t.doubledCosts}</span>
                     <strong>{percent.format(stress.total_return)}</strong>
                   </div>
                 </div>
                 <p className="panel-note">
-                  {asset === "btc"
-                    ? "BTC turns more negative under stress. Turnover remains the primary risk."
-                    : "ETH remains positive under stress, but the margin is not large enough for a production claim."}
+                  {asset === "btc" ? t.btcStress : t.ethStress}
                 </p>
               </>
             ) : (
               <>
                 <div className="stress-number">
                   <span>{currency.format(donchian?.fees_paid ?? 0)}</span>
-                  <small>simulated fees paid in the development window</small>
+                  <small>{t.feesDevelopment}</small>
                 </div>
-                <p className="panel-note">
-                  Stress results are reserved for the fixed evaluation period to
-                  keep development and final evidence clearly separated.
-                </p>
+                <p className="panel-note">{t.stressReserved}</p>
               </>
             )}
           </article>
@@ -282,80 +472,61 @@ export default function Home() {
           <article className="panel review-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Research review</p>
-                <h3>What the evidence says</h3>
+                <p className="eyebrow">{t.researchReview}</p>
+                <h3>{t.evidenceSays}</h3>
               </div>
-              <span className="review-count">03 findings</span>
+              <span className="review-count">{t.findingsCount}</span>
             </div>
             <ul className="findings">
-              <li>
-                <span className="finding-index">01</span>
-                <div>
-                  <strong>Risk-control hypothesis supported</strong>
-                  <p>
-                    Drawdown and Sharpe behavior improved versus passive exposure
-                    on both evaluation assets.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <span className="finding-index caution">02</span>
-                <div>
-                  <strong>No broad return claim</strong>
-                  <p>
-                    BTC remained approximately flat before stress. Two assets and
-                    one interval are insufficient evidence.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <span className="finding-index caution">03</span>
-                <div>
-                  <strong>Turnover needs work</strong>
-                  <p>
-                    Dynamic volatility sizing adds fills and makes the result
-                    sensitive to execution friction.
-                  </p>
-                </div>
-              </li>
+              {t.findings.map(([title, detail], index) => (
+                <li key={title}>
+                  <span
+                    className={`finding-index ${index > 0 ? "caution" : ""}`}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <strong>{title}</strong>
+                    <p>{detail}</p>
+                  </div>
+                </li>
+              ))}
             </ul>
           </article>
 
           <article className="panel provenance" id="provenance">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Evidence trail</p>
-                <h3>Reproducible by design</h3>
+                <p className="eyebrow">{t.evidenceTrail}</p>
+                <h3>{t.reproducible}</h3>
               </div>
-              <span className="verified">Verified</span>
+              <span className="verified">{t.verified}</span>
             </div>
             <dl>
               <div>
-                <dt>Dataset</dt>
+                <dt>{t.dataset}</dt>
                 <dd>{dataset.dataset_version}</dd>
               </div>
               <div>
-                <dt>Bars</dt>
-                <dd>{dataset.rows.toLocaleString()} × 4h</dd>
+                <dt>{t.bars}</dt>
+                <dd>{dataset.rows.toLocaleString(localeTag)} × 4h</dd>
               </div>
               <div>
-                <dt>Strategy run</dt>
+                <dt>{t.strategyRun}</dt>
                 <dd>{donchian?.run_id}</dd>
               </div>
               <div>
-                <dt>Content hash</dt>
+                <dt>{t.contentHash}</dt>
                 <dd>{dataset.content_sha256.slice(0, 20)}…</dd>
               </div>
             </dl>
-            <p className="provenance-note">
-              Binance Spot · UTC · closed Klines · immutable source identity
-            </p>
+            <p className="provenance-note">{t.provenance}</p>
           </article>
         </section>
 
         <footer>
-          <span>QuantOS / Research operating system</span>
-          <span>Historical simulation · Not investment advice</span>
+          <span>{t.product}</span>
+          <span>{t.disclaimer}</span>
         </footer>
       </section>
     </main>

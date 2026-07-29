@@ -208,6 +208,42 @@ h1 {
   font-size: 12px;
 }
 
+.header-actions {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+
+.language-switch {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line-bright);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10px;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 11px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.language-switch span {
+  color: var(--lime);
+  font-size: 9px;
+}
+
+.language-switch:hover,
+.language-switch:focus-visible {
+  background: var(--surface-raised);
+  border-color: var(--lime);
+  outline: none;
+}
+
 .hero-grid {
   display: grid;
   gap: 12px;
@@ -710,6 +746,12 @@ footer {
 
   .topbar {
     align-items: flex-start;
+  }
+
+  .header-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+    gap: 9px;
   }
 
   .hero-grid {
