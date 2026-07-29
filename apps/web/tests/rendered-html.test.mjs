@@ -34,6 +34,10 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Drawdown controlled/);
   assert.match(html, /Research mode/);
   assert.match(html, /Live trading disabled/);
+  assert.match(html, /Price, decisions, and risk/);
+  assert.match(html, /Kline \+ executed fills/);
+  assert.match(html, /Portfolio equity/);
+  assert.match(html, /Underwater drawdown/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 

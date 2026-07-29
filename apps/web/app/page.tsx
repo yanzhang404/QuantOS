@@ -10,6 +10,7 @@ import {
   type Period,
   studyAsOf,
 } from "./research-data";
+import { StrategyWorkbench } from "./strategy-workbench";
 
 type Locale = "en" | "zh";
 
@@ -342,6 +343,14 @@ export default function Home() {
           </article>
         </section>
 
+        <StrategyWorkbench
+          asset={asset}
+          locale={locale}
+          onAssetChange={setAsset}
+          onPeriodChange={setPeriod}
+          period={period}
+        />
+
         <section className="metric-strip" aria-label={t.selectedMetrics}>
           <div>
             <span>{t.totalReturn}</span>
@@ -374,7 +383,7 @@ export default function Home() {
         </section>
 
         <section className="analysis-grid">
-          <article className="panel comparison" id="strategies">
+          <article className="panel comparison">
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">{t.outcomeMatrix}</p>

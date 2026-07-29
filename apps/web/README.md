@@ -8,6 +8,11 @@ The workspace supports English and Simplified Chinese. Use the language control
 in the top-right corner to switch all research labels and conclusions without
 changing the selected asset, observation window, or underlying evidence.
 
+The strategy workbench adds synchronized Klines, executed buy/sell fills,
+portfolio equity, underwater drawdown, and fill-level inspection for Buy &
+Hold, EMA Cross, and Donchian ATR. Its compact visualization artifact preserves
+the immutable dataset version and experiment Run ID behind each view.
+
 ## Local development
 
 ```bash

@@ -21,3 +21,4 @@ Accepted decisions:
 - [ADR-0004: Execute close-generated signals at the next Kline open](0004-next-bar-open-execution.md)
 - [ADR-0005: Select parameters chronologically before holdout evaluation](0005-chronological-out-of-sample-selection.md)
 - [ADR-0006: Start the product workspace as a read-only research view](0006-read-only-research-workspace.md)
+- [ADR-0007: Derive a compact strategy visualization artifact](0007-strategy-visualization-artifact.md)

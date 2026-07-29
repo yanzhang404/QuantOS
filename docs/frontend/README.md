@@ -10,5 +10,15 @@ the actual Donchian ATR study as an interactive strategy comparison:
 - research findings and immutable dataset/Run IDs.
 
 The workspace imports the committed structured result artifact at build time.
+It also imports a compact strategy-visualization artifact derived from the
+immutable Kline datasets and experiment CSV files. The strategy workbench
+synchronizes:
+
+- Kline price action and buy/sell fills;
+- per-strategy equity and drawdown;
+- position exposure and fill-level details;
+- strategy, asset, and observation-window selection.
+
 The next frontend boundary is a versioned read-only API for browsing multiple
-datasets, runs, and studies. Live trading and order actions remain disabled.
+datasets, runs, and studies. Interactive reruns, live trading, and order actions
+remain disabled.
