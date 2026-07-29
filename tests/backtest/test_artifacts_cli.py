@@ -113,6 +113,49 @@ def test_root_cli_preserves_data_commands(capsys, tmp_path, price_klines) -> Non
     assert json.loads(capsys.readouterr().out)["is_valid"] is True
 
 
+def test_root_cli_runs_bounded_range_with_explicit_strategy_exposure(
+    capsys,
+    tmp_path,
+    price_klines,
+) -> None:
+    dataset = DatasetStore(tmp_path / "data").publish(
+        price_klines,
+        requested_start=price_klines[0].open_time,
+        requested_end=price_klines[-1].open_time
+        + (price_klines[1].open_time - price_klines[0].open_time),
+        source="fixture",
+    )
+    output_root = tmp_path / "runs"
+
+    assert (
+        main(
+            [
+                "backtest",
+                "run",
+                "--dataset",
+                str(dataset.path),
+                "--strategy",
+                "buy-and-hold",
+                "--target-exposure",
+                "0.5",
+                "--max-target-exposure",
+                "0.8",
+                "--start",
+                price_klines[0].open_time.isoformat(),
+                "--end",
+                price_klines[2].open_time.isoformat(),
+                "--output-root",
+                str(output_root),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    run = json.loads((output_root / payload["run_id"] / "run.json").read_text())
+    assert run["dataset"]["evaluation"]["bar_count"] == 2
+    assert run["strategy"]["parameters"]["target_exposure"] == "0.5"
+
+
 @pytest.mark.parametrize(
     ("strategy", "extra"),
     [

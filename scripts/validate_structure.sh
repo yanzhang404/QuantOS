@@ -10,6 +10,7 @@ required_files=(
   CONTRIBUTING.md
   LICENSE
   compose.yaml
+  go.mod
   pyproject.toml
   docs/adr/0001-modular-monolith.md
   docs/adr/0002-go-python-boundary.md
@@ -25,6 +26,8 @@ required_directories=(
   apps/web
   apps/web/app
   apps/api
+  apps/api/cmd/quantos-api
+  apps/api/internal/backtest
   apps/worker
   apps/worker/src/quantos_cli
   services/market-data

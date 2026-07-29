@@ -26,6 +26,7 @@ node_modules/
 # Data and local analytical state
 data/
 artifacts/
+var/
 reports/generated/
 *.duckdb
 *.duckdb.wal

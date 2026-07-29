@@ -42,3 +42,18 @@ and states whether the existing experiment was reused.
 
 The first API increment is historical research only. Live and paper trading
 remain outside this contract.
+
+## Implemented local task service
+
+The first Go service implements strategy discovery, submission, task lookup,
+and task history. It persists one atomic JSON record per Task and runs one
+background Python worker. Accepted tasks use these transitions:
+
+```text
+queued → running → succeeded
+                 ↘ failed
+queued/running + service restart → failed(service_restarted, retryable)
+```
+
+Completed Python experiment directories remain the Run source of truth.
+Experiment list/detail HTTP resources are the next API increment.

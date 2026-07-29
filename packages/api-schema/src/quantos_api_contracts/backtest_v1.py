@@ -203,6 +203,16 @@ class BacktestSubmission:
             raise ContractValidationError("idempotency_key has an invalid format")
         _optional_text(self.label, "label", maximum=120)
         _optional_text(self.note, "note", maximum=500)
+        if self.strategy.name == "buy-and-hold":
+            strategy_exposure = Decimal(self.strategy.parameters["target_exposure"])
+        elif self.strategy.name == "donchian-atr":
+            strategy_exposure = Decimal(self.strategy.parameters["max_exposure"])
+        else:
+            strategy_exposure = Decimal("1")
+        if strategy_exposure > self.config.max_target_exposure:
+            raise ContractValidationError(
+                "strategy exposure cannot exceed config.max_target_exposure"
+            )
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> BacktestSubmission:

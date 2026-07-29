@@ -118,6 +118,14 @@ def test_strategy_parameters_are_strict_and_cross_validated() -> None:
         )
 
 
+def test_strategy_exposure_cannot_bypass_configured_risk_limit() -> None:
+    payload = submission_payload()
+    payload["config"]["max_target_exposure"] = "0.5"
+
+    with pytest.raises(ContractValidationError, match="strategy exposure cannot exceed"):
+        BacktestSubmission.from_dict(payload)
+
+
 def test_task_state_requires_consistent_lifecycle_fields() -> None:
     request = BacktestSubmission.from_dict(submission_payload())
     created = datetime(2026, 7, 29, 12, tzinfo=UTC)
