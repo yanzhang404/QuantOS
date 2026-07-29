@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BacktestLab } from "./backtest-lab";
 import type {
   Asset,
   Period,
@@ -202,6 +203,8 @@ export function StrategyWorkbench({
           </label>
         </div>
       </div>
+
+      <BacktestLab dataset={dataset} locale={locale} strategy={strategy} />
 
       <div className="chart-panel price-panel">
         <div className="chart-heading">

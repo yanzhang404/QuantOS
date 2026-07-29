@@ -38,6 +38,9 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Kline \+ executed fills/);
   assert.match(html, /Portfolio equity/);
   assert.match(html, /Underwater drawdown/);
+  assert.match(html, /Edit parameters and save a reproducible run/);
+  assert.match(html, /Run backtest/);
+  assert.match(html, /Backtest history/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
@@ -64,4 +67,18 @@ test("labels the Kline timeline and executed fills with dates", async () => {
   assert.match(source, /formatAxisDate/);
   assert.match(source, /formatFullDate\(fill\.time/);
   assert.match(source, /activeFills/);
+});
+
+test("connects the parameter lab to durable backtest tasks", async () => {
+  const [lab, api] = await Promise.all([
+    readFile(new URL("../app/backtest-lab.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/backtest-api.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(lab, /submitBacktest\(request\)/);
+  assert.match(lab, /getTask\(activeTask\.task_id/);
+  assert.match(lab, /listTasks/);
+  assert.match(api, /\/api\/v1\/backtests/);
+  assert.match(api, /\/api\/v1\/tasks/);
+  assert.match(api, /Idempotency-Key/);
 });

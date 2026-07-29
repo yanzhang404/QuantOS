@@ -22,3 +22,19 @@ synchronizes:
 The next frontend boundary is a versioned read-only API for browsing multiple
 datasets, runs, and studies. Interactive reruns, live trading, and order actions
 remain disabled.
+
+## Backtest Lab
+
+The workspace now consumes the versioned local Task API for manual historical
+backtests. A researcher can edit the active strategy parameters, initial cash,
+fees, slippage, exposure limit, and final-liquidation assumption. The client:
+
+- generates a unique idempotency key for each intentional submission;
+- binds the immutable dataset version and content hash automatically;
+- polls queued/running Tasks until success or failure;
+- displays persisted Task history and resulting Run IDs;
+- preserves the read-only safety boundary around live execution.
+
+Completed manual runs do not yet replace the build-time Kline visualization.
+Experiment detail and comparison endpoints are the next boundary for loading a
+new Run's fills, equity, drawdown, and report into the charts.
