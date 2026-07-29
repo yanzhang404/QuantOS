@@ -1,0 +1,16 @@
+# API Schema
+
+Language-neutral request and response contracts between the web client, future
+Go control plane, and Python research worker.
+
+`schemas/backtest.v1.schema.json` is the normative JSON boundary for historical
+backtest submission, task lifecycle, completed experiment records, and the
+editable built-in strategy catalog. Python validation models live in
+`quantos_api_contracts`.
+
+The contract intentionally contains no filesystem paths, shell commands,
+credentials, paper-trading controls, or live-execution controls.
+
+Contract v1 preserves exact decimal inputs as JSON strings. Strategy periods
+remain JSON integers. A submission with unknown fields or strategy parameters
+is rejected instead of silently applying defaults.

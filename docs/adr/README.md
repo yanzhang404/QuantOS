@@ -22,3 +22,4 @@ Accepted decisions:
 - [ADR-0005: Select parameters chronologically before holdout evaluation](0005-chronological-out-of-sample-selection.md)
 - [ADR-0006: Start the product workspace as a read-only research view](0006-read-only-research-workspace.md)
 - [ADR-0007: Derive a compact strategy visualization artifact](0007-strategy-visualization-artifact.md)
+- [ADR-0008: Version backtest orchestration contracts independently](0008-versioned-backtest-orchestration-contract.md)

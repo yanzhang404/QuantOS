@@ -36,7 +36,7 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 
 - Dashboard and project navigation. **First read-only strategy workspace implemented.**
 - Dataset, strategy, backtest, and experiment views.
-- Task orchestration and progress streaming.
+- Task orchestration and progress streaming. **Versioned backtest/task contract implemented.**
 - Tool-driven AI research assistant for querying and reviewing artifacts.
 
 Exit criterion: the core research loop is usable without manually coordinating
