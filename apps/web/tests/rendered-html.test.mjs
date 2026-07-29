@@ -53,3 +53,15 @@ test("ships an accessible Chinese and English language switch", async () => {
   assert.match(source, /document\.documentElement\.lang/);
   assert.match(source, /aria-label=\{t\.switchLanguage\}/);
 });
+
+test("labels the Kline timeline and executed fills with dates", async () => {
+  const source = await readFile(
+    new URL("../app/strategy-workbench.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /dateTickIndexes/);
+  assert.match(source, /formatAxisDate/);
+  assert.match(source, /formatFullDate\(fill\.time/);
+  assert.match(source, /activeFills/);
+});

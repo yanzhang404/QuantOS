@@ -368,7 +368,18 @@ function CandlestickChart({
   const activeIndex =
     focusTime !== undefined ? indexForTime(focusTime) : hovered;
   const activeBar = activeIndex === undefined ? undefined : bars[activeIndex];
+  const activeFills =
+    activeIndex === undefined
+      ? []
+      : fills.filter((fill) => indexForTime(fill.time) === activeIndex);
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
+  const dateTickIndexes = Array.from(
+    new Set(
+      Array.from({ length: 6 }, (_, index) =>
+        Math.round((index / 5) * (bars.length - 1)),
+      ),
+    ),
+  );
 
   return (
     <div className="candlestick-wrap">
@@ -407,6 +418,22 @@ function CandlestickChart({
             </g>
           );
         })}
+        {dateTickIndexes.map((index) => {
+          const x = left + index * step + step / 2;
+          return (
+            <g className="date-tick" key={bars[index].time}>
+              <line
+                x1={x}
+                x2={x}
+                y1={height - bottom}
+                y2={height - bottom + 5}
+              />
+              <text x={x} y={height - bottom + 20}>
+                {formatAxisDate(bars[index].time, localeTag)}
+              </text>
+            </g>
+          );
+        })}
         {bars.map((bar, index) => {
           const x = left + index * step + step / 2;
           const rising = bar.close >= bar.open;
@@ -436,6 +463,9 @@ function CandlestickChart({
               className={`fill-marker ${fill.side}`}
               key={`${fill.time}-${fill.quantity}`}
             >
+              <title>
+                {`${fill.side === "buy" ? labels.buy : labels.sell} · ${formatFullDate(fill.time, localeTag)} · ${formatPrice(fill.price, localeTag)} · ${labels.fee} $${fill.fee.toFixed(2)}`}
+              </title>
               <circle cx={x} cy={markerY} r={5.5} />
               <text x={x} y={markerY + 2.8}>
                 {fill.side === "buy" ? "B" : "S"}
@@ -475,6 +505,17 @@ function CandlestickChart({
           <span>
             {labels.close} {formatCompactPrice(activeBar.close, localeTag)}
           </span>
+          {activeFills.map((fill) => (
+            <span
+              className={`tooltip-fill ${fill.side}`}
+              key={`${fill.time}-${fill.quantity}`}
+            >
+              {fill.side === "buy" ? labels.buy : labels.sell} ·{" "}
+              {formatFullDate(fill.time, localeTag)} ·{" "}
+              {formatPrice(fill.price, localeTag)} · {labels.fee} $
+              {fill.fee.toFixed(2)}
+            </span>
+          ))}
         </div>
       ) : null}
       <div className="chart-legend">
@@ -641,6 +682,27 @@ function formatCompactPrice(value: number, locale: string): string {
 function formatTime(value: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
     month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(new Date(value));
+}
+
+function formatAxisDate(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(new Date(value));
+}
+
+function formatFullDate(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",

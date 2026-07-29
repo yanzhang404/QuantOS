@@ -629,6 +629,18 @@ h1 {
   font-size: 9px;
 }
 
+.date-tick line {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+
+.date-tick text {
+  fill: var(--muted);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+  text-anchor: middle;
+}
+
 .candle line {
   stroke: currentColor;
   stroke-width: 1;
@@ -713,13 +725,27 @@ h1 {
   color: var(--muted);
 }
 
+.chart-tooltip .tooltip-fill {
+  border-left: 2px solid currentColor;
+  flex-basis: 100%;
+  padding-left: 7px;
+}
+
+.chart-tooltip .tooltip-fill.buy {
+  color: var(--lime);
+}
+
+.chart-tooltip .tooltip-fill.sell {
+  color: var(--red);
+}
+
 .chart-legend {
   align-items: center;
-  bottom: 4px;
   display: flex;
   gap: 6px;
-  left: 8px;
   position: absolute;
+  right: 84px;
+  top: 6px;
 }
 
 .buy-dot,
