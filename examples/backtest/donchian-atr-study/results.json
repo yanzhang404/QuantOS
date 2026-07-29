@@ -1,0 +1,189 @@
+{
+  "as_of": "2026-07-29",
+  "assumptions": {
+    "fee_bps": "10",
+    "initial_cash": "100000",
+    "liquidate_at_end": true,
+    "slippage_bps": "5"
+  },
+  "datasets": {
+    "btc_development": {
+      "content_sha256": "60d1e40505ad1fb240c3fe6285d07f2f8f23c952c8c5d2ccb84d8c9551524dec",
+      "dataset_version": "60d1e40505ad1fb2",
+      "rows": 6576
+    },
+    "btc_evaluation": {
+      "content_sha256": "024f23d9a629502eabf7c8186735938cb585ab76286b072e20ded76c1b4bc7b3",
+      "dataset_version": "024f23d9a629502e",
+      "rows": 3276
+    },
+    "eth_development": {
+      "content_sha256": "9d5fc0adea940804cc2067c960e1805288b135f66e282d8f9c4d5081ef39531c",
+      "dataset_version": "9d5fc0adea940804",
+      "rows": 6576
+    },
+    "eth_evaluation": {
+      "content_sha256": "4490813e551e1eaae5458b9d315aacc95eb5f798dfdfb8e74f6ed14ff09dc778",
+      "dataset_version": "4490813e551e1eaa",
+      "rows": 3276
+    }
+  },
+  "runs": [
+    {
+      "dataset": "btc_development",
+      "fees_paid": 299.3931098493713,
+      "fill_count": 2,
+      "max_drawdown": 0.6721392902032055,
+      "run_id": "d247f8ccc60ac99c",
+      "sharpe_ratio": 0.7005466253670619,
+      "strategy": "buy-and-hold",
+      "total_return": 0.9929351693940971,
+      "trade_count": 1
+    },
+    {
+      "dataset": "btc_development",
+      "fees_paid": 10997.434630329286,
+      "fill_count": 116,
+      "max_drawdown": 0.4780180709248771,
+      "run_id": "aef4d1e0a8dd7cb4",
+      "sharpe_ratio": 0.6529662157790359,
+      "strategy": "ema-cross",
+      "total_return": 0.6445221627266309,
+      "trade_count": 58
+    },
+    {
+      "dataset": "btc_development",
+      "fees_paid": 4883.451260034691,
+      "fill_count": 344,
+      "max_drawdown": 0.09571871979255558,
+      "run_id": "dc7243f350383429",
+      "sharpe_ratio": 0.8736594007286507,
+      "strategy": "donchian-atr",
+      "total_return": 0.24669153310227565,
+      "trade_count": 163
+    },
+    {
+      "dataset": "btc_evaluation",
+      "fees_paid": 162.249661954687,
+      "fill_count": 2,
+      "max_drawdown": 0.5344740218164715,
+      "run_id": "f7d1a5d886021205",
+      "sharpe_ratio": -0.4915162926506189,
+      "strategy": "buy-and-hold",
+      "total_return": -0.3771278750731375,
+      "trade_count": 1
+    },
+    {
+      "dataset": "btc_evaluation",
+      "fees_paid": 5988.1106495155445,
+      "fill_count": 60,
+      "max_drawdown": 0.30072655581216035,
+      "run_id": "3040a054c7588779",
+      "sharpe_ratio": -0.1718794760486458,
+      "strategy": "ema-cross",
+      "total_return": -0.10671198118932734,
+      "trade_count": 30
+    },
+    {
+      "dataset": "btc_evaluation",
+      "fees_paid": 2495.3158679921935,
+      "fill_count": 152,
+      "max_drawdown": 0.09438347305940469,
+      "run_id": "336fe16f3f221153",
+      "sharpe_ratio": 0.012242352928506233,
+      "strategy": "donchian-atr",
+      "total_return": -0.0032631356669269307,
+      "trade_count": 76
+    },
+    {
+      "cost_stress": "2x",
+      "dataset": "btc_evaluation",
+      "fees_paid": 4898.792951322005,
+      "fill_count": 152,
+      "max_drawdown": 0.10885042588710817,
+      "run_id": "ced0c8bd446c5ebd",
+      "sharpe_ratio": -0.2911314587026648,
+      "strategy": "donchian-atr",
+      "total_return": -0.03877886496821359,
+      "trade_count": 76
+    },
+    {
+      "dataset": "eth_development",
+      "fees_paid": 189.3509204051687,
+      "fill_count": 2,
+      "max_drawdown": 0.7622690621168215,
+      "run_id": "1eaaf4f3498f4be4",
+      "sharpe_ratio": 0.27443636461819515,
+      "strategy": "buy-and-hold",
+      "total_return": -0.1063863031543254,
+      "trade_count": 1
+    },
+    {
+      "dataset": "eth_development",
+      "fees_paid": 10369.696423928497,
+      "fill_count": 126,
+      "max_drawdown": 0.444027985073167,
+      "run_id": "9553a82bfed76097",
+      "sharpe_ratio": 0.20384954819677817,
+      "strategy": "ema-cross",
+      "total_return": -0.008306001680874142,
+      "trade_count": 63
+    },
+    {
+      "dataset": "eth_development",
+      "fees_paid": 3245.878118986925,
+      "fill_count": 212,
+      "max_drawdown": 0.16035869627663127,
+      "run_id": "00c5ff22a3a942be",
+      "sharpe_ratio": 0.35262351967187683,
+      "strategy": "donchian-atr",
+      "total_return": 0.08456205959800522,
+      "trade_count": 112
+    },
+    {
+      "dataset": "eth_evaluation",
+      "fees_paid": 146.6594556972616,
+      "fill_count": 2,
+      "max_drawdown": 0.6802938133664278,
+      "run_id": "a4f43741c1fab400",
+      "sharpe_ratio": -0.39742554689231063,
+      "strategy": "buy-and-hold",
+      "total_return": -0.5328740355863066,
+      "trade_count": 1
+    },
+    {
+      "dataset": "eth_evaluation",
+      "fees_paid": 6069.3547867467705,
+      "fill_count": 68,
+      "max_drawdown": 0.5166109294712599,
+      "run_id": "b436063de1250601",
+      "sharpe_ratio": -0.4192969497322199,
+      "strategy": "ema-cross",
+      "total_return": -0.30684862264366397,
+      "trade_count": 34
+    },
+    {
+      "dataset": "eth_evaluation",
+      "fees_paid": 1237.6364898521776,
+      "fill_count": 79,
+      "max_drawdown": 0.09102142309575027,
+      "run_id": "e722b83af14f22cf",
+      "sharpe_ratio": 0.461808568040037,
+      "strategy": "donchian-atr",
+      "total_return": 0.05177878251462009,
+      "trade_count": 42
+    },
+    {
+      "cost_stress": "2x",
+      "dataset": "eth_evaluation",
+      "fees_paid": 2452.3510347831366,
+      "fill_count": 79,
+      "max_drawdown": 0.1011641539901326,
+      "run_id": "5d1995bb3ce666ed",
+      "sharpe_ratio": 0.31502171119042205,
+      "strategy": "donchian-atr",
+      "total_return": 0.0334832564510219,
+      "trade_count": 42
+    }
+  ]
+}

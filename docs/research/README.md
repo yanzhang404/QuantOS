@@ -50,3 +50,7 @@ uv run quantos review show \
 Comparison emits normalized JSON including evaluation ranges, assumptions, and
 metrics. Review findings are evidence prompts, not claims that a strategy is
 safe or profitable.
+
+## Formal strategy studies
+
+- [Donchian ATR strategy study](donchian-atr-study.md)

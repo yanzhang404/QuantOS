@@ -6,7 +6,11 @@ from decimal import Decimal
 
 import pytest
 from quantos_backtest.errors import BacktestConfigurationError
-from quantos_backtest.strategies import EmaCrossStrategy
+from quantos_backtest.strategies import (
+    BuyAndHoldStrategy,
+    DonchianAtrStrategy,
+    EmaCrossStrategy,
+)
 from quantos_events import MarketEvent
 from quantos_strategy import StrategyContext
 
@@ -26,6 +30,30 @@ def market_event(start_time, index: int, close: str) -> MarketEvent:
         low=Decimal(close),
         close=Decimal(close),
         volume=Decimal("1"),
+    )
+
+
+def range_event(
+    start_time,
+    index: int,
+    *,
+    high: str,
+    low: str,
+    close: str,
+) -> MarketEvent:
+    event = market_event(start_time, index, close)
+    return MarketEvent(
+        timestamp=event.timestamp,
+        exchange=event.exchange,
+        symbol=event.symbol,
+        interval=event.interval,
+        open_time=event.open_time,
+        close_time=event.close_time,
+        open=event.open,
+        high=Decimal(high),
+        low=Decimal(low),
+        close=event.close,
+        volume=event.volume,
     )
 
 
@@ -58,3 +86,67 @@ def test_ema_strategy_emits_only_after_warmup_and_target_change(start_time) -> N
 def test_ema_strategy_rejects_invalid_periods(fast: int, slow: int) -> None:
     with pytest.raises(BacktestConfigurationError, match="EMA periods"):
         EmaCrossStrategy(fast_period=fast, slow_period=slow)
+
+
+def test_buy_and_hold_emits_one_benchmark_target(start_time) -> None:
+    strategy = BuyAndHoldStrategy(target_exposure=Decimal("0.75"))
+    context = StrategyContext(symbol="BTCUSDT", interval="1h")
+    strategy.initialize(context)
+
+    first = strategy.on_bar(context, market_event(start_time, 0, "100"))
+    second = strategy.on_bar(context, market_event(start_time, 1, "101"))
+
+    assert first is not None
+    assert first.target_exposure == Decimal("0.75")
+    assert second is None
+    assert strategy.parameters == {"target_exposure": "0.75"}
+
+
+def test_buy_and_hold_rejects_invalid_exposure() -> None:
+    with pytest.raises(BacktestConfigurationError, match="target_exposure"):
+        BuyAndHoldStrategy(target_exposure=Decimal("0"))
+
+
+def test_donchian_uses_prior_channel_and_exits_on_prior_low(start_time) -> None:
+    strategy = DonchianAtrStrategy(
+        entry_period=3,
+        exit_period=2,
+        atr_period=3,
+        target_annual_volatility=Decimal("0.20"),
+        rebalance_threshold=Decimal("1"),
+    )
+    context = StrategyContext(symbol="BTCUSDT", interval="1h")
+    strategy.initialize(context)
+    bars = [
+        range_event(start_time, 0, high="10", low="8", close="9"),
+        range_event(start_time, 1, high="11", low="9", close="10"),
+        range_event(start_time, 2, high="12", low="10", close="11"),
+        range_event(start_time, 3, high="14", low="12", close="13"),
+        range_event(start_time, 4, high="9", low="7", close="8"),
+    ]
+
+    signals = [strategy.on_bar(context, bar) for bar in bars]
+
+    assert signals[:3] == [None, None, None]
+    assert signals[3] is not None
+    assert Decimal("0") < signals[3].target_exposure < Decimal("1")
+    assert "prior 3-bar high 12" in signals[3].reason
+    assert signals[4] is not None
+    assert signals[4].target_exposure == Decimal("0")
+    assert "prior 2-bar low 10" in signals[4].reason
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"entry_period": 1}, "entry_period"),
+        ({"entry_period": 2, "exit_period": 3}, "exit_period"),
+        ({"atr_period": 1}, "atr_period"),
+        ({"target_annual_volatility": Decimal("0")}, "target_annual_volatility"),
+        ({"max_exposure": Decimal("1.1")}, "max_exposure"),
+        ({"rebalance_threshold": Decimal("-0.1")}, "rebalance_threshold"),
+    ],
+)
+def test_donchian_rejects_invalid_configuration(kwargs, message: str) -> None:
+    with pytest.raises(BacktestConfigurationError, match=message):
+        DonchianAtrStrategy(**kwargs)

@@ -11,8 +11,10 @@ short-term trading automation.
 Phase 0 architecture initialization is complete. The implemented loop now
 covers Binance Kline → validation → Parquet → DuckDB → event-driven EMA Cross
 backtest → metrics → versioned experiment artifacts → chronological parameter
-selection → untouched holdout and cost-stress review. The next increment is
-feature lineage, walk-forward validation, and broader market datasets.
+selection → untouched holdout and cost-stress review. Buy and Hold plus the
+first formal Donchian ATR strategy study are now implemented. The next
+increment is strategy robustness, feature lineage, walk-forward validation, and
+broader market datasets.
 
 ## Product principles
 

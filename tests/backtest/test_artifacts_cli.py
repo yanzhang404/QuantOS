@@ -4,6 +4,7 @@ import json
 from datetime import UTC, datetime
 from decimal import Decimal
 
+import pytest
 from quantos_backtest import BacktestConfig, BacktestEngine
 from quantos_backtest.artifacts import ExperimentStore
 from quantos_cli import main
@@ -110,3 +111,59 @@ def test_root_cli_preserves_data_commands(capsys, tmp_path, price_klines) -> Non
 
     assert main(["data", "validate", "--dataset", str(dataset.path)]) == 0
     assert json.loads(capsys.readouterr().out)["is_valid"] is True
+
+
+@pytest.mark.parametrize(
+    ("strategy", "extra"),
+    [
+        ("buy-and-hold", []),
+        (
+            "donchian-atr",
+            [
+                "--entry-period",
+                "2",
+                "--exit-period",
+                "1",
+                "--atr-period",
+                "2",
+                "--target-annual-volatility",
+                "0.2",
+            ],
+        ),
+    ],
+)
+def test_root_cli_runs_formal_strategies(
+    capsys,
+    tmp_path,
+    price_klines,
+    strategy,
+    extra,
+) -> None:
+    dataset = DatasetStore(tmp_path / "data").publish(
+        price_klines,
+        requested_start=price_klines[0].open_time,
+        requested_end=price_klines[-1].open_time
+        + (price_klines[1].open_time - price_klines[0].open_time),
+        source="fixture",
+    )
+    output_root = tmp_path / "runs"
+
+    assert (
+        main(
+            [
+                "backtest",
+                "run",
+                "--dataset",
+                str(dataset.path),
+                "--strategy",
+                strategy,
+                "--output-root",
+                str(output_root),
+                *extra,
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    run = json.loads((output_root / payload["run_id"] / "run.json").read_text())
+    assert run["strategy"]["name"] == strategy

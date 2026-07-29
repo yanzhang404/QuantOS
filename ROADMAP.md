@@ -17,6 +17,7 @@ and release hardening remain.
 - Apply fees and fixed slippage.
 - Calculate returns, Sharpe ratio, maximum drawdown, trades, and equity curve.
 - Persist experiment inputs, versions, metrics, artifacts, and reports.
+- Establish Buy & Hold and Donchian ATR as the first formal strategy benchmarks.
 
 Exit criterion: a clean environment can reproduce one documented experiment
 from data download through report generation.
