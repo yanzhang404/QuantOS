@@ -102,5 +102,8 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   );
   assert.match(catalog, /implementation: nonEmptyString\(candidate\.implementation\)/);
   assert.match(lab, /definition\.parameters\.map/);
+  assert.match(lab, /className="advanced-settings"/);
+  assert.match(lab, /className="task-result-row"/);
+  assert.match(lab, /setExperiments/);
   assert.doesNotMatch(lab, /const parameters: Record/);
 });

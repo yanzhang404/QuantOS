@@ -52,6 +52,7 @@ const copy = {
     title: "Edit parameters and save a reproducible run",
     strategyParameters: "Strategy parameters",
     assumptions: "Simulation assumptions",
+    advanced: "Advanced settings",
     initialCash: "Initial cash",
     fee: "Fee (bps)",
     slippage: "Slippage (bps)",
@@ -68,7 +69,7 @@ const copy = {
     offlineHint: "Start the QuantOS API to submit and browse saved runs.",
     retry: "Retry connection",
     history: "Backtest history",
-    historyHint: "Every submission is retained as a Task record.",
+    historyHint: "Select a saved run to compare its results and parameters.",
     empty: "No manual backtests yet.",
     reused: "reused",
     newRun: "new run",
@@ -81,12 +82,16 @@ const copy = {
     saved: "Saved",
     loadingResult: "Loading experiment result",
     showingResult: "Charts updated to this Run",
+    return: "Return",
+    drawdown: "Drawdown",
+    finalCapital: "Final",
   },
   zh: {
     eyebrow: "回测实验室",
     title: "修改参数并保存一次可复现回测",
     strategyParameters: "策略参数",
     assumptions: "模拟假设",
+    advanced: "高级设置",
     initialCash: "初始资金",
     fee: "手续费（bps）",
     slippage: "滑点（bps）",
@@ -103,7 +108,7 @@ const copy = {
     offlineHint: "启动 QuantOS API 后即可提交并查看持久化回测记录。",
     retry: "重新连接",
     history: "回测历史",
-    historyHint: "每次提交都会保留为独立 Task 记录。",
+    historyHint: "点击历史记录即可对比结果与参数。",
     empty: "还没有手动回测记录。",
     reused: "复用已有结果",
     newRun: "新回测",
@@ -116,6 +121,9 @@ const copy = {
     saved: "已保存",
     loadingResult: "正在加载实验结果",
     showingResult: "图表已切换到本次 Run",
+    return: "收益",
+    drawdown: "回撤",
+    finalCapital: "金额",
   },
 } as const;
 
@@ -134,6 +142,9 @@ export function BacktestLab({
   const [liquidateAtEnd, setLiquidateAtEnd] = useState(true);
   const [label, setLabel] = useState("");
   const [tasks, setTasks] = useState<BacktestTask[]>([]);
+  const [experiments, setExperiments] = useState<
+    Record<string, ExperimentVisualization>
+  >({});
   const [activeTask, setActiveTask] = useState<BacktestTask>();
   const [apiState, setAPIState] = useState<
     "connecting" | "connected" | "offline"
@@ -179,6 +190,36 @@ export function BacktestLab({
   }, []);
 
   useEffect(() => {
+    const missingRunIDs = visibleTasks
+      .filter(
+        (task) =>
+          task.status === "succeeded" &&
+          task.run_id &&
+          experiments[task.run_id] === undefined,
+      )
+      .map((task) => task.run_id!);
+    if (missingRunIDs.length === 0) return;
+
+    const controller = new AbortController();
+    void Promise.all(
+      missingRunIDs.map(async (runID) => {
+        try {
+          return [runID, await getExperiment(runID, controller.signal)] as const;
+        } catch {
+          return undefined;
+        }
+      }),
+    ).then((records) => {
+      if (controller.signal.aborted) return;
+      setExperiments((current) => ({
+        ...current,
+        ...Object.fromEntries(records.filter((record) => record !== undefined)),
+      }));
+    });
+    return () => controller.abort();
+  }, [experiments, visibleTasks]);
+
+  useEffect(() => {
     if (
       !activeTask ||
       (activeTask.status !== "queued" && activeTask.status !== "running")
@@ -201,6 +242,10 @@ export function BacktestLab({
               next.run_id,
               controller.signal,
             );
+            setExperiments((current) => ({
+              ...current,
+              [experiment.run_id]: experiment,
+            }));
             onExperimentLoaded(experiment);
             setMessage(t.showingResult);
             setLoadingExperiment(false);
@@ -240,6 +285,10 @@ export function BacktestLab({
     setMessage(t.loadingResult);
     try {
       const experiment = await getExperiment(task.run_id);
+      setExperiments((current) => ({
+        ...current,
+        [experiment.run_id]: experiment,
+      }));
       onExperimentLoaded(experiment);
       setAPIState("connected");
       setMessage(t.showingResult);
@@ -323,38 +372,56 @@ export function BacktestLab({
           </span>
         </div>
 
-        <div className="parameter-groups">
-          <fieldset>
-            <legend>{t.strategyParameters}</legend>
-            <div className="parameter-fields">
-              {definition.parameters.map((parameter) => (
-                <NumberField
-                  key={parameter.key}
-                  label={
-                    locale === "zh"
-                      ? parameterLabelsZh[parameter.key] ?? parameter.label
-                      : parameter.label
-                  }
-                  maximum={Number(parameter.maximum)}
-                  minimum={Number(parameter.minimum)}
-                  onChange={(value) => updateParameter(parameter.key, value)}
-                  step={parameter.kind === "integer" ? 1 : 0.01}
-                  value={activeValues[parameter.key]}
-                />
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>{t.assumptions}</legend>
-            <div className="parameter-fields assumptions">
+        <fieldset className="strategy-parameter-group">
+          <legend>{t.strategyParameters}</legend>
+          <div className="parameter-fields">
+            {definition.parameters.map((parameter) => (
               <NumberField
-                label={t.initialCash}
-                minimum={1}
-                onChange={setInitialCash}
-                step={1000}
-                value={initialCash}
+                key={parameter.key}
+                label={
+                  locale === "zh"
+                    ? parameterLabelsZh[parameter.key] ?? parameter.label
+                    : parameter.label
+                }
+                maximum={Number(parameter.maximum)}
+                minimum={Number(parameter.minimum)}
+                onChange={(value) => updateParameter(parameter.key, value)}
+                step={parameter.kind === "integer" ? 1 : 0.01}
+                value={activeValues[parameter.key]}
               />
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="run-basics">
+          <NumberField
+            label={t.initialCash}
+            minimum={1}
+            onChange={setInitialCash}
+            step={1000}
+            value={initialCash}
+          />
+          <label>
+            <span>{t.label}</span>
+            <input
+              maxLength={120}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder={t.labelPlaceholder}
+              type="text"
+              value={label}
+            />
+          </label>
+        </div>
+
+        <details className="advanced-settings">
+          <summary>
+            <span>{t.advanced}</span>
+            <small>
+              {feeBPS} bps fee · {slippageBPS} bps slippage
+            </small>
+          </summary>
+          <div className="advanced-settings-content">
+            <div className="parameter-fields assumptions">
               <NumberField
                 label={t.fee}
                 maximum={1000}
@@ -381,29 +448,16 @@ export function BacktestLab({
                 value={strategy === "ema-cross" ? "1" : riskLimit}
               />
             </div>
-          </fieldset>
-        </div>
-
-        <div className="run-meta">
-          <label>
-            <span>{t.label}</span>
-            <input
-              maxLength={120}
-              onChange={(event) => setLabel(event.target.value)}
-              placeholder={t.labelPlaceholder}
-              type="text"
-              value={label}
-            />
-          </label>
-          <label className="checkbox-label">
-            <input
-              checked={liquidateAtEnd}
-              onChange={(event) => setLiquidateAtEnd(event.target.checked)}
-              type="checkbox"
-            />
-            <span>{t.liquidate}</span>
-          </label>
-        </div>
+            <label className="checkbox-label">
+              <input
+                checked={liquidateAtEnd}
+                onChange={(event) => setLiquidateAtEnd(event.target.checked)}
+                type="checkbox"
+              />
+              <span>{t.liquidate}</span>
+            </label>
+          </div>
+        </details>
 
         <div className="run-actions">
           <div className="run-context">
@@ -466,34 +520,78 @@ export function BacktestLab({
         </div>
         <div className="task-list">
           {visibleTasks.length ? (
-            visibleTasks.map((task) => (
-              <button
-                className={activeTask?.task_id === task.task_id ? "selected" : ""}
-                key={task.task_id}
-                onClick={() => void selectTask(task)}
-                type="button"
-              >
-                <span className={`task-status ${task.status}`} />
-                <div>
-                  <strong>
-                    {task.request.label ||
-                      task.request.strategy.name.replaceAll("-", " ")}
-                  </strong>
-                  <small>
-                    {task.request.dataset.symbol} ·{" "}
-                    {formatTaskTime(task.created_at, localeTag)}
-                  </small>
-                  <code>
-                    {task.run_id
-                      ? `${t.saved} ${task.run_id}`
-                      : `${t.task} ${task.task_id.slice(-8)}`}
-                  </code>
-                </div>
-                <span className="task-state-label">
-                  {statusLabel(task, t)}
-                </span>
-              </button>
-            ))
+            visibleTasks.map((task) => {
+              const experiment = task.run_id
+                ? experiments[task.run_id]
+                : undefined;
+              return (
+                <button
+                  className={
+                    activeTask?.task_id === task.task_id ? "selected" : ""
+                  }
+                  key={task.task_id}
+                  onClick={() => void selectTask(task)}
+                  type="button"
+                >
+                  <span className={`task-status ${task.status}`} />
+                  <div>
+                    <strong>
+                      {task.request.label ||
+                        task.request.strategy.name.replaceAll("-", " ")}
+                    </strong>
+                    <small>
+                      {task.request.dataset.symbol} ·{" "}
+                      {formatTaskTime(task.created_at, localeTag)}
+                    </small>
+                    {experiment ? (
+                      <div className="task-result-row">
+                        <span
+                          className={
+                            experiment.metrics.total_return >= 0
+                              ? "positive"
+                              : "negative"
+                          }
+                        >
+                          {t.return}{" "}
+                          {formatPercent(
+                            experiment.metrics.total_return,
+                            localeTag,
+                          )}
+                        </span>
+                        <span className="negative">
+                          {t.drawdown}{" "}
+                          {formatPercent(
+                            -experiment.metrics.max_drawdown,
+                            localeTag,
+                          )}
+                        </span>
+                        <span>
+                          {t.finalCapital}{" "}
+                          {formatMoney(
+                            experiment.metrics.final_equity,
+                            localeTag,
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      <code>
+                        {task.run_id
+                          ? `${t.saved} ${task.run_id}`
+                          : `${t.task} ${task.task_id.slice(-8)}`}
+                      </code>
+                    )}
+                    <code className="task-parameters">
+                      {Object.entries(task.request.strategy.parameters)
+                        .map(([key, value]) => `${key}=${value}`)
+                        .join(" · ")}
+                    </code>
+                  </div>
+                  <span className="task-state-label">
+                    {statusLabel(task, t)}
+                  </span>
+                </button>
+              );
+            })
           ) : (
             <p className="empty-history">{t.empty}</p>
           )}
@@ -666,4 +764,21 @@ function formatTaskTime(value: string, locale: string): string {
     minute: "2-digit",
     hour12: false,
   }).format(new Date(value));
+}
+
+function formatPercent(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+    signDisplay: "exceptZero",
+  }).format(value);
+}
+
+function formatMoney(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }

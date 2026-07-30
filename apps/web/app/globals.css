@@ -829,7 +829,7 @@ h1 {
 .backtest-lab {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.55fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(330px, 0.7fr);
   margin-bottom: 10px;
 }
 
@@ -846,8 +846,7 @@ h1 {
 
 .lab-heading,
 .history-heading,
-.run-actions,
-.run-meta {
+.run-actions {
   align-items: center;
   display: flex;
   justify-content: space-between;
@@ -898,21 +897,15 @@ h1 {
   background: var(--red);
 }
 
-.parameter-groups {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
-  margin-top: 20px;
-}
-
-.parameter-groups fieldset {
+.strategy-parameter-group {
   border: 0;
   margin: 0;
+  margin-top: 20px;
   min-width: 0;
   padding: 0;
 }
 
-.parameter-groups legend {
+.strategy-parameter-group legend {
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
   font-size: 8px;
@@ -927,11 +920,11 @@ h1 {
 }
 
 .parameter-fields.assumptions {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .parameter-fields label,
-.run-meta > label:first-child {
+.run-basics > label {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -941,13 +934,13 @@ h1 {
 }
 
 .parameter-fields label > span,
-.run-meta label > span {
+.run-basics label > span {
   color: var(--subtle);
   font-size: 7px;
 }
 
 .parameter-fields input,
-.run-meta input[type="text"] {
+.run-basics input {
   background: transparent;
   border: 0;
   color: var(--ink);
@@ -960,12 +953,12 @@ h1 {
 }
 
 .parameter-fields input:focus,
-.run-meta input[type="text"]:focus {
+.run-basics input:focus {
   color: var(--lime);
 }
 
 .parameter-fields label:focus-within,
-.run-meta > label:first-child:focus-within {
+.run-basics > label:focus-within {
   border-color: var(--line-bright);
 }
 
@@ -978,15 +971,61 @@ h1 {
   opacity: 0.45;
 }
 
-.run-meta {
+.run-basics {
   border-top: 1px solid var(--line);
+  display: grid;
   gap: 12px;
+  grid-template-columns: minmax(150px, 0.45fr) minmax(220px, 1fr);
   margin-top: 16px;
   padding-top: 16px;
 }
 
-.run-meta > label:first-child {
-  flex: 1;
+.advanced-settings {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+}
+
+.advanced-settings summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+  padding: 11px 2px;
+}
+
+.advanced-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-settings summary span {
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.advanced-settings summary span::before {
+  color: var(--lime);
+  content: "+";
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.advanced-settings[open] summary span::before {
+  content: "−";
+}
+
+.advanced-settings summary small {
+  color: var(--subtle);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 7px;
+}
+
+.advanced-settings-content {
+  display: grid;
+  gap: 12px;
+  padding: 2px 2px 13px;
 }
 
 .checkbox-label {
@@ -1002,8 +1041,15 @@ h1 {
 }
 
 .run-actions {
+  background: rgba(8, 19, 14, 0.96);
+  border: 1px solid var(--line-bright);
+  border-radius: 9px;
   gap: 18px;
-  margin-top: 12px;
+  margin-top: 14px;
+  padding: 9px 10px;
+  position: sticky;
+  bottom: 8px;
+  z-index: 4;
 }
 
 .run-context {
@@ -1033,9 +1079,9 @@ h1 {
   font-weight: 800;
   gap: 8px;
   justify-content: center;
-  min-height: 38px;
-  min-width: 150px;
-  padding: 9px 14px;
+  min-height: 42px;
+  min-width: 190px;
+  padding: 10px 18px;
 }
 
 .run-backtest:hover,
@@ -1186,6 +1232,28 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.task-result-row {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 3px;
+}
+
+.task-result-row span {
+  color: var(--muted);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-parameters {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -2006,10 +2074,6 @@ footer {
     border-top: 1px solid var(--line);
   }
 
-  .parameter-groups {
-    grid-template-columns: 1fr;
-  }
-
   .task-history {
     min-height: 0;
   }
@@ -2155,7 +2219,6 @@ footer {
     grid-template-columns: 1fr 1fr;
   }
 
-  .run-meta,
   .run-actions,
   .active-run-banner {
     align-items: stretch;
@@ -2168,6 +2231,10 @@ footer {
 
   .run-backtest {
     width: 100%;
+  }
+
+  .run-basics {
+    grid-template-columns: 1fr;
   }
 
   .lab-message {
