@@ -1559,6 +1559,7 @@ h1 {
 
 .performance-panel {
   padding: 15px 16px 7px;
+  position: relative;
 }
 
 .position-readout {
@@ -1571,6 +1572,74 @@ h1 {
   color: var(--mint);
   font-family: var(--font-plex-mono), monospace;
   font-size: 9px;
+}
+
+.position-readout small {
+  color: var(--subtle);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+}
+
+.performance-date-tick line:not(.performance-time-grid) {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+
+.performance-date-tick text {
+  fill: var(--muted);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+}
+
+.performance-time-grid {
+  stroke: var(--line);
+  stroke-dasharray: 2 6;
+  stroke-width: 1;
+}
+
+.performance-crosshair line {
+  stroke: var(--muted);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}
+
+.performance-crosshair circle {
+  fill: var(--lime);
+  stroke: #08130e;
+  stroke-width: 2;
+}
+
+.performance-tooltip {
+  background: rgba(7, 16, 12, 0.96);
+  border: 1px solid var(--line-bright);
+  border-radius: 7px;
+  display: grid;
+  gap: 4px;
+  min-width: 178px;
+  padding: 9px 10px;
+  pointer-events: none;
+  position: absolute;
+  top: 58px;
+  transform: translateX(9px);
+  z-index: 5;
+}
+
+.performance-tooltip.align-right {
+  transform: translateX(calc(-100% - 9px));
+}
+
+.performance-tooltip strong,
+.performance-tooltip span {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+}
+
+.performance-tooltip strong {
+  color: var(--ink);
+}
+
+.performance-tooltip span {
+  color: var(--muted);
 }
 
 .equity-line {

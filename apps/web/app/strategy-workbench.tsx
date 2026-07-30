@@ -75,6 +75,7 @@ const copy = {
     low: "L",
     close: "C",
     equity: "Portfolio equity",
+    equityHint: "Changes only while the strategy has market exposure",
     drawdown: "Underwater drawdown",
     currentPosition: "Current position",
     flat: "Flat",
@@ -141,6 +142,7 @@ const copy = {
     low: "低",
     close: "收",
     equity: "投资组合权益",
+    equityHint: "仅在策略持仓期间随市场变化",
     drawdown: "水下回撤",
     currentPosition: "当前仓位",
     flat: "空仓",
@@ -757,14 +759,16 @@ function PerformanceChart({
   locale: Locale;
   labels: Copy;
 }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number>();
   const width = 720;
-  const height = 220;
+  const height = 244;
   const left = 10;
   const right = 10;
   const equityTop = 22;
   const equityBottom = 126;
   const drawdownTop = 156;
   const drawdownBottom = 208;
+  const axisLabelY = 232;
   const values = run.equity.map((point) => point.equity);
   const minEquity = Math.min(...values);
   const maxEquity = Math.max(...values);
@@ -773,8 +777,13 @@ function PerformanceChart({
     -0.01,
     ...run.equity.map((point) => point.drawdown),
   );
-  const x = (index: number) =>
-    left + (index / Math.max(1, run.equity.length - 1)) * (width - left - right);
+  const firstTime = Date.parse(run.equity[0]?.time ?? "");
+  const lastTime = Date.parse(run.equity.at(-1)?.time ?? "");
+  const timeRange = Math.max(1, lastTime - firstTime);
+  const xForTime = (time: string) =>
+    left +
+    ((Date.parse(time) - firstTime) / timeRange) * (width - left - right);
+  const x = (index: number) => xForTime(run.equity[index].time);
   const equityY = (value: number) =>
     equityTop +
     ((maxEquity - value) / equityRange) * (equityBottom - equityTop);
@@ -789,21 +798,23 @@ function PerformanceChart({
   );
   const last = run.equity.at(-1);
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
+  const performanceDateTickIndexes = Array.from(
+    new Set(
+      Array.from({ length: 6 }, (_, index) =>
+        Math.round((index / 5) * (run.equity.length - 1)),
+      ),
+    ),
+  );
+  const activePoint =
+    hoveredIndex === undefined ? undefined : run.equity[hoveredIndex];
+  const activeX = activePoint ? xForTime(activePoint.time) : undefined;
 
   return (
     <div className="chart-panel performance-panel">
       <div className="chart-heading">
         <div>
           <strong>{labels.equity}</strong>
-          <span>
-            {last
-              ? new Intl.NumberFormat(localeTag, {
-                  style: "currency",
-                  currency: "USD",
-                  maximumFractionDigits: 0,
-                }).format(last.equity)
-              : "—"}
-          </span>
+          <span>{labels.equityHint}</span>
         </div>
         <div className="position-readout">
           <span>{labels.currentPosition}</span>
@@ -812,14 +823,70 @@ function PerformanceChart({
               ? `${last.position.toFixed(4)} ${labels.units}`
               : labels.flat}
           </strong>
+          <small>{last ? formatMoney(last.equity, localeTag) : "—"}</small>
         </div>
       </div>
       <svg
         aria-label={`${labels.equity} / ${labels.drawdown}`}
         className="performance-chart"
+        onMouseLeave={() => setHoveredIndex(undefined)}
+        onMouseMove={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const cursor =
+            ((event.clientX - rect.left) / rect.width) * width;
+          const targetTime =
+            firstTime +
+            ((Math.max(left, Math.min(width - right, cursor)) - left) /
+              (width - left - right)) *
+              timeRange;
+          let nearestIndex = 0;
+          let nearestDistance = Number.POSITIVE_INFINITY;
+          run.equity.forEach((point, index) => {
+            const distance = Math.abs(Date.parse(point.time) - targetTime);
+            if (distance < nearestDistance) {
+              nearestDistance = distance;
+              nearestIndex = index;
+            }
+          });
+          setHoveredIndex(nearestIndex);
+        }}
         role="img"
         viewBox={`0 0 ${width} ${height}`}
       >
+        {performanceDateTickIndexes.map((index) => {
+          const point = run.equity[index];
+          const tickX = xForTime(point.time);
+          return (
+            <g className="performance-date-tick" key={point.time}>
+              <line
+                className="performance-time-grid"
+                x1={tickX}
+                x2={tickX}
+                y1={equityTop}
+                y2={drawdownBottom}
+              />
+              <line
+                x1={tickX}
+                x2={tickX}
+                y1={drawdownBottom}
+                y2={drawdownBottom + 5}
+              />
+              <text
+                textAnchor={
+                  index === 0
+                    ? "start"
+                    : index === run.equity.length - 1
+                      ? "end"
+                      : "middle"
+                }
+                x={tickX}
+                y={axisLabelY}
+              >
+                {formatAxisDate(point.time, localeTag)}
+              </text>
+            </g>
+          );
+        })}
         <line
           className="chart-grid-line"
           x1={left}
@@ -846,7 +913,45 @@ function PerformanceChart({
         <text className="chart-caption" x={left} y={148}>
           {labels.drawdown} · {formatPercent(maxDrawdown, localeTag)}
         </text>
+        {activePoint && activeX !== undefined ? (
+          <g className="performance-crosshair">
+            <line
+              x1={activeX}
+              x2={activeX}
+              y1={equityTop}
+              y2={drawdownBottom}
+            />
+            <circle
+              cx={activeX}
+              cy={equityY(activePoint.equity)}
+              r={3.5}
+            />
+          </g>
+        ) : null}
       </svg>
+      {activePoint && activeX !== undefined ? (
+        <div
+          className={`performance-tooltip ${
+            activeX > width * 0.72 ? "align-right" : ""
+          }`}
+          style={{ left: `${(activeX / width) * 100}%` }}
+        >
+          <strong>{formatFullDate(activePoint.time, localeTag)}</strong>
+          <span>
+            {labels.equity} {formatMoney(activePoint.equity, localeTag)}
+          </span>
+          <span>
+            {labels.drawdown}{" "}
+            {formatPercent(activePoint.drawdown, localeTag)}
+          </span>
+          <span>
+            {labels.currentPosition}{" "}
+            {activePoint.position
+              ? `${activePoint.position.toFixed(4)} ${labels.units}`
+              : labels.flat}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

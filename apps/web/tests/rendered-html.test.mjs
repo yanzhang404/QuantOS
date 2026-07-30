@@ -73,6 +73,9 @@ test("labels the Kline timeline and executed fills with dates", async () => {
   assert.match(source, /formatAxisDate/);
   assert.match(source, /formatFullDate\(fill\.time/);
   assert.match(source, /activeFills/);
+  assert.match(source, /performanceDateTickIndexes/);
+  assert.match(source, /performance-tooltip/);
+  assert.match(source, /xForTime/);
 });
 
 test("connects the parameter lab to durable backtest tasks", async () => {
