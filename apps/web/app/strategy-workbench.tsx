@@ -108,6 +108,7 @@ const copy = {
     finalCapital: "Final capital",
     pnl: "Net P&L",
     feesPaid: "Fees paid",
+    totalReturn: "Total return",
     interval: "Timeframe",
     intervalUnavailable: "dataset not loaded",
     selectedMetrics: "Selected run results",
@@ -173,6 +174,7 @@ const copy = {
     finalCapital: "最终金额",
     pnl: "净盈亏",
     feesPaid: "支付费用",
+    totalReturn: "总收益",
     interval: "时间尺度",
     intervalUnavailable: "尚未加载数据",
     selectedMetrics: "当前回测结果",
@@ -259,18 +261,69 @@ export function StrategyWorkbench({
 
   return (
     <section className="workbench panel" id="strategies">
-      <div className="workbench-heading">
-        <div>
-          <p className="eyebrow">{t.eyebrow}</p>
-          <h2>{t.title}</h2>
-          <p>{t.intro}</p>
+      <section className="result-summary" aria-label={t.selectedMetrics}>
+        <header className="result-summary-header">
+          <div>
+            <span>{t.selectedMetrics}</span>
+            <strong>{t.names[strategy]}</strong>
+            <small>
+              {asset.toUpperCase()} / USDT · {dataset.interval} ·{" "}
+              {t.periods[period]}
+            </small>
+          </div>
+          <div className="result-run-ref">
+            <span>
+              {t.run} {run.run_id}
+            </span>
+            <small>
+              {t.source} · {dataset.dataset_version} · schema{" "}
+              {visualizationSchemaVersion}
+            </small>
+          </div>
+        </header>
+
+        <div className="result-metrics">
+          <div className="primary-return">
+            <span>{t.totalReturn}</span>
+            <strong
+              className={run.metrics.total_return >= 0 ? "positive" : "negative"}
+            >
+              {formatPercent(run.metrics.total_return, localeTag)}
+            </strong>
+          </div>
+          <div>
+            <span>{t.finalCapital}</span>
+            <strong>{formatMoney(finalEquity, localeTag)}</strong>
+          </div>
+          <div>
+            <span>{t.pnl}</span>
+            <strong className={netProfit >= 0 ? "positive" : "negative"}>
+              {formatSignedMoney(netProfit, localeTag)}
+            </strong>
+            <small>
+              {t.feesPaid} {formatMoney(run.metrics.fees_paid, localeTag)}
+            </small>
+          </div>
+          <div>
+            <span>{locale === "zh" ? "最大回撤" : "Max drawdown"}</span>
+            <strong className="negative">
+              {formatPercent(-run.metrics.max_drawdown, localeTag)}
+            </strong>
+          </div>
+          <div>
+            <span>{locale === "zh" ? "交易 / 成交" : "Trades / fills"}</span>
+            <strong>
+              {run.metrics.trade_count} / {run.metrics.fill_count}
+            </strong>
+            <small>
+              {locale === "zh" ? "夏普比率" : "Sharpe"}{" "}
+              {run.metrics.sharpe_ratio === null
+                ? "—"
+                : run.metrics.sharpe_ratio.toFixed(2)}
+            </small>
+          </div>
         </div>
-        <div className="workbench-source">
-          <span>{t.source}</span>
-          <strong>{dataset.dataset_version}</strong>
-          <small>schema {visualizationSchemaVersion}</small>
-        </div>
-      </div>
+      </section>
 
       <aside className="strategy-library" aria-label={t.library}>
         <div className="library-title">
@@ -315,55 +368,6 @@ export function StrategyWorkbench({
           </code>
         </div>
       </aside>
-
-      <section className="result-first" aria-label={t.selectedMetrics}>
-        <div>
-          <span>{t.finalCapital}</span>
-          <strong>{formatMoney(finalEquity, localeTag)}</strong>
-          <small>{t.run} {run.run_id}</small>
-        </div>
-        <div>
-          <span>{t.pnl}</span>
-          <strong className={netProfit >= 0 ? "positive" : "negative"}>
-            {formatSignedMoney(netProfit, localeTag)}
-          </strong>
-          <small>{formatPercent(run.metrics.total_return, localeTag)}</small>
-        </div>
-        <div>
-          <span>{locale === "zh" ? "最大回撤" : "Max drawdown"}</span>
-          <strong className="negative">
-            {formatPercent(-run.metrics.max_drawdown, localeTag)}
-          </strong>
-          <small>
-            {locale === "zh" ? "历史峰值至谷底" : "peak-to-trough"}
-          </small>
-        </div>
-        <div>
-          <span>{locale === "zh" ? "夏普比率" : "Sharpe ratio"}</span>
-          <strong>
-            {run.metrics.sharpe_ratio === null
-              ? "—"
-              : run.metrics.sharpe_ratio.toFixed(2)}
-          </strong>
-          <small>{dataset.interval} annualized</small>
-        </div>
-        <div>
-          <span>{locale === "zh" ? "交易 / 成交" : "Trades / fills"}</span>
-          <strong>
-            {run.metrics.trade_count} / {run.metrics.fill_count}
-          </strong>
-          <small>{visibleFills.length} {locale === "zh" ? "笔可见" : "visible"}</small>
-        </div>
-        <div>
-          <span>{t.feesPaid}</span>
-          <strong>{formatMoney(run.metrics.fees_paid, localeTag)}</strong>
-          <small>
-            {selectedExperimentMatches
-              ? `${selectedExperiment.config.fee_bps} bps`
-              : "10 bps"}
-          </small>
-        </div>
-      </section>
 
       <div className="workbench-controls">
         <div className="timeframe-picker" aria-label={t.interval}>

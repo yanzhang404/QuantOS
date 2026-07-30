@@ -34,7 +34,6 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Drawdown controlled/);
   assert.match(html, /Research mode/);
   assert.match(html, /Live trading disabled/);
-  assert.match(html, /Price, decisions, and risk/);
   assert.match(html, /Kline \+ executed fills/);
   assert.match(html, /Portfolio equity/);
   assert.match(html, /Underwater drawdown/);
@@ -43,6 +42,7 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Backtest history/);
   assert.match(html, /Research center/);
   assert.match(html, /Strategy library/);
+  assert.match(html, /Total return/);
   assert.match(html, /Final capital/);
   assert.match(html, /AI-assisted strategy discovery/);
   assert.match(html, />5m</);
@@ -96,6 +96,10 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.match(workbench, /const run: VisualizationRun = selectedExperimentMatches/);
   assert.match(workbench, /getStrategyCatalog/);
   assert.match(workbench, /mergeStrategyCatalog\(records\)/);
+  assert.match(
+    workbench,
+    /className="result-summary"[\s\S]*className="strategy-library"/,
+  );
   assert.match(catalog, /implementation: nonEmptyString\(candidate\.implementation\)/);
   assert.match(lab, /definition\.parameters\.map/);
   assert.doesNotMatch(lab, /const parameters: Record/);
