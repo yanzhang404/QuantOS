@@ -22,6 +22,11 @@ The Backtest Lab connects to the local Go API and supports:
 - loading a completed Run into the metric cards, Kline fills, equity, and
   drawdown charts.
 
+The workspace uses a result-first layout: global workflows are in the top
+navigation, reusable strategies are grouped in a folder-style library, and
+capital/return/risk outcomes precede parameters and chart details. Parameter
+inputs are generated from the versioned strategy catalog.
+
 Copy `.env.example` to `.env.local` only when the API uses a non-default URL.
 The default is `http://localhost:8080`.
 

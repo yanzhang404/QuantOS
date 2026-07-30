@@ -29,7 +29,7 @@
           "pattern": "^[A-Z0-9]{5,20}$"
         },
         "interval": {
-          "enum": ["1h", "4h"]
+          "enum": ["5m", "15m", "1h", "4h", "1d"]
         },
         "data_start": {
           "type": ["string", "null"],
@@ -427,7 +427,17 @@
     "strategy_definition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "label", "description", "parameters"],
+      "required": [
+        "name",
+        "version",
+        "label",
+        "description",
+        "category",
+        "stage",
+        "implementation",
+        "supported_intervals",
+        "parameters"
+      ],
       "properties": {
         "name": {
           "enum": ["buy-and-hold", "ema-cross", "donchian-atr"]
@@ -438,6 +448,24 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 240
+        },
+        "category": {
+          "enum": ["trend", "benchmark", "mean-reversion", "intraday"]
+        },
+        "stage": {
+          "enum": ["candidate", "validated", "benchmark"]
+        },
+        "implementation": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "supported_intervals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["5m", "15m", "1h", "4h", "1d"]
+          }
         },
         "parameters": {
           "type": "array",

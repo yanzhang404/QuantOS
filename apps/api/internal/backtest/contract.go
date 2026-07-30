@@ -137,8 +137,8 @@ func (d DatasetRef) validate() error {
 	if !symbolPattern.MatchString(d.Symbol) {
 		return errors.New("dataset.symbol must be uppercase alphanumeric")
 	}
-	if d.Interval != "1h" && d.Interval != "4h" {
-		return errors.New("dataset.interval must be 1h or 4h")
+	if !supportedInterval(d.Interval) {
+		return errors.New("dataset.interval must be 5m, 15m, 1h, 4h, or 1d")
 	}
 	if (d.DataStart == nil) != (d.DataEnd == nil) {
 		return errors.New("dataset.data_start and data_end must be provided together")
@@ -157,6 +157,15 @@ func (d DatasetRef) validate() error {
 		}
 	}
 	return nil
+}
+
+func supportedInterval(value string) bool {
+	switch value {
+	case "5m", "15m", "1h", "4h", "1d":
+		return true
+	default:
+		return false
+	}
 }
 
 func (s StrategyRef) validate() error {

@@ -16,13 +16,16 @@ from quantos_market_data.models import (
 def test_normalizes_supported_symbol_and_interval() -> None:
     assert normalize_symbol(" btcusdt ") == "BTCUSDT"
     assert Interval.parse("4h") is Interval.FOUR_HOURS
+    assert Interval.parse("5m") is Interval.FIVE_MINUTES
+    assert Interval.parse("15m") is Interval.FIFTEEN_MINUTES
+    assert Interval.parse("1d") is Interval.ONE_DAY
 
 
 def test_rejects_unsupported_contract_values() -> None:
     with pytest.raises(ConfigurationError, match="unsupported symbol"):
         normalize_symbol("SOLUSDT")
     with pytest.raises(ConfigurationError, match="unsupported interval"):
-        Interval.parse("5m")
+        Interval.parse("30m")
 
 
 def test_requires_timezone_for_milliseconds() -> None:

@@ -15,3 +15,7 @@ version manifests, and read-only analytical queries.
 
 The adapter has no authenticated endpoint, API-key parameter, account model, or
 order capability.
+
+The normalized interval vocabulary supports `5m`, `15m`, `1h`, `4h`, and `1d`.
+An interval becomes runnable only after the public-data pipeline publishes a
+real immutable dataset version; recognizing an interval never fabricates data.

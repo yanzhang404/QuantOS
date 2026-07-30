@@ -1,4 +1,5 @@
 import type { StrategyName } from "./research-data";
+import type { StrategyDefinition } from "./strategy-catalog";
 
 export type TaskStatus =
   | "queued"
@@ -16,7 +17,7 @@ export type BacktestSubmission = {
     version: string;
     content_sha256: string;
     symbol: string;
-    interval: "1h" | "4h";
+    interval: "5m" | "15m" | "1h" | "4h" | "1d";
   };
   strategy: {
     name: StrategyName;
@@ -88,6 +89,11 @@ type TaskList = {
   tasks: BacktestTask[];
 };
 
+type StrategyCatalog = {
+  schema_version: "1.0";
+  strategies: StrategyDefinition[];
+};
+
 const apiBase =
   process.env.NEXT_PUBLIC_QUANTOS_API_URL ?? "http://localhost:8080";
 
@@ -145,6 +151,17 @@ export async function getExperiment(
     {},
     signal,
   );
+}
+
+export async function getStrategyCatalog(
+  signal?: AbortSignal,
+): Promise<StrategyDefinition[]> {
+  const response = await requestJSON<StrategyCatalog>(
+    "/api/v1/strategies",
+    {},
+    signal,
+  );
+  return response.strategies;
 }
 
 async function requestJSON<T>(

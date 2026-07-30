@@ -23,3 +23,18 @@ func TestSubmissionRejectsInvalidPeriodOrdering(t *testing.T) {
 		t.Fatal("expected invalid period ordering")
 	}
 }
+
+func TestDatasetAcceptsResearchTimeframesAndRejectsUnknownValues(t *testing.T) {
+	for _, interval := range []string{"5m", "15m", "1h", "4h", "1d"} {
+		request := validSubmission()
+		request.Dataset.Interval = interval
+		if err := request.Validate(); err != nil {
+			t.Fatalf("interval %s: %v", interval, err)
+		}
+	}
+	request := validSubmission()
+	request.Dataset.Interval = "30m"
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected unsupported interval error")
+	}
+}

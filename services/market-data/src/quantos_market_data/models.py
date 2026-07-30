@@ -12,16 +12,22 @@ from .errors import ConfigurationError, DownloadError
 
 
 class Interval(StrEnum):
-    """Kline intervals supported by the V0.1 product contract."""
+    """Kline intervals supported by the product contract."""
 
+    FIVE_MINUTES = "5m"
+    FIFTEEN_MINUTES = "15m"
     ONE_HOUR = "1h"
     FOUR_HOURS = "4h"
+    ONE_DAY = "1d"
 
     @property
     def milliseconds(self) -> int:
         return {
+            Interval.FIVE_MINUTES: 5 * 60 * 1_000,
+            Interval.FIFTEEN_MINUTES: 15 * 60 * 1_000,
             Interval.ONE_HOUR: 60 * 60 * 1_000,
             Interval.FOUR_HOURS: 4 * 60 * 60 * 1_000,
+            Interval.ONE_DAY: 24 * 60 * 60 * 1_000,
         }[self]
 
     @classmethod

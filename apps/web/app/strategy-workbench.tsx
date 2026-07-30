@@ -1,13 +1,21 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import type { ExperimentVisualization } from "./backtest-api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ExperimentVisualization,
+  getStrategyCatalog,
+} from "./backtest-api";
 import { BacktestLab } from "./backtest-lab";
 import type {
   Asset,
   Period,
   StrategyName,
 } from "./research-data";
+import {
+  fallbackStrategyCatalog,
+  type StrategyCategory,
+  type StrategyInterval,
+} from "./strategy-catalog";
 import {
   type Bar,
   type Fill,
@@ -27,11 +35,14 @@ type Props = {
   onPeriodChange: (period: Period) => void;
 };
 
-const strategies: StrategyName[] = [
-  "donchian-atr",
-  "ema-cross",
-  "buy-and-hold",
+const categories: StrategyCategory[] = [
+  "trend",
+  "mean-reversion",
+  "intraday",
+  "benchmark",
 ];
+
+const intervals: StrategyInterval[] = ["5m", "15m", "1h", "4h", "1d"];
 
 const copy = {
   en: {
@@ -80,6 +91,25 @@ const copy = {
     source: "Immutable source",
     manualResult: "Manual backtest result",
     parameters: "Parameters",
+    library: "Strategy library",
+    categories: {
+      trend: "Trend following",
+      benchmark: "Benchmarks",
+      "mean-reversion": "Mean reversion",
+      intraday: "Intraday / Daytrade",
+    },
+    emptyFolder: "No approved strategy yet",
+    stages: {
+      candidate: "candidate",
+      validated: "validated",
+      benchmark: "benchmark",
+    },
+    finalCapital: "Final capital",
+    pnl: "Net P&L",
+    feesPaid: "Fees paid",
+    interval: "Timeframe",
+    intervalUnavailable: "dataset not loaded",
+    selectedMetrics: "Selected run results",
   },
   zh: {
     eyebrow: "策略工作台",
@@ -126,6 +156,25 @@ const copy = {
     source: "不可变数据源",
     manualResult: "手动回测结果",
     parameters: "参数",
+    library: "策略库",
+    categories: {
+      trend: "趋势策略",
+      benchmark: "基准策略",
+      "mean-reversion": "均值回归",
+      intraday: "日内 / Daytrade",
+    },
+    emptyFolder: "暂无已验证策略",
+    stages: {
+      candidate: "候选",
+      validated: "已验证",
+      benchmark: "基准",
+    },
+    finalCapital: "最终金额",
+    pnl: "净盈亏",
+    feesPaid: "支付费用",
+    interval: "时间尺度",
+    intervalUnavailable: "尚未加载数据",
+    selectedMetrics: "当前回测结果",
   },
 } as const;
 
@@ -141,11 +190,15 @@ export function StrategyWorkbench({
   const [focus, setFocus] = useState<{ context: string; time: string }>();
   const [selectedExperiment, setSelectedExperiment] =
     useState<ExperimentVisualization>();
+  const [catalog, setCatalog] = useState(fallbackStrategyCatalog);
   const t = copy[locale];
   const dataset = useMemo(
     () => getVisualizationDataset(asset, period),
     [asset, period],
   );
+  const definition =
+    catalog.find((item) => item.name === strategy) ??
+    fallbackStrategyCatalog.find((item) => item.name === strategy)!;
   const selectedExperimentMatches =
     selectedExperiment?.dataset.version === dataset.dataset_version &&
     selectedExperiment.dataset.content_sha256 === dataset.content_sha256 &&
@@ -164,6 +217,14 @@ export function StrategyWorkbench({
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
   const focusContext = `${asset}-${period}-${strategy}-${barCount}`;
   const focusTime = focus?.context === focusContext ? focus.time : undefined;
+  const finalEquity =
+    run.metrics.final_equity ?? run.equity.at(-1)?.equity ?? 0;
+  const initialEquity =
+    run.metrics.initial_equity ??
+    (1 + run.metrics.total_return
+      ? finalEquity / (1 + run.metrics.total_return)
+      : run.equity[0]?.equity ?? 0);
+  const netProfit = finalEquity - initialEquity;
   const loadExperiment = useCallback(
     (experiment: ExperimentVisualization) => {
       const context = findVisualizationDatasetContext(
@@ -187,6 +248,14 @@ export function StrategyWorkbench({
     setFocus(undefined);
   };
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void getStrategyCatalog(controller.signal)
+      .then(setCatalog)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
   return (
     <section className="workbench panel" id="strategies">
       <div className="workbench-heading">
@@ -202,23 +271,119 @@ export function StrategyWorkbench({
         </div>
       </div>
 
+      <aside className="strategy-library" aria-label={t.library}>
+        <div className="library-title">
+          <span aria-hidden="true">⌘</span>
+          <strong>{t.library}</strong>
+          <small>{String(catalog.length).padStart(2, "0")}</small>
+        </div>
+        {categories.map((category) => {
+          const members = catalog.filter((item) => item.category === category);
+          return (
+            <div className="strategy-folder" key={category}>
+              <div className="folder-label">
+                <span aria-hidden="true">▾</span>
+                <strong>{t.categories[category]}</strong>
+              </div>
+              {members.length ? (
+                members.map((item) => (
+                  <button
+                    aria-pressed={strategy === item.name}
+                    className={strategy === item.name ? "selected" : ""}
+                    key={item.name}
+                    onClick={() => {
+                      clearManualResult();
+                      setStrategy(item.name);
+                    }}
+                    type="button"
+                  >
+                    <span>{item.label}</span>
+                    <small className={item.stage}>{t.stages[item.stage]}</small>
+                  </button>
+                ))
+              ) : (
+                <p>{t.emptyFolder}</p>
+              )}
+            </div>
+          );
+        })}
+        <div className="implementation-ref">
+          <span>{locale === "zh" ? "策略代码" : "Implementation"}</span>
+          <code>{definition.implementation.split(".").at(-1)}</code>
+        </div>
+      </aside>
+
+      <section className="result-first" aria-label={t.selectedMetrics}>
+        <div>
+          <span>{t.finalCapital}</span>
+          <strong>{formatMoney(finalEquity, localeTag)}</strong>
+          <small>{t.run} {run.run_id}</small>
+        </div>
+        <div>
+          <span>{t.pnl}</span>
+          <strong className={netProfit >= 0 ? "positive" : "negative"}>
+            {formatSignedMoney(netProfit, localeTag)}
+          </strong>
+          <small>{formatPercent(run.metrics.total_return, localeTag)}</small>
+        </div>
+        <div>
+          <span>{locale === "zh" ? "最大回撤" : "Max drawdown"}</span>
+          <strong className="negative">
+            {formatPercent(-run.metrics.max_drawdown, localeTag)}
+          </strong>
+          <small>
+            {locale === "zh" ? "历史峰值至谷底" : "peak-to-trough"}
+          </small>
+        </div>
+        <div>
+          <span>{locale === "zh" ? "夏普比率" : "Sharpe ratio"}</span>
+          <strong>
+            {run.metrics.sharpe_ratio === null
+              ? "—"
+              : run.metrics.sharpe_ratio.toFixed(2)}
+          </strong>
+          <small>{dataset.interval} annualized</small>
+        </div>
+        <div>
+          <span>{locale === "zh" ? "交易 / 成交" : "Trades / fills"}</span>
+          <strong>
+            {run.metrics.trade_count} / {run.metrics.fill_count}
+          </strong>
+          <small>{visibleFills.length} {locale === "zh" ? "笔可见" : "visible"}</small>
+        </div>
+        <div>
+          <span>{t.feesPaid}</span>
+          <strong>{formatMoney(run.metrics.fees_paid, localeTag)}</strong>
+          <small>
+            {selectedExperimentMatches
+              ? `${selectedExperiment.config.fee_bps} bps`
+              : "10 bps"}
+          </small>
+        </div>
+      </section>
+
       <div className="workbench-controls">
-        <div className="strategy-picker" aria-label={t.strategy}>
-          {strategies.map((name) => (
+        <div className="timeframe-picker" aria-label={t.interval}>
+          <span>{t.interval}</span>
+          <div>
+          {intervals.map((interval) => {
+            const available =
+              definition.supported_intervals.includes(interval) &&
+              interval === dataset.interval;
+            return (
             <button
-              aria-pressed={strategy === name}
-              className={strategy === name ? "selected" : ""}
-              key={name}
-              onClick={() => {
-                clearManualResult();
-                setStrategy(name);
-              }}
+              aria-pressed={interval === dataset.interval}
+              className={interval === dataset.interval ? "selected" : ""}
+              disabled={!available}
+              key={interval}
+              title={!available ? t.intervalUnavailable : undefined}
               type="button"
             >
-              <span>{t.names[name]}</span>
-              <small>{t.descriptions[name]}</small>
+              {interval}
             </button>
-          ))}
+            );
+          })}
+          </div>
         </div>
         <div className="workbench-filters">
           <label>
@@ -252,6 +417,7 @@ export function StrategyWorkbench({
 
       <BacktestLab
         dataset={dataset}
+        definition={definition}
         locale={locale}
         onExperimentLoaded={loadExperiment}
         strategy={strategy}
@@ -304,30 +470,6 @@ export function StrategyWorkbench({
 
       <div className="performance-grid">
         <PerformanceChart locale={locale} run={run} labels={t} />
-        <div className="workbench-metrics">
-          <Metric
-            label={locale === "zh" ? "总收益率" : "Total return"}
-            tone={run.metrics.total_return >= 0 ? "positive" : "negative"}
-            value={formatPercent(run.metrics.total_return, localeTag)}
-          />
-          <Metric
-            label={locale === "zh" ? "夏普比率" : "Sharpe ratio"}
-            value={
-              run.metrics.sharpe_ratio === null
-                ? "—"
-                : run.metrics.sharpe_ratio.toFixed(2)
-            }
-          />
-          <Metric
-            label={locale === "zh" ? "最大回撤" : "Max drawdown"}
-            tone="negative"
-            value={formatPercent(-run.metrics.max_drawdown, localeTag)}
-          />
-          <Metric
-            label={locale === "zh" ? "完成交易" : "Completed trades"}
-            value={String(run.metrics.trade_count)}
-          />
-        </div>
       </div>
 
       <div className="fills-section">
@@ -702,23 +844,6 @@ function PerformanceChart({
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone = "",
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-}) {
-  return (
-    <div>
-      <span>{label}</span>
-      <strong className={tone}>{value}</strong>
-    </div>
-  );
-}
-
 function linePath(
   values: number[],
   x: (index: number) => number,
@@ -735,6 +860,19 @@ function formatPercent(value: number, locale: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatMoney(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatSignedMoney(value: number, locale: string): string {
+  const formatted = formatMoney(Math.abs(value), locale);
+  return `${value >= 0 ? "+" : "−"}${formatted}`;
 }
 
 function formatPrice(value: number, locale: string): string {

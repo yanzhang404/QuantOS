@@ -36,7 +36,7 @@ class DatasetRef:
     version: str
     content_sha256: str
     symbol: str
-    interval: Literal["1h", "4h"]
+    interval: Literal["5m", "15m", "1h", "4h", "1d"]
     data_start: datetime | None = None
     data_end: datetime | None = None
 
@@ -49,8 +49,8 @@ class DatasetRef:
             )
         if not _SYMBOL.fullmatch(self.symbol):
             raise ContractValidationError("dataset symbol must be uppercase alphanumeric")
-        if self.interval not in {"1h", "4h"}:
-            raise ContractValidationError("dataset interval must be 1h or 4h")
+        if self.interval not in {"5m", "15m", "1h", "4h", "1d"}:
+            raise ContractValidationError("dataset interval must be 5m, 15m, 1h, 4h, or 1d")
         if (self.data_start is None) != (self.data_end is None):
             raise ContractValidationError("data_start and data_end must be provided together")
         if self.data_start is not None and self.data_end is not None:
@@ -469,6 +469,10 @@ def strategy_catalog() -> dict[str, Any]:
                 "version": STRATEGY_VERSION,
                 "label": "Buy & Hold",
                 "description": "Passive long-only market exposure benchmark.",
+                "category": "benchmark",
+                "stage": "benchmark",
+                "implementation": "quantos_backtest.strategies.BuyAndHoldStrategy",
+                "supported_intervals": ["5m", "15m", "1h", "4h", "1d"],
                 "parameters": [
                     _parameter("target_exposure", "decimal", "Target exposure", "1", "0.01", "1")
                 ],
@@ -478,6 +482,10 @@ def strategy_catalog() -> dict[str, Any]:
                 "version": STRATEGY_VERSION,
                 "label": "EMA Cross",
                 "description": "Long-only trend state from fast and slow exponential averages.",
+                "category": "trend",
+                "stage": "candidate",
+                "implementation": "quantos_backtest.strategies.EmaCrossStrategy",
+                "supported_intervals": ["15m", "1h", "4h", "1d"],
                 "parameters": [
                     _parameter("fast_period", "integer", "Fast period", 20, 1, 1000),
                     _parameter("slow_period", "integer", "Slow period", 50, 2, 2000),
@@ -488,6 +496,10 @@ def strategy_catalog() -> dict[str, Any]:
                 "version": STRATEGY_VERSION,
                 "label": "Donchian ATR",
                 "description": "Channel breakout with ATR volatility-targeted exposure.",
+                "category": "trend",
+                "stage": "candidate",
+                "implementation": "quantos_backtest.strategies.DonchianAtrStrategy",
+                "supported_intervals": ["1h", "4h", "1d"],
                 "parameters": [
                     _parameter("entry_period", "integer", "Entry period", 55, 2, 2000),
                     _parameter("exit_period", "integer", "Exit period", 20, 1, 2000),

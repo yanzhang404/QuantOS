@@ -17,7 +17,12 @@ type Locale = "en" | "zh";
 const copy = {
   en: {
     workspace: "Workspace",
-    nav: ["Research", "Strategies", "Data lineage"],
+    nav: [
+      "Research center",
+      "Strategy library",
+      "Runs & comparison",
+      "Data & reproducibility",
+    ],
     researchMode: "Research mode",
     liveDisabled: "Live trading disabled",
     strategyReview: "Strategy review / 001",
@@ -94,12 +99,24 @@ const copy = {
     contentHash: "Content hash",
     provenance:
       "Binance Spot · UTC · closed Klines · immutable source identity",
+    lineageExplanation:
+      "This lineage links the displayed result to its exact dataset, strategy code, parameters, costs, engine version, and Run ID.",
     product: "QuantOS / Research operating system",
     disclaimer: "Historical simulation · Not investment advice",
+    discovery: "AI-assisted strategy discovery",
+    discoveryTitle: "Research turns hypotheses into reviewable candidates.",
+    discoveryIntro:
+      "Research is the evidence process. Strategies are reusable code modules that enter the library only with explicit parameters, tests, and reproducible Runs.",
+    lifecycle: [
+      ["01 Hypothesis", "Volatility-sized channel breakout may reduce passive drawdown."],
+      ["02 Candidate", "Donchian ATR code, parameter manifest, and deterministic tests registered."],
+      ["03 Robustness review", "BTC/ETH · 4h · chronological split · doubled-cost stress."],
+      ["04 Promotion", "More intervals and evidence required; owner approval remains mandatory."],
+    ],
   },
   zh: {
     workspace: "工作台",
-    nav: ["研究", "策略", "数据血缘"],
+    nav: ["研究中心", "策略库", "回测与对比", "数据与溯源"],
     researchMode: "研究模式",
     liveDisabled: "实盘交易已禁用",
     strategyReview: "策略评审 / 001",
@@ -173,8 +190,20 @@ const copy = {
     strategyRun: "策略运行",
     contentHash: "内容哈希",
     provenance: "Binance 现货 · UTC · 已收盘 K 线 · 不可变来源标识",
+    lineageExplanation:
+      "溯源信息把当前结果关联到确切的数据集、策略代码、参数、成本、引擎版本和 Run ID。",
     product: "QuantOS / 量化研究操作系统",
     disclaimer: "历史模拟 · 不构成投资建议",
+    discovery: "AI 辅助策略发现",
+    discoveryTitle: "研究把假设转化为可评审的候选策略。",
+    discoveryIntro:
+      "研究是验证证据的过程；策略是可复用的独立代码模块。只有明确参数、测试和可复现 Run 后，策略才进入策略库。",
+    lifecycle: [
+      ["01 假设", "波动率仓位控制的通道突破可能降低被动持有回撤。"],
+      ["02 候选策略", "已登记 Donchian ATR 代码、参数清单与确定性测试。"],
+      ["03 稳健性评审", "BTC/ETH · 4小时 · 时间序列切分 · 双倍成本压力测试。"],
+      ["04 晋级", "仍需更多周期和证据，并且必须由项目所有者批准。"],
+    ],
   },
 } as const;
 
@@ -223,44 +252,52 @@ export default function Home() {
 
   const runs = useMemo(() => getRuns(asset, period), [asset, period]);
   const donchian = runs.find((run) => run.strategy === "donchian-atr");
-  const benchmark = runs.find((run) => run.strategy === "buy-and-hold");
   const stress = period === "evaluation" ? getStressRun(asset) : undefined;
   const dataset = getDataset(asset, period);
   const maxMagnitude = Math.max(
     ...runs.map((run) => Math.abs(run.total_return)),
     0.01,
   );
-  const drawdownDelta =
-    donchian && benchmark
-      ? benchmark.max_drawdown - donchian.max_drawdown
-      : undefined;
-
   return (
     <main className="workspace">
-      <aside className="rail">
+      <header className="app-header">
         <div className="brand" aria-label="QuantOS">
           <span className="brand-mark">Q</span>
           <span>QuantOS</span>
         </div>
         <nav aria-label={t.workspace}>
           <a className="nav-item active" href="#research">
-            <span>01</span> {t.nav[0]}
+            {t.nav[0]}
           </a>
           <a className="nav-item" href="#strategies">
-            <span>02</span> {t.nav[1]}
+            {t.nav[1]}
+          </a>
+          <a className="nav-item" href="#comparison">
+            {t.nav[2]}
           </a>
           <a className="nav-item" href="#provenance">
-            <span>03</span> {t.nav[2]}
+            {t.nav[3]}
           </a>
         </nav>
-        <div className="rail-status">
-          <span className="status-dot" />
-          <div>
-            <strong>{t.researchMode}</strong>
-            <span>{t.liveDisabled}</span>
+        <div className="app-header-actions">
+          <div className="rail-status">
+            <span className="status-dot" />
+            <div>
+              <strong>{t.researchMode}</strong>
+              <span>{t.liveDisabled}</span>
+            </div>
           </div>
+          <button
+            aria-label={t.switchLanguage}
+            className="language-switch"
+            onClick={() => setLocale(locale === "en" ? "zh" : "en")}
+            type="button"
+          >
+            <span aria-hidden="true">文/A</span>
+            {t.languageLabel}
+          </button>
         </div>
-      </aside>
+      </header>
 
       <section className="content" id="research">
         <header className="topbar">
@@ -273,15 +310,6 @@ export default function Home() {
               <span>{t.evidenceAsOf}</span>
               <strong>{studyAsOf}</strong>
             </div>
-            <button
-              aria-label={t.switchLanguage}
-              className="language-switch"
-              onClick={() => setLocale(locale === "en" ? "zh" : "en")}
-              type="button"
-            >
-              <span aria-hidden="true">文/A</span>
-              {t.languageLabel}
-            </button>
           </div>
         </header>
 
@@ -343,6 +371,25 @@ export default function Home() {
           </article>
         </section>
 
+        <section className="research-lifecycle panel">
+          <div className="lifecycle-heading">
+            <div>
+              <p className="eyebrow">{t.discovery}</p>
+              <h2>{t.discoveryTitle}</h2>
+            </div>
+            <p>{t.discoveryIntro}</p>
+          </div>
+          <ol>
+            {t.lifecycle.map(([title, detail], index) => (
+              <li className={index === 3 ? "pending" : ""} key={title}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{title}</strong>
+                <p>{detail}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         <StrategyWorkbench
           asset={asset}
           locale={locale}
@@ -351,38 +398,7 @@ export default function Home() {
           period={period}
         />
 
-        <section className="metric-strip" aria-label={t.selectedMetrics}>
-          <div>
-            <span>{t.totalReturn}</span>
-            <strong className={metricTone(donchian?.total_return ?? 0)}>
-              {percent.format(donchian?.total_return ?? 0)}
-            </strong>
-            <small>{t.returnNote}</small>
-          </div>
-          <div>
-            <span>{t.sharpe}</span>
-            <strong>{number.format(donchian?.sharpe_ratio ?? 0)}</strong>
-            <small>{t.sharpeNote}</small>
-          </div>
-          <div>
-            <span>{t.maxDrawdown}</span>
-            <strong>{percent.format(donchian?.max_drawdown ?? 0)}</strong>
-            <small>
-              {drawdownDelta
-                ? `${percent.format(drawdownDelta)} ${t.belowPassive}`
-                : t.versusPassive}
-            </small>
-          </div>
-          <div>
-            <span>{t.completedTrades}</span>
-            <strong>{donchian?.trade_count ?? 0}</strong>
-            <small>
-              {donchian?.fill_count ?? 0} {t.totalFills}
-            </small>
-          </div>
-        </section>
-
-        <section className="analysis-grid">
+        <section className="analysis-grid" id="comparison">
           <article className="panel comparison">
             <div className="panel-heading">
               <div>
@@ -529,6 +545,7 @@ export default function Home() {
                 <dd>{dataset.content_sha256.slice(0, 20)}…</dd>
               </div>
             </dl>
+            <p className="provenance-explanation">{t.lineageExplanation}</p>
             <p className="provenance-note">{t.provenance}</p>
           </article>
         </section>

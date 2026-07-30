@@ -31,6 +31,14 @@ A submission records:
 - initial cash, fees, slippage, maximum exposure, and final-liquidation policy;
 - an optional human label and note.
 
+Dataset intervals use the shared `5m`, `15m`, `1h`, `4h`, or `1d` vocabulary.
+Submission still fails when the referenced immutable dataset version is not
+present beneath the trusted data root.
+
+Strategy discovery returns a manifest for every executable strategy: category,
+lifecycle stage, implementation reference, supported intervals, and parameter
+specifications. The web client renders editable fields from this catalog.
+
 The request never accepts dataset paths, experiment output paths, shell
 commands, exchange credentials, or live-execution controls.
 

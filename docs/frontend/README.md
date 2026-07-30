@@ -19,9 +19,10 @@ synchronizes:
 - position exposure and fill-level details;
 - strategy, asset, and observation-window selection.
 
-The next frontend boundary is a versioned read-only API for browsing multiple
-datasets, runs, and studies. Interactive reruns, live trading, and order actions
-remain disabled.
+The application now separates a top-level Research Center from the Strategy
+Library. Global navigation sits above the workspace; a folder-style strategy
+tree owns reusable strategy modules and lifecycle state. Run results are shown
+before configuration and detail charts.
 
 ## Backtest Lab
 
@@ -44,3 +45,15 @@ window returns the workspace to its committed baseline until another compatible
 history record is selected.
 
 Multi-Run comparison and Experiment filtering are the next frontend boundary.
+
+## Strategy manifests and intervals
+
+The versioned strategy catalog supplies category, lifecycle stage,
+implementation reference, supported intervals, and parameter specifications.
+The Backtest Lab generates its inputs from that manifest, so EMA, Donchian, and
+benchmark strategies expose different editable parameters without duplicating
+form definitions.
+
+The product recognizes `5m`, `15m`, `1h`, `4h`, and `1d`. The selector clearly
+disables combinations whose immutable dataset has not been loaded. The current
+committed visualization evidence remains 4-hour data.

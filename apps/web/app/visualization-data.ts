@@ -29,6 +29,8 @@ export type Fill = {
 export type VisualizationRun = {
   run_id: string;
   metrics: {
+    initial_equity?: number;
+    final_equity?: number;
     total_return: number;
     sharpe_ratio: number | null;
     max_drawdown: number;

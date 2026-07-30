@@ -41,6 +41,12 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Edit parameters and save a reproducible run/);
   assert.match(html, /Run backtest/);
   assert.match(html, /Backtest history/);
+  assert.match(html, /Research center/);
+  assert.match(html, /Strategy library/);
+  assert.match(html, /Final capital/);
+  assert.match(html, /AI-assisted strategy discovery/);
+  assert.match(html, />5m</);
+  assert.match(html, />1d</);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
@@ -87,4 +93,7 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.match(lab, /onExperimentLoaded\(experiment\)/);
   assert.match(workbench, /selectedExperimentMatches/);
   assert.match(workbench, /const run: VisualizationRun = selectedExperimentMatches/);
+  assert.match(workbench, /getStrategyCatalog/);
+  assert.match(lab, /definition\.parameters\.map/);
+  assert.doesNotMatch(lab, /const parameters: Record/);
 });

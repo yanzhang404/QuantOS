@@ -34,10 +34,12 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 
 ## V0.3 — Product workspace
 
-- Dashboard and project navigation. **First read-only strategy workspace implemented.**
+- Dashboard and project navigation. **Top navigation, Research Center, result-first workspace, and folder-style Strategy Library implemented.**
 - Dataset, strategy, backtest, and experiment views. **Interactive parameter submission, Task history, and dynamic Experiment detail implemented; comparison pending.**
 - Task orchestration and progress streaming. **Local durable task API and worker implemented; streaming pending.**
 - Tool-driven AI research assistant for querying and reviewing artifacts.
+- Manifest-driven strategy parameters and candidate-to-promotion lifecycle. **Initial catalog and evidence view implemented.**
+- Multi-timeframe research datasets. **5m/15m/1h/4h/1d contracts implemented; immutable intraday datasets pending.**
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

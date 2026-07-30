@@ -123,4 +123,22 @@ def test_metrics_reject_empty_or_unsupported_input() -> None:
         Decimal("1"),
     )
     with pytest.raises(ValueError, match="unsupported"):
-        calculate_metrics([event], [], interval="1d")
+        calculate_metrics([event], [], interval="30m")
+
+
+@pytest.mark.parametrize("interval", ["5m", "15m", "1h", "4h", "1d"])
+def test_metrics_supports_product_timeframes(interval: str) -> None:
+    timestamp = datetime(2024, 1, 1, tzinfo=UTC)
+    curve = [
+        PortfolioEvent(
+            timestamp,
+            "BTCUSDT",
+            Decimal("100"),
+            Decimal("0"),
+            Decimal("1"),
+            equity,
+        )
+        for equity in (Decimal("100"), Decimal("101"), Decimal("102"))
+    ]
+
+    assert calculate_metrics(curve, [], interval=interval).total_return == pytest.approx(0.02)

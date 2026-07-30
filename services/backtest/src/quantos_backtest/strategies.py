@@ -11,8 +11,11 @@ from quantos_strategy import StrategyContext
 from .errors import BacktestConfigurationError
 
 PERIODS_PER_YEAR = {
+    "5m": 365 * 24 * 12,
+    "15m": 365 * 24 * 4,
     "1h": 365 * 24,
     "4h": 365 * 6,
+    "1d": 365,
 }
 
 

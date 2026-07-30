@@ -66,6 +66,14 @@ def test_submission_round_trips_exact_versioned_values() -> None:
     assert submission.strategy.parameters["target_annual_volatility"] == "0.20"
 
 
+@pytest.mark.parametrize("interval", ["5m", "15m", "1h", "4h", "1d"])
+def test_submission_accepts_supported_research_intervals(interval: str) -> None:
+    payload = submission_payload()
+    payload["dataset"]["interval"] = interval
+
+    assert BacktestSubmission.from_dict(payload).dataset.interval == interval
+
+
 @pytest.mark.parametrize(
     ("field", "value", "match"),
     [
@@ -237,6 +245,16 @@ def test_language_neutral_schema_and_catalog_cover_python_contract() -> None:
         "experiment_visualization",
         "strategy_catalog",
     } <= definitions.keys()
+    assert all(
+        {
+            "category",
+            "stage",
+            "implementation",
+            "supported_intervals",
+        }
+        <= strategy.keys()
+        for strategy in catalog["strategies"]
+    )
     assert [item["name"] for item in catalog["strategies"]] == [
         "buy-and-hold",
         "ema-cross",

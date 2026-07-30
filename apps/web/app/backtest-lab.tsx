@@ -12,119 +12,39 @@ import {
   submitBacktest,
 } from "./backtest-api";
 import type { StrategyName } from "./research-data";
+import {
+  fallbackStrategyCatalog,
+  parameterLabelsZh,
+  type StrategyDefinition,
+} from "./strategy-catalog";
 import type { VisualizationDataset } from "./visualization-data";
 
 type Locale = "en" | "zh";
 
 type Props = {
   dataset: VisualizationDataset;
+  definition: StrategyDefinition;
   locale: Locale;
   strategy: StrategyName;
   onExperimentLoaded: (experiment: ExperimentVisualization) => void;
 };
 
-type Parameter = {
-  key: string;
-  kind: "integer" | "decimal";
-  label: { en: string; zh: string };
-  minimum: number;
-  maximum: number;
-  step: number;
-};
-
-const parameters: Record<StrategyName, Parameter[]> = {
-  "buy-and-hold": [
-    {
-      key: "target_exposure",
-      kind: "decimal",
-      label: { en: "Target exposure", zh: "目标仓位" },
-      minimum: 0.01,
-      maximum: 1,
-      step: 0.01,
-    },
-  ],
-  "ema-cross": [
-    {
-      key: "fast_period",
-      kind: "integer",
-      label: { en: "Fast EMA", zh: "快速 EMA 周期" },
-      minimum: 1,
-      maximum: 1000,
-      step: 1,
-    },
-    {
-      key: "slow_period",
-      kind: "integer",
-      label: { en: "Slow EMA", zh: "慢速 EMA 周期" },
-      minimum: 2,
-      maximum: 2000,
-      step: 1,
-    },
-  ],
-  "donchian-atr": [
-    {
-      key: "entry_period",
-      kind: "integer",
-      label: { en: "Entry period", zh: "入场周期" },
-      minimum: 2,
-      maximum: 2000,
-      step: 1,
-    },
-    {
-      key: "exit_period",
-      kind: "integer",
-      label: { en: "Exit period", zh: "退出周期" },
-      minimum: 1,
-      maximum: 2000,
-      step: 1,
-    },
-    {
-      key: "atr_period",
-      kind: "integer",
-      label: { en: "ATR period", zh: "ATR 周期" },
-      minimum: 2,
-      maximum: 2000,
-      step: 1,
-    },
-    {
-      key: "target_annual_volatility",
-      kind: "decimal",
-      label: { en: "Target volatility", zh: "目标年化波动率" },
-      minimum: 0.01,
-      maximum: 2,
-      step: 0.01,
-    },
-    {
-      key: "max_exposure",
-      kind: "decimal",
-      label: { en: "Strategy max exposure", zh: "策略最大仓位" },
-      minimum: 0.01,
-      maximum: 1,
-      step: 0.01,
-    },
-    {
-      key: "rebalance_threshold",
-      kind: "decimal",
-      label: { en: "Rebalance threshold", zh: "再平衡阈值" },
-      minimum: 0,
-      maximum: 1,
-      step: 0.01,
-    },
-  ],
-};
-
-const initialParameters: Record<StrategyName, Record<string, string>> = {
-  "buy-and-hold": { target_exposure: "1" },
-  "ema-cross": { fast_period: "20", slow_period: "50" },
-  "donchian-atr": {
-    entry_period: "55",
-    exit_period: "20",
-    atr_period: "20",
-    target_annual_volatility: "0.20",
-    max_exposure: "1",
-    rebalance_threshold: "0.05",
-  },
-};
+function initialParameterValues(): Record<
+  StrategyName,
+  Record<string, string>
+> {
+  return Object.fromEntries(
+    fallbackStrategyCatalog.map((definition) => [
+      definition.name,
+      Object.fromEntries(
+        definition.parameters.map((parameter) => [
+          parameter.key,
+          String(parameter.default),
+        ]),
+      ),
+    ]),
+  ) as Record<StrategyName, Record<string, string>>;
+}
 
 const copy = {
   en: {
@@ -201,11 +121,12 @@ const copy = {
 
 export function BacktestLab({
   dataset,
+  definition,
   locale,
   strategy,
   onExperimentLoaded,
 }: Props) {
-  const [values, setValues] = useState(initialParameters);
+  const [values, setValues] = useState(initialParameterValues);
   const [initialCash, setInitialCash] = useState("100000");
   const [feeBPS, setFeeBPS] = useState("10");
   const [slippageBPS, setSlippageBPS] = useState("5");
@@ -334,6 +255,7 @@ export function BacktestLab({
 
   const validationMessage = validateForm(
     strategy,
+    definition,
     activeValues,
     initialCash,
     feeBPS,
@@ -358,6 +280,7 @@ export function BacktestLab({
     setMessage(undefined);
     const request = buildSubmission({
       dataset,
+      definition,
       strategy,
       values: activeValues,
       initialCash,
@@ -404,14 +327,18 @@ export function BacktestLab({
           <fieldset>
             <legend>{t.strategyParameters}</legend>
             <div className="parameter-fields">
-              {parameters[strategy].map((parameter) => (
+              {definition.parameters.map((parameter) => (
                 <NumberField
                   key={parameter.key}
-                  label={parameter.label[locale]}
-                  maximum={parameter.maximum}
-                  minimum={parameter.minimum}
+                  label={
+                    locale === "zh"
+                      ? parameterLabelsZh[parameter.key] ?? parameter.label
+                      : parameter.label
+                  }
+                  maximum={Number(parameter.maximum)}
+                  minimum={Number(parameter.minimum)}
                   onChange={(value) => updateParameter(parameter.key, value)}
-                  step={parameter.step}
+                  step={parameter.kind === "integer" ? 1 : 0.01}
                   value={activeValues[parameter.key]}
                 />
               ))}
@@ -611,6 +538,7 @@ function NumberField({
 
 function buildSubmission({
   dataset,
+  definition,
   strategy,
   values,
   initialCash,
@@ -621,6 +549,7 @@ function buildSubmission({
   label,
 }: {
   dataset: VisualizationDataset;
+  definition: StrategyDefinition;
   strategy: StrategyName;
   values: Record<string, string>;
   initialCash: string;
@@ -631,7 +560,7 @@ function buildSubmission({
   label: string;
 }): BacktestSubmission {
   const strategyParameters = Object.fromEntries(
-    parameters[strategy].map((parameter) => [
+    definition.parameters.map((parameter) => [
       parameter.key,
       parameter.kind === "integer"
         ? Number.parseInt(values[parameter.key], 10)
@@ -646,11 +575,11 @@ function buildSubmission({
       version: dataset.dataset_version,
       content_sha256: dataset.content_sha256,
       symbol: dataset.symbol,
-      interval: dataset.interval as "1h" | "4h",
+      interval: dataset.interval as BacktestSubmission["dataset"]["interval"],
     },
     strategy: {
       name: strategy,
-      version: "1.0.0",
+      version: definition.version,
       parameters: strategyParameters,
     },
     config: {
@@ -665,6 +594,7 @@ function buildSubmission({
 
 function validateForm(
   strategy: StrategyName,
+  definition: StrategyDefinition,
   values: Record<string, string>,
   initialCash: string,
   feeBPS: string,
@@ -672,12 +602,12 @@ function validateForm(
   riskLimit: string,
   t: (typeof copy)[Locale],
 ): string | undefined {
-  const invalidParameter = parameters[strategy].some((parameter) => {
+  const invalidParameter = definition.parameters.some((parameter) => {
     const value = Number(values[parameter.key]);
     return (
       !Number.isFinite(value) ||
-      value < parameter.minimum ||
-      value > parameter.maximum
+      value < Number(parameter.minimum) ||
+      value > Number(parameter.maximum)
     );
   });
   if (

@@ -89,6 +89,13 @@ The event clock is controlled by the engine. Strategy code may only observe the
 current and past state. Fills apply configured fees, slippage, and later funding
 rules before portfolio updates.
 
+Each strategy owns separate implementation code and a versioned manifest
+describing its category, lifecycle stage, supported intervals, and editable
+parameters. The implementations share the same event clock, risk, execution,
+portfolio, metrics, and artifact pipeline. Research candidates require
+reproducible evidence and explicit human promotion before their lifecycle state
+can advance.
+
 V0.1 strategies observe a bar at its close and approved targets execute at the
 next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).
 
