@@ -13,11 +13,12 @@ import (
 const SchemaVersion = "1.0"
 
 var (
-	hex16Pattern       = regexp.MustCompile(`^[0-9a-f]{16}$`)
-	hex64Pattern       = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	symbolPattern      = regexp.MustCompile(`^[A-Z0-9]{5,20}$`)
-	idempotencyPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$`)
-	decimalPattern     = regexp.MustCompile(`^(0|[1-9][0-9]*)(\.[0-9]+)?$`)
+	hex16Pattern           = regexp.MustCompile(`^[0-9a-f]{16}$`)
+	hex64Pattern           = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	symbolPattern          = regexp.MustCompile(`^[A-Z0-9]{5,20}$`)
+	idempotencyPattern     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$`)
+	decimalPattern         = regexp.MustCompile(`^(0|[1-9][0-9]*)(\.[0-9]+)?$`)
+	semanticVersionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 )
 
 type DatasetRef struct {

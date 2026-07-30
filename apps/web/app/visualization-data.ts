@@ -30,7 +30,7 @@ export type VisualizationRun = {
   run_id: string;
   metrics: {
     total_return: number;
-    sharpe_ratio: number;
+    sharpe_ratio: number | null;
     max_drawdown: number;
     trade_count: number;
     fill_count: number;
@@ -65,6 +65,28 @@ export function getVisualizationDataset(
   period: Period,
 ): VisualizationDataset {
   return artifact.datasets[`${asset}_${period}`];
+}
+
+export function findVisualizationDatasetContext(
+  symbol: string,
+  version: string,
+  contentSHA256: string,
+): { asset: Asset; period: Period } | undefined {
+  const entry = Object.entries(artifact.datasets).find(
+    ([, dataset]) =>
+      dataset.symbol === symbol &&
+      dataset.dataset_version === version &&
+      dataset.content_sha256 === contentSHA256,
+  );
+  if (!entry) return undefined;
+  const [asset, period] = entry[0].split("_");
+  if (
+    (asset !== "btc" && asset !== "eth") ||
+    (period !== "evaluation" && period !== "development")
+  ) {
+    return undefined;
+  }
+  return { asset, period };
 }
 
 export const visualizationSchemaVersion = artifact.schema_version;

@@ -24,3 +24,4 @@ Accepted decisions:
 - [ADR-0007: Derive a compact strategy visualization artifact](0007-strategy-visualization-artifact.md)
 - [ADR-0008: Version backtest orchestration contracts independently](0008-versioned-backtest-orchestration-contract.md)
 - [ADR-0009: Persist local backtest tasks as atomic JSON records](0009-file-backed-local-task-orchestration.md)
+- [ADR-0010: Serve experiment visualization as a derived read model](0010-experiment-visualization-read-model.md)

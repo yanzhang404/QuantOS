@@ -5,6 +5,8 @@ import {
   APIError,
   type BacktestSubmission,
   type BacktestTask,
+  type ExperimentVisualization,
+  getExperiment,
   getTask,
   listTasks,
   submitBacktest,
@@ -18,6 +20,7 @@ type Props = {
   dataset: VisualizationDataset;
   locale: Locale;
   strategy: StrategyName;
+  onExperimentLoaded: (experiment: ExperimentVisualization) => void;
 };
 
 type Parameter = {
@@ -156,6 +159,8 @@ const copy = {
     invalidValue: "One or more parameters are outside the allowed range.",
     task: "Task",
     saved: "Saved",
+    loadingResult: "Loading experiment result",
+    showingResult: "Charts updated to this Run",
   },
   zh: {
     eyebrow: "回测实验室",
@@ -189,10 +194,17 @@ const copy = {
     invalidValue: "一个或多个参数超出允许范围。",
     task: "任务",
     saved: "已保存",
+    loadingResult: "正在加载实验结果",
+    showingResult: "图表已切换到本次 Run",
   },
 } as const;
 
-export function BacktestLab({ dataset, locale, strategy }: Props) {
+export function BacktestLab({
+  dataset,
+  locale,
+  strategy,
+  onExperimentLoaded,
+}: Props) {
   const [values, setValues] = useState(initialParameters);
   const [initialCash, setInitialCash] = useState("100000");
   const [feeBPS, setFeeBPS] = useState("10");
@@ -207,6 +219,7 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
   >("connecting");
   const [message, setMessage] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const [loadingExperiment, setLoadingExperiment] = useState(false);
   const t = copy[locale];
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
   const activeValues = values[strategy];
@@ -261,13 +274,27 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
           ...current.filter((task) => task.task_id !== next.task_id),
         ]);
         if (next.status === "succeeded") {
-          setMessage(t.succeeded);
+          if (next.run_id) {
+            setLoadingExperiment(true);
+            const experiment = await getExperiment(
+              next.run_id,
+              controller.signal,
+            );
+            onExperimentLoaded(experiment);
+            setMessage(t.showingResult);
+            setLoadingExperiment(false);
+          } else {
+            setMessage(t.succeeded);
+          }
         } else if (next.status === "failed") {
           setMessage(next.error?.message ?? t.failed);
         }
       } catch (error) {
         if (!controller.signal.aborted) {
-          setAPIState("offline");
+          setLoadingExperiment(false);
+          if (error instanceof APIError && !error.status) {
+            setAPIState("offline");
+          }
           setMessage(error instanceof APIError ? error.message : t.offline);
         }
       }
@@ -276,7 +303,34 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [activeTask, t.failed, t.offline, t.succeeded]);
+  }, [
+    activeTask,
+    onExperimentLoaded,
+    t.failed,
+    t.offline,
+    t.showingResult,
+    t.succeeded,
+  ]);
+
+  const selectTask = async (task: BacktestTask) => {
+    setActiveTask(task);
+    if (task.status !== "succeeded" || !task.run_id) return;
+    setLoadingExperiment(true);
+    setMessage(t.loadingResult);
+    try {
+      const experiment = await getExperiment(task.run_id);
+      onExperimentLoaded(experiment);
+      setAPIState("connected");
+      setMessage(t.showingResult);
+    } catch (error) {
+      if (error instanceof APIError && !error.status) {
+        setAPIState("offline");
+      }
+      setMessage(error instanceof APIError ? error.message : t.failed);
+    } finally {
+      setLoadingExperiment(false);
+    }
+  };
 
   const validationMessage = validateForm(
     strategy,
@@ -435,6 +489,7 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
             className="run-backtest"
             disabled={
               submitting ||
+              loadingExperiment ||
               activeTask?.status === "queued" ||
               activeTask?.status === "running"
             }
@@ -444,6 +499,8 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
             <span aria-hidden="true">▶</span>
             {submitting
               ? t.queued
+              : loadingExperiment
+                ? t.loadingResult
               : activeTask?.status === "running"
                 ? t.running
                 : t.run}
@@ -486,7 +543,7 @@ export function BacktestLab({ dataset, locale, strategy }: Props) {
               <button
                 className={activeTask?.task_id === task.task_id ? "selected" : ""}
                 key={task.task_id}
-                onClick={() => setActiveTask(task)}
+                onClick={() => void selectTask(task)}
                 type="button"
               >
                 <span className={`task-status ${task.status}`} />

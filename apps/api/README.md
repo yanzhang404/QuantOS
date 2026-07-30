@@ -23,11 +23,16 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `POST /api/v1/backtests`
 - `GET /api/v1/tasks`
 - `GET /api/v1/tasks/{task_id}`
+- `GET /api/v1/experiments/{run_id}`
 
 Task metadata is stored as atomic JSON files. The API resolves dataset paths
 from the configured trusted data root; requests cannot choose local paths or
 commands. One background worker runs historical simulations through the Python
 CLI and links successful Tasks to deterministic Run IDs.
+
+Experiment detail is read-only. It normalizes the selected Run's metrics,
+fills, equity, position, and running drawdown from bounded immutable artifacts;
+the browser never receives local artifact paths.
 
 This local file store supports one API process. PostgreSQL replaces it before
 multi-user or multi-process operation.

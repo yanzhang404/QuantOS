@@ -919,6 +919,48 @@ h1 {
   text-align: center;
 }
 
+.active-run-banner {
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(185, 243, 107, 0.08), transparent 68%),
+    #08130e;
+  border: 1px solid rgba(185, 243, 107, 0.28);
+  border-radius: 9px;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 11px 14px;
+}
+
+.active-run-banner > div {
+  display: grid;
+  flex-shrink: 0;
+  gap: 3px;
+}
+
+.active-run-banner span,
+.active-run-banner p {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.active-run-banner code {
+  color: var(--lime);
+  font-size: 10px;
+}
+
+.active-run-banner p {
+  line-height: 1.55;
+  margin: 0;
+  text-align: right;
+}
+
+.active-run-banner p strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .chart-panel {
   background: #08130e;
   border: 1px solid var(--line);
@@ -1732,9 +1774,14 @@ footer {
   }
 
   .run-meta,
-  .run-actions {
+  .run-actions,
+  .active-run-banner {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .active-run-banner p {
+    text-align: left;
   }
 
   .run-backtest {

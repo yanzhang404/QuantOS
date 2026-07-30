@@ -7,6 +7,7 @@
     { "$ref": "#/$defs/backtest_submission" },
     { "$ref": "#/$defs/backtest_task" },
     { "$ref": "#/$defs/experiment_record" },
+    { "$ref": "#/$defs/experiment_visualization" },
     { "$ref": "#/$defs/strategy_catalog" }
   ],
   "$defs": {
@@ -330,6 +331,80 @@
             "type": "string",
             "pattern": "^[A-Za-z0-9._-]+$"
           }
+        }
+      }
+    },
+    "experiment_equity_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time", "equity", "drawdown", "position"],
+      "properties": {
+        "time": { "type": "string", "format": "date-time" },
+        "equity": { "type": "number" },
+        "drawdown": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 0
+        },
+        "position": { "type": "number" }
+      }
+    },
+    "experiment_fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time", "side", "price", "quantity", "fee", "reason"],
+      "properties": {
+        "time": { "type": "string", "format": "date-time" },
+        "side": { "enum": ["buy", "sell"] },
+        "price": { "type": "number", "exclusiveMinimum": 0 },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 },
+        "fee": { "type": "number", "minimum": 0 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
+    },
+    "experiment_visualization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "run_id",
+        "created_at",
+        "dataset",
+        "strategy",
+        "config",
+        "engine_version",
+        "metrics_version",
+        "metrics",
+        "equity",
+        "fills"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "dataset": { "$ref": "#/$defs/dataset_ref" },
+        "strategy": { "$ref": "#/$defs/strategy_ref" },
+        "config": { "$ref": "#/$defs/backtest_config" },
+        "engine_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "metrics_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "metrics": { "$ref": "#/$defs/experiment_metrics" },
+        "equity": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/experiment_equity_point" }
+        },
+        "fills": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/experiment_fill" }
         }
       }
     },

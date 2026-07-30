@@ -18,7 +18,9 @@ The Backtest Lab connects to the local Go API and supports:
 - editing strategy-specific parameters and simulation assumptions;
 - submitting an idempotent historical backtest;
 - polling queued and running Tasks to a terminal state;
-- browsing persisted Task history and resulting Run IDs.
+- browsing persisted Task history and resulting Run IDs;
+- loading a completed Run into the metric cards, Kline fills, equity, and
+  drawdown charts.
 
 Copy `.env.example` to `.env.local` only when the API uses a non-default URL.
 The default is `http://localhost:8080`.

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { ExperimentVisualization } from "./backtest-api";
 import { BacktestLab } from "./backtest-lab";
 import type {
   Asset,
@@ -10,6 +11,7 @@ import type {
 import {
   type Bar,
   type Fill,
+  findVisualizationDatasetContext,
   getVisualizationDataset,
   type VisualizationRun,
   visualizationSchemaVersion,
@@ -76,6 +78,8 @@ const copy = {
     clickHint: "Select a fill to locate it on the Kline chart.",
     run: "Run",
     source: "Immutable source",
+    manualResult: "Manual backtest result",
+    parameters: "Parameters",
   },
   zh: {
     eyebrow: "策略工作台",
@@ -120,6 +124,8 @@ const copy = {
     clickHint: "点击成交记录可在 K 线图中定位。",
     run: "运行",
     source: "不可变数据源",
+    manualResult: "手动回测结果",
+    parameters: "参数",
   },
 } as const;
 
@@ -133,12 +139,21 @@ export function StrategyWorkbench({
   const [strategy, setStrategy] = useState<StrategyName>("donchian-atr");
   const [barCount, setBarCount] = useState(120);
   const [focus, setFocus] = useState<{ context: string; time: string }>();
+  const [selectedExperiment, setSelectedExperiment] =
+    useState<ExperimentVisualization>();
   const t = copy[locale];
   const dataset = useMemo(
     () => getVisualizationDataset(asset, period),
     [asset, period],
   );
-  const run = dataset.runs[strategy];
+  const selectedExperimentMatches =
+    selectedExperiment?.dataset.version === dataset.dataset_version &&
+    selectedExperiment.dataset.content_sha256 === dataset.content_sha256 &&
+    selectedExperiment.dataset.symbol === dataset.symbol &&
+    selectedExperiment.strategy.name === strategy;
+  const run: VisualizationRun = selectedExperimentMatches
+    ? selectedExperiment
+    : dataset.runs[strategy];
   const visibleBars = dataset.bars.slice(-barCount);
   const visibleStart = Date.parse(visibleBars[0]?.time ?? "");
   const visibleEnd = Date.parse(visibleBars.at(-1)?.time ?? "");
@@ -149,6 +164,28 @@ export function StrategyWorkbench({
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
   const focusContext = `${asset}-${period}-${strategy}-${barCount}`;
   const focusTime = focus?.context === focusContext ? focus.time : undefined;
+  const loadExperiment = useCallback(
+    (experiment: ExperimentVisualization) => {
+      const context = findVisualizationDatasetContext(
+        experiment.dataset.symbol,
+        experiment.dataset.version,
+        experiment.dataset.content_sha256,
+      );
+      if (context) {
+        onAssetChange(context.asset);
+        onPeriodChange(context.period);
+      }
+      setStrategy(experiment.strategy.name);
+      setFocus(undefined);
+      setSelectedExperiment(experiment);
+    },
+    [onAssetChange, onPeriodChange],
+  );
+
+  const clearManualResult = () => {
+    setSelectedExperiment(undefined);
+    setFocus(undefined);
+  };
 
   return (
     <section className="workbench panel" id="strategies">
@@ -172,7 +209,10 @@ export function StrategyWorkbench({
               aria-pressed={strategy === name}
               className={strategy === name ? "selected" : ""}
               key={name}
-              onClick={() => setStrategy(name)}
+              onClick={() => {
+                clearManualResult();
+                setStrategy(name);
+              }}
               type="button"
             >
               <span>{t.names[name]}</span>
@@ -184,7 +224,10 @@ export function StrategyWorkbench({
           <label>
             <span>{t.market}</span>
             <select
-              onChange={(event) => onAssetChange(event.target.value as Asset)}
+              onChange={(event) => {
+                clearManualResult();
+                onAssetChange(event.target.value as Asset);
+              }}
               value={asset}
             >
               <option value="btc">BTC / USDT</option>
@@ -194,7 +237,10 @@ export function StrategyWorkbench({
           <label>
             <span>{t.period}</span>
             <select
-              onChange={(event) => onPeriodChange(event.target.value as Period)}
+              onChange={(event) => {
+                clearManualResult();
+                onPeriodChange(event.target.value as Period);
+              }}
               value={period}
             >
               <option value="evaluation">{t.periods.evaluation}</option>
@@ -204,7 +250,27 @@ export function StrategyWorkbench({
         </div>
       </div>
 
-      <BacktestLab dataset={dataset} locale={locale} strategy={strategy} />
+      <BacktestLab
+        dataset={dataset}
+        locale={locale}
+        onExperimentLoaded={loadExperiment}
+        strategy={strategy}
+      />
+
+      {selectedExperimentMatches ? (
+        <div className="active-run-banner" role="status">
+          <div>
+            <span>{t.manualResult}</span>
+            <code>{selectedExperiment.run_id}</code>
+          </div>
+          <p>
+            <strong>{t.parameters}</strong>{" "}
+            {Object.entries(selectedExperiment.strategy.parameters)
+              .map(([key, value]) => `${key}=${value}`)
+              .join(" · ")}
+          </p>
+        </div>
+      ) : null}
 
       <div className="chart-panel price-panel">
         <div className="chart-heading">
@@ -246,7 +312,11 @@ export function StrategyWorkbench({
           />
           <Metric
             label={locale === "zh" ? "夏普比率" : "Sharpe ratio"}
-            value={run.metrics.sharpe_ratio.toFixed(2)}
+            value={
+              run.metrics.sharpe_ratio === null
+                ? "—"
+                : run.metrics.sharpe_ratio.toFixed(2)
+            }
           />
           <Metric
             label={locale === "zh" ? "最大回撤" : "Max drawdown"}

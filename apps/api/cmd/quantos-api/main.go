@@ -50,10 +50,11 @@ func main() {
 	}
 	orchestrator := backtest.NewOrchestrator(store, runner, *queueSize, nil)
 	defer orchestrator.Close()
+	experiments := backtest.NewExperimentStore(filepath.Clean(*artifactRoot))
 
 	server := &http.Server{
 		Addr:              *listen,
-		Handler:           backtest.NewHTTPHandler(orchestrator, *allowedOrigin),
+		Handler:           backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,

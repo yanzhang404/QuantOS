@@ -33,8 +33,14 @@ fees, slippage, exposure limit, and final-liquidation assumption. The client:
 - binds the immutable dataset version and content hash automatically;
 - polls queued/running Tasks until success or failure;
 - displays persisted Task history and resulting Run IDs;
+- loads a successful Experiment into every synchronized result view;
 - preserves the read-only safety boundary around live execution.
 
-Completed manual runs do not yet replace the build-time Kline visualization.
-Experiment detail and comparison endpoints are the next boundary for loading a
-new Run's fills, equity, drawdown, and report into the charts.
+Completed manual runs now replace the build-time strategy result when their
+immutable dataset identity matches the selected workspace view. The selected
+Run drives aggregate metrics, Kline fill markers, the fill table, portfolio
+equity, position, and drawdown. Changing the strategy, asset, or observation
+window returns the workspace to its committed baseline until another compatible
+history record is selected.
+
+Multi-Run comparison and Experiment filtering are the next frontend boundary.

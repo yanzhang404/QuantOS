@@ -234,6 +234,7 @@ def test_language_neutral_schema_and_catalog_cover_python_contract() -> None:
         "backtest_submission",
         "backtest_task",
         "experiment_record",
+        "experiment_visualization",
         "strategy_catalog",
     } <= definitions.keys()
     assert [item["name"] for item in catalog["strategies"]] == [

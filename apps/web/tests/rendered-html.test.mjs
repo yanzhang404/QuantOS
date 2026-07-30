@@ -70,9 +70,10 @@ test("labels the Kline timeline and executed fills with dates", async () => {
 });
 
 test("connects the parameter lab to durable backtest tasks", async () => {
-  const [lab, api] = await Promise.all([
+  const [lab, api, workbench] = await Promise.all([
     readFile(new URL("../app/backtest-lab.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/backtest-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/strategy-workbench.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(lab, /submitBacktest\(request\)/);
@@ -81,4 +82,9 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.match(api, /\/api\/v1\/backtests/);
   assert.match(api, /\/api\/v1\/tasks/);
   assert.match(api, /Idempotency-Key/);
+  assert.match(api, /\/api\/v1\/experiments/);
+  assert.match(lab, /getExperiment\(task\.run_id/);
+  assert.match(lab, /onExperimentLoaded\(experiment\)/);
+  assert.match(workbench, /selectedExperimentMatches/);
+  assert.match(workbench, /const run: VisualizationRun = selectedExperimentMatches/);
 });

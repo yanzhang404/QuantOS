@@ -35,7 +35,7 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 ## V0.3 — Product workspace
 
 - Dashboard and project navigation. **First read-only strategy workspace implemented.**
-- Dataset, strategy, backtest, and experiment views. **Interactive parameter submission and Task history implemented; experiment detail pending.**
+- Dataset, strategy, backtest, and experiment views. **Interactive parameter submission, Task history, and dynamic Experiment detail implemented; comparison pending.**
 - Task orchestration and progress streaming. **Local durable task API and worker implemented; streaming pending.**
 - Tool-driven AI research assistant for querying and reviewing artifacts.
 

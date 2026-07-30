@@ -9,13 +9,19 @@ import (
 
 type HTTPHandler struct {
 	orchestrator  *Orchestrator
+	experiments   *ExperimentStore
 	allowedOrigin string
 	mux           *http.ServeMux
 }
 
-func NewHTTPHandler(orchestrator *Orchestrator, allowedOrigin string) http.Handler {
+func NewHTTPHandler(
+	orchestrator *Orchestrator,
+	experiments *ExperimentStore,
+	allowedOrigin string,
+) http.Handler {
 	handler := &HTTPHandler{
 		orchestrator:  orchestrator,
+		experiments:   experiments,
 		allowedOrigin: allowedOrigin,
 		mux:           http.NewServeMux(),
 	}
@@ -24,6 +30,7 @@ func NewHTTPHandler(orchestrator *Orchestrator, allowedOrigin string) http.Handl
 	handler.mux.HandleFunc("POST /api/v1/backtests", handler.submit)
 	handler.mux.HandleFunc("GET /api/v1/tasks", handler.list)
 	handler.mux.HandleFunc("GET /api/v1/tasks/{task_id}", handler.get)
+	handler.mux.HandleFunc("GET /api/v1/experiments/{run_id}", handler.getExperiment)
 	return handler
 }
 
@@ -114,6 +121,38 @@ func (h *HTTPHandler) get(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	writeJSON(response, http.StatusOK, task)
+}
+
+func (h *HTTPHandler) getExperiment(response http.ResponseWriter, request *http.Request) {
+	experiment, err := h.experiments.Get(request.PathValue("run_id"))
+	if errors.Is(err, ErrExperimentNotFound) {
+		writeAPIError(
+			response,
+			http.StatusNotFound,
+			"experiment_not_found",
+			"Experiment not found.",
+		)
+		return
+	}
+	if errors.Is(err, ErrExperimentInvalid) {
+		writeAPIError(
+			response,
+			http.StatusUnprocessableEntity,
+			"experiment_invalid",
+			"Experiment artifacts are invalid.",
+		)
+		return
+	}
+	if err != nil {
+		writeAPIError(
+			response,
+			http.StatusInternalServerError,
+			"experiment_read_failed",
+			"Experiment read failed.",
+		)
+		return
+	}
+	writeJSON(response, http.StatusOK, experiment)
 }
 
 func writeJSON(response http.ResponseWriter, status int, value any) {

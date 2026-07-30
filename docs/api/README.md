@@ -14,8 +14,8 @@ The normative language-neutral schema is
 | `GET` | `/api/v1/strategies` | Editable built-in strategy definitions |
 | `POST` | `/api/v1/backtests` | Accept a historical backtest and return a Task |
 | `GET` | `/api/v1/tasks/{task_id}` | Read task state and resulting Run ID |
-| `GET` | `/api/v1/experiments` | Filter saved completed experiments |
-| `GET` | `/api/v1/experiments/{run_id}` | Read one reproducible experiment |
+| `GET` | `/api/v1/experiments/{run_id}` | Read one reproducible experiment and its chart series |
+| `GET` | `/api/v1/experiments` | Filter saved completed experiments (planned) |
 
 Submitting the same HTTP request twice with one idempotency key returns the same
 Task. Submitting identical deterministic inputs with a new idempotency key
@@ -55,5 +55,7 @@ queued → running → succeeded
 queued/running + service restart → failed(service_restarted, retryable)
 ```
 
-Completed Python experiment directories remain the Run source of truth.
-Experiment list/detail HTTP resources are the next API increment.
+Completed Python experiment directories remain the Run source of truth. The
+implemented Experiment detail resource derives normalized metrics, fills,
+equity, position, and drawdown from those immutable artifacts. Experiment
+listing and comparison are the next API increments.

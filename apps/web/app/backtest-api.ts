@@ -49,6 +49,41 @@ export type BacktestTask = {
   } | null;
 };
 
+export type ExperimentVisualization = {
+  schema_version: "1.0";
+  run_id: string;
+  created_at: string;
+  dataset: BacktestSubmission["dataset"];
+  strategy: BacktestSubmission["strategy"];
+  config: BacktestSubmission["config"];
+  engine_version: string;
+  metrics_version: string;
+  metrics: {
+    initial_equity: number;
+    final_equity: number;
+    total_return: number;
+    sharpe_ratio: number | null;
+    max_drawdown: number;
+    trade_count: number;
+    fill_count: number;
+    fees_paid: number;
+  };
+  equity: Array<{
+    time: string;
+    equity: number;
+    drawdown: number;
+    position: number;
+  }>;
+  fills: Array<{
+    time: string;
+    side: "buy" | "sell";
+    price: number;
+    quantity: number;
+    fee: number;
+    reason: string;
+  }>;
+};
+
 type TaskList = {
   tasks: BacktestTask[];
 };
@@ -99,6 +134,17 @@ export async function listTasks(
 ): Promise<BacktestTask[]> {
   const response = await requestJSON<TaskList>("/api/v1/tasks", {}, signal);
   return response.tasks;
+}
+
+export async function getExperiment(
+  runID: string,
+  signal?: AbortSignal,
+): Promise<ExperimentVisualization> {
+  return requestJSON<ExperimentVisualization>(
+    `/api/v1/experiments/${encodeURIComponent(runID)}`,
+    {},
+    signal,
+  );
 }
 
 async function requestJSON<T>(
