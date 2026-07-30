@@ -110,6 +110,84 @@ export const parameterLabelsZh: Record<string, string> = {
   rebalance_threshold: "再平衡阈值",
 };
 
+export function mergeStrategyCatalog(remote: unknown): StrategyDefinition[] {
+  if (!Array.isArray(remote)) {
+    return fallbackStrategyCatalog;
+  }
+
+  return fallbackStrategyCatalog.map((fallback) => {
+    const candidate = remote.find(
+      (item): item is Partial<StrategyDefinition> =>
+        isRecord(item) && item.name === fallback.name,
+    );
+
+    if (!candidate) {
+      return fallback;
+    }
+
+    return {
+      ...fallback,
+      label: nonEmptyString(candidate.label) ? candidate.label : fallback.label,
+      description: nonEmptyString(candidate.description)
+        ? candidate.description
+        : fallback.description,
+      category: isStrategyCategory(candidate.category)
+        ? candidate.category
+        : fallback.category,
+      stage: isStrategyStage(candidate.stage)
+        ? candidate.stage
+        : fallback.stage,
+      implementation: nonEmptyString(candidate.implementation)
+        ? candidate.implementation
+        : fallback.implementation,
+      supported_intervals:
+        Array.isArray(candidate.supported_intervals) &&
+        candidate.supported_intervals.length > 0
+          ? candidate.supported_intervals.filter(isStrategyInterval)
+          : fallback.supported_intervals,
+      parameters:
+        Array.isArray(candidate.parameters) && candidate.parameters.length > 0
+          ? candidate.parameters
+          : fallback.parameters,
+    };
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isStrategyCategory(value: unknown): value is StrategyCategory {
+  return (
+    value === "trend" ||
+    value === "benchmark" ||
+    value === "mean-reversion" ||
+    value === "intraday"
+  );
+}
+
+function isStrategyStage(value: unknown): value is StrategyStage {
+  return (
+    value === "candidate" ||
+    value === "validated" ||
+    value === "benchmark"
+  );
+}
+
+function isStrategyInterval(value: unknown): value is StrategyInterval {
+  return (
+    value === "5m" ||
+    value === "15m" ||
+    value === "1h" ||
+    value === "4h" ||
+    value === "1d"
+  );
+}
+
 function parameter(
   key: string,
   kind: StrategyParameter["kind"],

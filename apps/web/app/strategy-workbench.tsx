@@ -13,6 +13,7 @@ import type {
 } from "./research-data";
 import {
   fallbackStrategyCatalog,
+  mergeStrategyCatalog,
   type StrategyCategory,
   type StrategyInterval,
 } from "./strategy-catalog";
@@ -251,7 +252,7 @@ export function StrategyWorkbench({
   useEffect(() => {
     const controller = new AbortController();
     void getStrategyCatalog(controller.signal)
-      .then(setCatalog)
+      .then((records) => setCatalog(mergeStrategyCatalog(records)))
       .catch(() => undefined);
     return () => controller.abort();
   }, []);
@@ -309,7 +310,9 @@ export function StrategyWorkbench({
         })}
         <div className="implementation-ref">
           <span>{locale === "zh" ? "策略代码" : "Implementation"}</span>
-          <code>{definition.implementation.split(".").at(-1)}</code>
+          <code>
+            {definition.implementation?.split(".").at(-1) ?? definition.name}
+          </code>
         </div>
       </aside>
 
