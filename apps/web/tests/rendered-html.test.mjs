@@ -173,10 +173,11 @@ test("uses a compact light workspace without the known heading overlap", async (
   assert.match(styles, /--background: #f3f7f2/);
   assert.match(styles, /\.panel \{\s*padding: 18px;/);
   assert.match(styles, /@media \(max-width: 1180px\)/);
-  assert.match(styles, /\.intelligence-heading > div:first-child/);
+  assert.match(styles, /\.intelligence-title/);
   assert.doesNotMatch(
     styles,
     /\.intelligence-heading > div,\s*\.daily-brief > div:first-child/,
   );
   assert.match(intelligence, /className="intelligence-heading"/);
+  assert.match(intelligence, /className="intelligence-title"/);
 });

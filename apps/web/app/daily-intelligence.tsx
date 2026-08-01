@@ -114,7 +114,7 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
   return (
     <section className={`intelligence panel sentiment-${tone}`} id="intelligence">
       <div className="intelligence-heading">
-        <div>
+        <div className="intelligence-title">
           <p className="eyebrow">{t.eyebrow}</p>
           <h2>{t.title}</h2>
         </div>

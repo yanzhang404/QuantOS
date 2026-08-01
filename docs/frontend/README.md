@@ -38,6 +38,11 @@ instead of large dark containers. At intermediate widths the intelligence
 summary moves its three supporting KPIs onto a second row, and the header hides
 secondary status copy before navigation can overlap.
 
+The intelligence heading uses its own vertical title container rather than
+inheriting generic flex behavior. Supporting labels, metadata, parameter names,
+table values, and chart descriptions use a 9–14px scale with increased line
+height; 7–8px type is reserved for dense chart axes only.
+
 ## Daily market intelligence
 
 The Overview view requests the latest validated sentiment snapshot from

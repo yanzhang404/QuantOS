@@ -171,9 +171,9 @@ nav {
 .control-label {
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.1em;
   margin: 0 0 8px;
   text-transform: uppercase;
 }
@@ -200,13 +200,13 @@ h1 {
 
 .as-of span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
 }
 
 .as-of strong {
   font-family: var(--font-plex-mono), monospace;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .header-actions {
@@ -267,10 +267,12 @@ h1 {
   justify-content: space-between;
 }
 
-.intelligence-heading > div:first-child {
+.intelligence-title {
   display: grid;
-  gap: 2px;
+  gap: 4px;
+  justify-items: start;
   min-width: 0;
+  width: 100%;
 }
 
 .intelligence-heading h2 {
@@ -284,8 +286,9 @@ h1 {
   border-radius: 999px;
   color: var(--mint);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 10px;
-  padding: 7px 10px;
+  font-size: 11px;
+  line-height: 1.35;
+  padding: 7px 11px;
 }
 
 .intelligence-status.partial,
@@ -321,13 +324,13 @@ h1 {
 .sentiment-score > span {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   margin-left: 6px;
 }
 
 .sentiment-score em {
   color: var(--sentiment-accent);
-  font-size: 17px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 700;
   margin-left: 18px;
@@ -365,7 +368,7 @@ h1 {
 .meter-label {
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .meter-label.fear {
@@ -379,7 +382,7 @@ h1 {
 .sentiment-score small {
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 9px;
+  font-size: 11px;
   grid-column: 1 / -1;
   margin-top: 9px;
 }
@@ -399,7 +402,7 @@ h1 {
 
 .intelligence-kpis span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .intelligence-kpis strong {
@@ -422,7 +425,7 @@ h1 {
   color: var(--muted);
   cursor: pointer;
   font-family: var(--font-plex-mono), monospace;
-  font-size: 9px;
+  font-size: 11px;
   list-style: none;
   padding: 14px 0 0;
   text-align: center;
@@ -535,8 +538,8 @@ h1 {
 
 .view-intro {
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.65;
   margin: 11px 0 0;
   max-width: 680px;
 }
@@ -569,7 +572,7 @@ h1 {
 .overview-evidence > div > span,
 .overview-status-card > span {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .overview-evidence dl {
@@ -587,7 +590,7 @@ h1 {
 
 .overview-evidence dt {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .overview-evidence dd {
@@ -599,7 +602,7 @@ h1 {
 .text-action {
   bottom: 17px;
   color: var(--lime);
-  font-size: 9px;
+  font-size: 11px;
   left: 18px;
   position: absolute;
   text-decoration: none;
@@ -621,7 +624,7 @@ h1 {
 .overview-status-card > p:last-child,
 .interval-coverage > p {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.65;
   margin: auto 0 0;
 }
@@ -679,7 +682,7 @@ h1 {
 .coverage-table strong,
 .coverage-table span {
   font-family: var(--font-plex-mono), monospace;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .coverage-table .coverage-header {
@@ -708,7 +711,7 @@ h1 {
 
 .coverage-meta dt {
   color: var(--subtle);
-  font-size: 8px;
+  font-size: 9px;
   margin-bottom: 4px;
   text-transform: uppercase;
 }
@@ -716,7 +719,7 @@ h1 {
 .coverage-meta dd {
   color: var(--text);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 9px;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1013,7 +1016,8 @@ h1 {
 .result-metrics small {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 9.5px;
+  line-height: 1.45;
 }
 
 .result-summary-header span,
@@ -1092,13 +1096,13 @@ h1 {
 }
 
 .library-title strong {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .library-title small {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .strategy-folder {
@@ -1110,7 +1114,7 @@ h1 {
   align-items: center;
   color: var(--muted);
   display: flex;
-  font-size: 8px;
+  font-size: 9px;
   gap: 7px;
   padding: 5px 6px 7px;
   text-transform: uppercase;
@@ -1173,7 +1177,8 @@ h1 {
 
 .strategy-folder > p {
   color: var(--subtle);
-  font-size: 7px;
+  font-size: 9px;
+  line-height: 1.45;
   margin: 2px 6px 5px 18px;
 }
 
@@ -1185,13 +1190,13 @@ h1 {
 
 .implementation-ref span {
   color: var(--subtle);
-  font-size: 7px;
+  font-size: 9px;
   text-transform: uppercase;
 }
 
 .implementation-ref code {
   color: var(--muted);
-  font-size: 7px;
+  font-size: 9px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1208,7 +1213,7 @@ h1 {
 
 .timeframe-picker > span {
   color: var(--subtle);
-  font-size: 7px;
+  font-size: 9px;
   text-transform: uppercase;
 }
 
@@ -1224,7 +1229,7 @@ h1 {
   color: var(--muted);
   cursor: pointer;
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 10px;
   padding: 6px 8px;
 }
 
@@ -1309,7 +1314,7 @@ h1 {
 .workbench-filters label > span {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 7px;
+  font-size: 9px;
   text-transform: uppercase;
 }
 
@@ -1320,7 +1325,7 @@ h1 {
   color: var(--ink);
   cursor: pointer;
   font-family: var(--font-plex-mono), monospace;
-  font-size: 9px;
+  font-size: 11px;
   outline: 0;
 }
 
@@ -1406,7 +1411,7 @@ h1 {
 .strategy-parameter-group legend {
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 10px;
   margin-bottom: 9px;
   text-transform: uppercase;
 }
@@ -1434,7 +1439,7 @@ h1 {
 .parameter-fields label > span,
 .run-basics label > span {
   color: var(--subtle);
-  font-size: 7px;
+  font-size: 9px;
 }
 
 .parameter-fields input,
@@ -1443,7 +1448,7 @@ h1 {
   border: 0;
   color: var(--ink);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 10px;
+  font-size: 11px;
   min-width: 0;
   outline: 0;
   padding: 1px 0;
@@ -1499,7 +1504,7 @@ h1 {
 
 .advanced-settings summary span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
   text-transform: uppercase;
 }
 
@@ -1517,7 +1522,7 @@ h1 {
 .advanced-settings summary small {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 7px;
+  font-size: 9px;
 }
 
 .advanced-settings-content {
@@ -1557,12 +1562,12 @@ h1 {
 
 .run-context span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .run-context code {
   color: var(--subtle);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .run-backtest {
@@ -1842,12 +1847,12 @@ h1 {
 }
 
 .chart-heading strong {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .chart-heading span {
   color: var(--subtle);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .range-picker {
@@ -2242,7 +2247,7 @@ h1 {
 .fills-table th {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 7px;
+  font-size: 8.5px;
   font-weight: 500;
   padding: 8px 10px;
   text-align: left;
@@ -2253,7 +2258,7 @@ h1 {
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 10px;
   max-width: 280px;
   padding: 10px;
 }
@@ -2355,7 +2360,7 @@ h1 {
 }
 
 .panel-heading h3 {
-  font-size: 20px;
+  font-size: 22px;
   letter-spacing: -0.035em;
   margin-bottom: 0;
 }
@@ -2376,7 +2381,7 @@ h1 {
 .comparison-head {
   color: var(--subtle);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 8px;
+  font-size: 9px;
   padding: 0 14px 10px;
   text-transform: uppercase;
 }
@@ -2384,7 +2389,7 @@ h1 {
 .strategy-row {
   border-top: 1px solid var(--line);
   font-family: var(--font-plex-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   min-height: 58px;
   padding: 10px 14px;
 }
@@ -2407,7 +2412,7 @@ h1 {
 
 .strategy-name small {
   color: var(--subtle);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .return-cell {
@@ -2472,7 +2477,7 @@ h1 {
 .panel-note,
 .provenance-note {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.7;
   margin: auto 0 0;
   padding-top: 14px;
@@ -2518,7 +2523,7 @@ h1 {
 
 .findings p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
   margin: 5px 0 0;
 }
@@ -2541,18 +2546,18 @@ h1 {
 
 .provenance dt {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .provenance dd {
   font-family: var(--font-plex-mono), monospace;
-  font-size: 9px;
+  font-size: 10px;
   margin: 0;
 }
 
 .provenance-explanation {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.6;
   margin: 12px 0;
 }
