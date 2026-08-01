@@ -163,3 +163,20 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
   assert.match(page, /getCoverageMember\("BTCUSDT", interval\)/);
   assert.doesNotMatch(page, /interval === "4h" \? t\.verified : "Pending"/);
 });
+
+test("uses a compact light workspace without the known heading overlap", async () => {
+  const [styles, intelligence] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/daily-intelligence.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(styles, /--background: #f3f7f2/);
+  assert.match(styles, /\.panel \{\s*padding: 18px;/);
+  assert.match(styles, /@media \(max-width: 1180px\)/);
+  assert.match(styles, /\.intelligence-heading > div:first-child/);
+  assert.doesNotMatch(
+    styles,
+    /\.intelligence-heading > div,\s*\.daily-brief > div:first-child/,
+  );
+  assert.match(intelligence, /className="intelligence-heading"/);
+});

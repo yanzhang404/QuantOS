@@ -31,6 +31,13 @@ On wide screens the Strategies view uses a strategy tree, central result area,
 and sticky parameter panel; narrower layouts collapse without hiding the
 underlying backtest controls.
 
+The visual system uses a bright research-workbench theme: a warm off-white
+canvas, white evidence cards, restrained green actions, and explicit red/amber/
+green semantic states. Cards use compact 18px spacing and low-contrast shadows
+instead of large dark containers. At intermediate widths the intelligence
+summary moves its three supporting KPIs onto a second row, and the header hides
+secondary status copy before navigation can overlap.
+
 ## Daily market intelligence
 
 The Overview view requests the latest validated sentiment snapshot from
