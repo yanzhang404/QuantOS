@@ -22,6 +22,7 @@ required_files=(
   docs/adr/0013-result-first-product-workspace.md
   packages/api-schema/schemas/intelligence.v1.schema.json
   apps/web/package.json
+  apps/web/sites-vite-plugin.ts
   docs/market-data/kline-schema.md
 )
 
