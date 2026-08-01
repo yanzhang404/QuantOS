@@ -64,7 +64,7 @@ Backfill once and then refresh to the latest common closed boundary:
 uv run quantos data sync-current \
   --start 2021-01-01T00:00:00Z \
   --data-root data \
-  --coverage-output examples/market-data/multi-timeframe-coverage.v1.json
+  --coverage-output apps/web/app/multi-timeframe-coverage.v1.json
 ```
 
 The first call downloads the complete matrix. Later calls discover the newest

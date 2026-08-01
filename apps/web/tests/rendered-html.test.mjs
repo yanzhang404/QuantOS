@@ -143,7 +143,7 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
   const [page, coverage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
-      new URL("../../../examples/market-data/multi-timeframe-coverage.v1.json", import.meta.url),
+      new URL("../app/multi-timeframe-coverage.v1.json", import.meta.url),
       "utf8",
     ),
   ]);

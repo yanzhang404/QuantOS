@@ -1,4 +1,4 @@
-import coverage from "../../../examples/market-data/multi-timeframe-coverage.v1.json";
+import coverage from "./multi-timeframe-coverage.v1.json";
 
 export type CoverageInterval = "5m" | "15m" | "1h" | "4h" | "1d";
 export type CoverageSymbol = "BTCUSDT" | "ETHUSDT";
