@@ -153,7 +153,7 @@ nav {
 
 .content {
   margin: 0 auto;
-  max-width: 1480px;
+  max-width: 1680px;
   padding: 30px 44px 24px;
   width: 100%;
 }
@@ -244,8 +244,17 @@ h1 {
 }
 
 .intelligence {
+  --sentiment-accent: var(--amber);
   margin-top: 26px;
   padding: 24px;
+}
+
+.intelligence.sentiment-fear {
+  --sentiment-accent: var(--red);
+}
+
+.intelligence.sentiment-greed {
+  --sentiment-accent: var(--mint);
 }
 
 .intelligence-heading,
@@ -292,7 +301,7 @@ h1 {
 }
 
 .sentiment-score strong {
-  color: var(--lime);
+  color: var(--sentiment-accent);
   font-family: var(--font-plex-mono), monospace;
   font-size: clamp(48px, 6vw, 78px);
   letter-spacing: -0.08em;
@@ -307,10 +316,54 @@ h1 {
 }
 
 .sentiment-score em {
+  color: var(--sentiment-accent);
   font-size: 17px;
   font-style: normal;
   font-weight: 700;
   margin-left: 18px;
+}
+
+.sentiment-meter {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(150px, 1fr) auto;
+  margin: 0 26px;
+  min-width: 240px;
+}
+
+.sentiment-meter i {
+  background: linear-gradient(90deg, var(--red), var(--amber) 50%, var(--mint));
+  border-radius: 999px;
+  display: block;
+  height: 8px;
+  position: relative;
+}
+
+.sentiment-meter i b {
+  background: var(--ink);
+  border: 3px solid var(--sentiment-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(7, 16, 12, 0.85);
+  height: 18px;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+}
+
+.meter-label {
+  color: var(--muted);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+}
+
+.meter-label.fear {
+  color: var(--red);
+}
+
+.meter-label.greed {
+  color: var(--mint);
 }
 
 .sentiment-score small {
@@ -351,6 +404,34 @@ h1 {
   padding-top: 22px;
 }
 
+.intelligence-disclosure {
+  border-top: 0;
+}
+
+.intelligence-disclosure > summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 9px;
+  list-style: none;
+  padding: 14px 0 0;
+  text-align: center;
+}
+
+.intelligence-disclosure > summary::before {
+  color: var(--sentiment-accent);
+  content: "+";
+  margin-right: 8px;
+}
+
+.intelligence-disclosure[open] > summary::before {
+  content: "−";
+}
+
+.intelligence-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
 .factor-list h3,
 .daily-brief h3 {
   font-size: 13px;
@@ -381,7 +462,7 @@ h1 {
 }
 
 .factor-list i b {
-  background: var(--lime);
+  background: var(--sentiment-accent);
   display: block;
   height: 100%;
 }
@@ -440,6 +521,171 @@ h1 {
   font-family: var(--font-plex-mono), monospace;
   font-size: 8px;
   text-transform: uppercase;
+}
+
+.view-intro {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 16px 0 0;
+  max-width: 680px;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(420px, 1.5fr) repeat(2, minmax(220px, 0.65fr));
+  margin-top: 12px;
+}
+
+.overview-evidence,
+.overview-status-card {
+  min-height: 210px;
+}
+
+.overview-evidence {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(170px, 0.8fr) minmax(260px, 1.2fr);
+  position: relative;
+}
+
+.overview-evidence h2 {
+  font-size: 28px;
+  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+
+.overview-evidence > div > span,
+.overview-status-card > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.overview-evidence dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+}
+
+.overview-evidence dl div {
+  border-left: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+.overview-evidence dt {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.overview-evidence dd {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 20px;
+  margin: 0;
+}
+
+.text-action {
+  bottom: 22px;
+  color: var(--lime);
+  font-size: 9px;
+  left: 24px;
+  position: absolute;
+  text-decoration: none;
+}
+
+.overview-status-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-status-card > strong {
+  color: var(--lime);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 38px;
+  letter-spacing: -0.06em;
+  margin: 18px 0 4px;
+}
+
+.overview-status-card > p:last-child,
+.interval-coverage > p {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.65;
+  margin: auto 0 0;
+}
+
+.view-filters {
+  display: flex;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.view-filters button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 9px;
+  padding: 9px 12px;
+  text-transform: capitalize;
+}
+
+.view-filters button.selected {
+  background: var(--surface-raised);
+  border-color: var(--line-bright);
+  color: var(--lime);
+}
+
+.runs-review {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.data-layout {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  margin-top: 20px;
+}
+
+.coverage-table {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+}
+
+.coverage-table > div {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 11px 4px;
+}
+
+.coverage-table > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.coverage-table strong,
+.coverage-table span {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 9px;
+}
+
+.coverage-table span::before {
+  content: "BTC ";
+}
+
+.coverage-table span:last-child::before {
+  content: "ETH ";
+}
+
+.coverage-table .loaded {
+  color: var(--mint);
+}
+
+.coverage-table .pending {
+  color: var(--subtle);
 }
 
 .hero-grid {
@@ -678,8 +924,8 @@ h1 {
 .workbench {
   display: grid;
   gap: 10px 16px;
-  grid-template-columns: 220px minmax(0, 1fr);
-  margin-top: 12px;
+  grid-template-columns: 220px minmax(560px, 1fr) minmax(330px, 0.48fr);
+  margin-top: 22px;
   overflow: hidden;
 }
 
@@ -692,6 +938,22 @@ h1 {
 }
 
 .workbench > :not(.result-summary):not(.strategy-library) {
+  grid-column: 2;
+}
+
+.workbench > .backtest-lab {
+  display: contents;
+}
+
+.workbench > .backtest-lab .parameter-panel {
+  align-self: start;
+  grid-column: 3;
+  grid-row: 2 / span 20;
+  position: sticky;
+  top: 82px;
+}
+
+.workbench > .backtest-lab .task-history {
   grid-column: 2;
 }
 
@@ -737,7 +999,7 @@ h1 {
 
 .result-metrics {
   display: grid;
-  grid-template-columns: 1.35fr repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
 }
 
 .result-metrics > div {
@@ -2266,6 +2528,32 @@ footer {
   text-transform: uppercase;
 }
 
+@media (max-width: 1350px) {
+  .overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .overview-evidence {
+    grid-column: 1 / -1;
+  }
+
+  .workbench {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .workbench > .backtest-lab {
+    display: grid;
+    grid-column: 2;
+  }
+
+  .workbench > .backtest-lab .parameter-panel,
+  .workbench > .backtest-lab .task-history {
+    grid-column: auto;
+    grid-row: auto;
+    position: static;
+  }
+}
+
 @media (max-width: 1060px) {
   .app-header {
     gap: 14px;
@@ -2290,13 +2578,42 @@ footer {
   .hero-grid,
   .analysis-grid,
   .lower-grid,
-  .intelligence-detail {
+  .intelligence-detail,
+  .data-layout {
     grid-template-columns: 1fr;
+  }
+
+  .overview-grid,
+  .overview-evidence {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-evidence {
+    grid-column: auto;
+  }
+
+  .overview-evidence dl {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+
+  .overview-evidence dl div:first-child {
+    border-left: 0;
+  }
+
+  .text-action {
+    bottom: auto;
+    left: auto;
+    position: static;
   }
 
   .intelligence-overview {
     align-items: flex-start;
     gap: 20px;
+  }
+
+  .sentiment-meter {
+    margin: 0;
   }
 
   .intelligence-kpis {
@@ -2463,6 +2780,25 @@ footer {
 
   .intelligence-kpis {
     width: 100%;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-evidence dl {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-evidence dl div,
+  .overview-evidence dl div:first-child {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    grid-template-columns: 1fr auto;
+  }
+
+  .view-filters {
+    flex-wrap: wrap;
   }
 
   .verdict-card {

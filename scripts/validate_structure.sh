@@ -19,6 +19,7 @@ required_files=(
   docs/adr/0005-chronological-out-of-sample-selection.md
   docs/adr/0006-read-only-research-workspace.md
   docs/adr/0012-deterministic-daily-market-intelligence.md
+  docs/adr/0013-result-first-product-workspace.md
   packages/api-schema/schemas/intelligence.v1.schema.json
   apps/web/package.json
   docs/market-data/kline-schema.md

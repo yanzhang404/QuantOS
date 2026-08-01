@@ -17,6 +17,10 @@ increment also includes a deterministic daily market-intelligence contract,
 read-only API, and bilingual homepage view. Current data collection still
 requires a bounded external Agent/OpenClaw adapter; strategy robustness,
 feature lineage, walk-forward validation, and broader market datasets remain.
+The next accepted product increment starts by splitting the workspace into
+Overview, Strategies, Runs, and Data views before expanding immutable intervals
+and Agent-proposed strategy candidates. Paper reproduction remains a later
+research workflow rather than part of this increment.
 
 ## Product principles
 

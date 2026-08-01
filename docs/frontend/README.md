@@ -19,18 +19,30 @@ synchronizes:
 - position exposure and fill-level details;
 - strategy, asset, and observation-window selection.
 
-The application now separates a top-level Research Center from the Strategy
-Library. Global navigation sits above the workspace; a folder-style strategy
-tree owns reusable strategy modules and lifecycle state. Run results are shown
-before configuration and detail charts.
+The application now exposes four hash-addressable product views:
+
+- Overview for market intelligence, latest evidence, candidate status, and data health;
+- Strategies for the folder-style library, result-first metrics, parameters, and charts;
+- Runs for fixed experiment comparison, cost stress, and research findings;
+- Data for immutable identities, interval coverage, and lineage.
+
+The previous report-style hero and large lifecycle diagram have been removed.
+On wide screens the Strategies view uses a strategy tree, central result area,
+and sticky parameter panel; narrower layouts collapse without hiding the
+underlying backtest controls.
 
 ## Daily market intelligence
 
-The homepage requests the latest validated sentiment snapshot from
+The Overview view requests the latest validated sentiment snapshot from
 `GET /api/v1/intelligence/latest` and presents the composite score first,
 followed by its change, market/news components, seven factor scores, daily
 brief, and source links. If no daily publication exists, the page uses a
 committed fixture that is visibly labeled as non-current sample data.
+
+The sentiment level uses a labeled red-to-amber-to-green scale: fear is red,
+neutral is amber, and greed is green. The separate change value remains green
+for an increase and red for a decrease. Factor and brief detail is collapsed by
+default to keep the first viewport focused.
 
 The UI never calculates the index itself. The deterministic methodology and
 input provenance remain owned by the versioned Agent contract.

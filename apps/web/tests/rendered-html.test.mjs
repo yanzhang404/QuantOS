@@ -31,27 +31,36 @@ test("server-renders the QuantOS research workspace", async () => {
   const html = await response.text();
   assert.match(html, /<title>QuantOS — Strategy Research Workspace<\/title>/i);
   assert.match(html, /Donchian ATR/);
-  assert.match(html, /Drawdown controlled/);
   assert.match(html, /Research mode/);
   assert.match(html, /Live trading disabled/);
-  assert.match(html, /Kline \+ executed fills/);
-  assert.match(html, /Portfolio equity/);
-  assert.match(html, /Underwater drawdown/);
-  assert.match(html, /Edit parameters and save a reproducible run/);
-  assert.match(html, /Run backtest/);
-  assert.match(html, /Backtest history/);
-  assert.match(html, /Research center/);
-  assert.match(html, /Strategy library/);
+  assert.match(html, />Overview</);
+  assert.match(html, />Strategies</);
+  assert.match(html, />Runs</);
+  assert.match(html, />Data</);
+  assert.match(html, /Market &amp; research pulse/);
+  assert.match(html, /Start with market context/);
   assert.match(html, /Total return/);
-  assert.match(html, /Final capital/);
-  assert.match(html, /AI-assisted strategy discovery/);
+  assert.match(html, /Latest strategy evidence/);
+  assert.match(html, /Candidate queue/);
+  assert.match(html, /Dataset coverage/);
   assert.match(html, /Daily market intelligence/);
   assert.match(html, /Sample snapshot · not current market data/);
   assert.match(html, /Market score/);
   assert.match(html, /Source-linked news/);
-  assert.match(html, />5m</);
-  assert.match(html, />1d</);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("splits the workspace into four hash-addressable views", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /type WorkspaceView = "overview" \| "strategies" \| "runs" \| "data"/);
+  assert.match(source, /window\.addEventListener\("hashchange", syncView\)/);
+  assert.match(source, /activeView === "overview"/);
+  assert.match(source, /activeView === "strategies"/);
+  assert.match(source, /activeView === "runs"/);
+  assert.match(source, /activeView === "data"/);
+  assert.doesNotMatch(source, /className="hero-grid"/);
+  assert.doesNotMatch(source, /className="research-lifecycle panel"/);
 });
 
 test("connects daily intelligence to the validated API snapshot", async () => {
@@ -64,6 +73,8 @@ test("connects daily intelligence to the validated API snapshot", async () => {
   assert.match(component, /sampleSnapshot/);
   assert.match(component, /非当前市场数据/);
   assert.match(component, /factor\.source/);
+  assert.match(component, /sentiment-\$\{tone\}/);
+  assert.match(component, /className="sentiment-meter"/);
   assert.match(api, /\/api\/v1\/intelligence\/latest/);
 });
 

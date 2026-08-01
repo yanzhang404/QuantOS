@@ -137,9 +137,9 @@ npm ci
 npm run dev
 ```
 
-The dashboard presents daily market intelligence, the committed BTC/ETH
-strategy study, cost stress, research findings, and immutable evidence
-identities. See
+The dashboard separates Overview, Strategies, Runs, and Data views. It presents
+daily market intelligence, the committed BTC/ETH strategy study, cost stress,
+research findings, and immutable evidence identities. See
 [`docs/frontend`](docs/frontend/README.md).
 
 ## Roadmap

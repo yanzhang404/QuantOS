@@ -41,6 +41,18 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 - Daily source-linked market brief and deterministic sentiment index. **Initial contract, local publisher, read-only API, and homepage view implemented.**
 - Manifest-driven strategy parameters and candidate-to-promotion lifecycle. **Initial catalog and evidence view implemented.**
 - Multi-timeframe research datasets. **5m/15m/1h/4h/1d contracts implemented; immutable intraday datasets pending.**
+- Result-first product information architecture. **Overview, Strategies, Runs,
+  and Data views accepted; initial workspace split in progress.**
+
+The accepted delivery order for the remaining V0.3 work is:
+
+1. split and simplify the four product views;
+2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d;
+3. add immutable Run filtering, archival, and up-to-four comparison;
+4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market gates;
+5. add candidate strategy lifecycle and bounded Agent proposal contracts;
+6. schedule at most one or two explainable candidates per week through draft PRs;
+7. replace the sample intelligence input with public, read-only daily collectors.
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

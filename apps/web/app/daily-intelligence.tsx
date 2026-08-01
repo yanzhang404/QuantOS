@@ -26,6 +26,7 @@ const text = {
     brief: "Daily brief",
     sources: "Source-linked news",
     methodology: "Deterministic methodology",
+    details: "View factor detail and daily brief",
     labels: {
       extreme_fear: "Extreme fear",
       fear: "Fear",
@@ -57,6 +58,7 @@ const text = {
     brief: "每日简报",
     sources: "带来源的新闻",
     methodology: "确定性计算方法",
+    details: "查看因子明细和每日报告",
     labels: {
       extreme_fear: "极度恐惧",
       fear: "恐惧",
@@ -102,9 +104,15 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
   const summary = locale === "zh" ? snapshot.brief.summary_zh : snapshot.brief.summary;
   const highlights =
     locale === "zh" ? snapshot.brief.highlights_zh : snapshot.brief.highlights;
+  const tone =
+    snapshot.label === "extreme_fear" || snapshot.label === "fear"
+      ? "fear"
+      : snapshot.label === "extreme_greed" || snapshot.label === "greed"
+        ? "greed"
+        : "neutral";
 
   return (
-    <section className="intelligence panel" id="intelligence">
+    <section className={`intelligence panel sentiment-${tone}`} id="intelligence">
       <div className="intelligence-heading">
         <div>
           <p className="eyebrow">{t.eyebrow}</p>
@@ -121,6 +129,13 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
           <small>
             {t.asOf} {date}
           </small>
+        </div>
+        <div className="sentiment-meter" aria-label={`${snapshot.score} / 100`}>
+          <span className="meter-label fear">0</span>
+          <i>
+            <b style={{ left: `${snapshot.score}%` }} />
+          </i>
+          <span className="meter-label greed">100</span>
         </div>
         <div className="intelligence-kpis">
           <div>
@@ -142,8 +157,10 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <div className="intelligence-detail">
-        <div className="factor-list">
+      <details className="intelligence-disclosure">
+        <summary>{t.details}</summary>
+        <div className="intelligence-detail">
+          <div className="factor-list">
           <h3>{t.drivers}</h3>
           {snapshot.factors.map((factor) => (
             <a href={factor.source} key={factor.key} rel="noreferrer" target="_blank">
@@ -152,8 +169,8 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
               <strong>{factor.score.toFixed(0)}</strong>
             </a>
           ))}
-        </div>
-        <article className="daily-brief">
+          </div>
+          <article className="daily-brief">
           <div>
             <span className="eyebrow">{t.brief}</span>
             <a
@@ -178,8 +195,9 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
               </a>
             ))}
           </div>
-        </article>
-      </div>
+          </article>
+        </div>
+      </details>
     </section>
   );
 }

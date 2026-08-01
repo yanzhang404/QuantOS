@@ -14,16 +14,38 @@ import { DailyIntelligence } from "./daily-intelligence";
 import { StrategyWorkbench } from "./strategy-workbench";
 
 type Locale = "en" | "zh";
+type WorkspaceView = "overview" | "strategies" | "runs" | "data";
+
+const workspaceViews: WorkspaceView[] = ["overview", "strategies", "runs", "data"];
 
 const copy = {
   en: {
     workspace: "Workspace",
-    nav: [
-      "Research center",
-      "Strategy library",
-      "Runs & comparison",
-      "Data & reproducibility",
-    ],
+    nav: ["Overview", "Strategies", "Runs", "Data"],
+    viewEyebrows: {
+      overview: "Market & research pulse",
+      strategies: "Strategy workspace",
+      runs: "Immutable experiment evidence",
+      data: "Datasets & lineage",
+    },
+    viewTitles: {
+      overview: "Overview",
+      strategies: "Strategies",
+      runs: "Runs & comparison",
+      data: "Data & reproducibility",
+    },
+    overviewIntro:
+      "Start with market context and the latest reproducible evidence. Sentiment is context—not a trading signal.",
+    latestEvidence: "Latest strategy evidence",
+    openStrategy: "Open strategy workspace",
+    candidateQueue: "Candidate queue",
+    candidateNote: "Agent proposals require tests, robustness review, and owner approval.",
+    datasetHealth: "Dataset coverage",
+    datasetNote: "BTC/ETH 4h evidence loaded. Intraday and daily immutable datasets are next.",
+    runsIntro:
+      "Every result stays attributable to its dataset, parameters, costs, and Run ID.",
+    dataIntro:
+      "Inspect exactly which immutable market data supports the displayed evidence.",
     researchMode: "Research mode",
     liveDisabled: "Live trading disabled",
     strategyReview: "Strategy review / 001",
@@ -117,7 +139,29 @@ const copy = {
   },
   zh: {
     workspace: "工作台",
-    nav: ["研究中心", "策略库", "回测与对比", "数据与溯源"],
+    nav: ["总览", "策略", "运行记录", "数据"],
+    viewEyebrows: {
+      overview: "市场与研究脉搏",
+      strategies: "策略工作区",
+      runs: "不可变实验记录",
+      data: "数据集与溯源",
+    },
+    viewTitles: {
+      overview: "总览",
+      strategies: "策略",
+      runs: "运行记录与对比",
+      data: "数据与可复现性",
+    },
+    overviewIntro:
+      "先看市场环境，再查看最新的可复现实验。情绪只提供背景，不是交易信号。",
+    latestEvidence: "最新策略证据",
+    openStrategy: "打开策略工作区",
+    candidateQueue: "候选策略队列",
+    candidateNote: "Agent 提案必须通过测试、稳健性评审和所有者批准。",
+    datasetHealth: "数据覆盖",
+    datasetNote: "BTC/ETH 4小时证据已加载；日内与日线不可变数据集是下一步。",
+    runsIntro: "每个结果都关联到确切的数据集、参数、成本和 Run ID。",
+    dataIntro: "查看当前证据究竟使用了哪些不可变市场数据。",
     researchMode: "研究模式",
     liveDisabled: "实盘交易已禁用",
     strategyReview: "策略评审 / 001",
@@ -218,6 +262,7 @@ export default function Home() {
   const [asset, setAsset] = useState<Asset>("btc");
   const [period, setPeriod] = useState<Period>("evaluation");
   const [locale, setLocale] = useState<Locale>("en");
+  const [activeView, setActiveView] = useState<WorkspaceView>("overview");
   const t = copy[locale];
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
   const percent = useMemo(
@@ -251,6 +296,16 @@ export default function Home() {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
   }, [locale]);
 
+  useEffect(() => {
+    const syncView = () => {
+      const candidate = window.location.hash.slice(1) as WorkspaceView;
+      setActiveView(workspaceViews.includes(candidate) ? candidate : "overview");
+    };
+    syncView();
+    window.addEventListener("hashchange", syncView);
+    return () => window.removeEventListener("hashchange", syncView);
+  }, []);
+
   const runs = useMemo(() => getRuns(asset, period), [asset, period]);
   const donchian = runs.find((run) => run.strategy === "donchian-atr");
   const stress = period === "evaluation" ? getStressRun(asset) : undefined;
@@ -267,18 +322,16 @@ export default function Home() {
           <span>QuantOS</span>
         </div>
         <nav aria-label={t.workspace}>
-          <a className="nav-item active" href="#research">
-            {t.nav[0]}
-          </a>
-          <a className="nav-item" href="#strategies">
-            {t.nav[1]}
-          </a>
-          <a className="nav-item" href="#comparison">
-            {t.nav[2]}
-          </a>
-          <a className="nav-item" href="#provenance">
-            {t.nav[3]}
-          </a>
+          {workspaceViews.map((view, index) => (
+            <a
+              aria-current={activeView === view ? "page" : undefined}
+              className={`nav-item ${activeView === view ? "active" : ""}`}
+              href={`#${view}`}
+              key={view}
+            >
+              {t.nav[index]}
+            </a>
+          ))}
         </nav>
         <div className="app-header-actions">
           <div className="rail-status">
@@ -300,11 +353,11 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="content" id="research">
+      <section className="content" id={activeView}>
         <header className="topbar">
           <div>
-            <p className="eyebrow">{t.strategyReview}</p>
-            <h1>Donchian ATR</h1>
+            <p className="eyebrow">{t.viewEyebrows[activeView]}</p>
+            <h1>{t.viewTitles[activeView]}</h1>
           </div>
           <div className="header-actions">
             <div className="as-of">
@@ -314,94 +367,91 @@ export default function Home() {
           </div>
         </header>
 
-        <DailyIntelligence locale={locale} />
+        {activeView === "overview" ? (
+          <>
+            <p className="view-intro">{t.overviewIntro}</p>
+            <DailyIntelligence locale={locale} />
+            <section className="overview-grid">
+              <article className="panel overview-evidence">
+                <div>
+                  <p className="eyebrow">{t.latestEvidence}</p>
+                  <h2>Donchian ATR</h2>
+                  <span>BTC / USDT · 4h · {t.periods[period]}</span>
+                </div>
+                <dl>
+                  <div>
+                    <dt>{t.totalReturn}</dt>
+                    <dd className={metricTone(donchian?.total_return ?? 0)}>
+                      {percent.format(donchian?.total_return ?? 0)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t.sharpe}</dt>
+                    <dd>{number.format(donchian?.sharpe_ratio ?? 0)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.maxDrawdown}</dt>
+                    <dd>{percent.format(donchian?.max_drawdown ?? 0)}</dd>
+                  </div>
+                </dl>
+                <a className="text-action" href="#strategies">
+                  {t.openStrategy} →
+                </a>
+              </article>
+              <article className="panel overview-status-card">
+                <p className="eyebrow">{t.candidateQueue}</p>
+                <strong>01</strong>
+                <span>Donchian ATR · candidate</span>
+                <p>{t.candidateNote}</p>
+              </article>
+              <article className="panel overview-status-card">
+                <p className="eyebrow">{t.datasetHealth}</p>
+                <strong>2 × 4h</strong>
+                <span>BTCUSDT · ETHUSDT</span>
+                <p>{t.datasetNote}</p>
+              </article>
+            </section>
+          </>
+        ) : null}
 
-        <section className="hero-grid">
-          <article className="verdict-card">
-            <div className="card-label">
-              <span className="pulse" />
-              {t.verdict}
-            </div>
-            <h2>
-              {t.drawdownControlled}
-              <br />
-              {t.returnEdge}{" "}
-              <em>{asset === "btc" ? t.unproven : t.modest}.</em>
-            </h2>
-            <p>{t.hero}</p>
-            <div className="verdict-meta">
-              {t.tags.map((tag) => (
-                <span key={tag}>{tag}</span>
+        {activeView === "strategies" ? (
+          <StrategyWorkbench
+            asset={asset}
+            locale={locale}
+            onAssetChange={setAsset}
+            onPeriodChange={setPeriod}
+            period={period}
+          />
+        ) : null}
+
+        {activeView === "runs" ? (
+          <>
+            <p className="view-intro">{t.runsIntro}</p>
+            <div className="view-filters" aria-label={t.filters}>
+              {(["btc", "eth"] as const).map((value) => (
+                <button
+                  aria-pressed={asset === value}
+                  className={asset === value ? "selected" : ""}
+                  key={value}
+                  onClick={() => setAsset(value)}
+                  type="button"
+                >
+                  {value.toUpperCase()} / USDT
+                </button>
+              ))}
+              {(["evaluation", "development"] as const).map((value) => (
+                <button
+                  aria-pressed={period === value}
+                  className={period === value ? "selected" : ""}
+                  key={value}
+                  onClick={() => setPeriod(value)}
+                  type="button"
+                >
+                  {t.periods[value]}
+                </button>
               ))}
             </div>
-          </article>
-
-          <article className="control-card" aria-label={t.filters}>
-            <div className="control-group">
-              <span className="control-label">{t.market}</span>
-              <div className="segment">
-                {(["btc", "eth"] as const).map((value) => (
-                  <button
-                    aria-pressed={asset === value}
-                    className={asset === value ? "selected" : ""}
-                    key={value}
-                    onClick={() => setAsset(value)}
-                    type="button"
-                  >
-                    {value.toUpperCase()}
-                    <small>USDT</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="control-group">
-              <span className="control-label">{t.observation}</span>
-              <div className="segment">
-                {(["evaluation", "development"] as const).map((value) => (
-                  <button
-                    aria-pressed={period === value}
-                    className={period === value ? "selected" : ""}
-                    key={value}
-                    onClick={() => setPeriod(value)}
-                    type="button"
-                  >
-                    {value === "evaluation" ? "2025—26" : "2022—24"}
-                    <small>{t.periods[value]}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section className="research-lifecycle panel">
-          <div className="lifecycle-heading">
-            <div>
-              <p className="eyebrow">{t.discovery}</p>
-              <h2>{t.discoveryTitle}</h2>
-            </div>
-            <p>{t.discoveryIntro}</p>
-          </div>
-          <ol>
-            {t.lifecycle.map(([title, detail], index) => (
-              <li className={index === 3 ? "pending" : ""} key={title}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{title}</strong>
-                <p>{detail}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <StrategyWorkbench
-          asset={asset}
-          locale={locale}
-          onAssetChange={setAsset}
-          onPeriodChange={setPeriod}
-          period={period}
-        />
-
-        <section className="analysis-grid" id="comparison">
+            <section className="analysis-grid" id="comparison">
           <article className="panel comparison">
             <div className="panel-heading">
               <div>
@@ -494,9 +544,8 @@ export default function Home() {
               </>
             )}
           </article>
-        </section>
-
-        <section className="lower-grid">
+            </section>
+            <section className="lower-grid runs-review">
           <article className="panel review-panel">
             <div className="panel-heading">
               <div>
@@ -522,7 +571,15 @@ export default function Home() {
             </ul>
           </article>
 
-          <article className="panel provenance" id="provenance">
+            </section>
+          </>
+        ) : null}
+
+        {activeView === "data" ? (
+          <>
+            <p className="view-intro">{t.dataIntro}</p>
+            <section className="data-layout">
+              <article className="panel provenance" id="provenance">
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">{t.evidenceTrail}</p>
@@ -550,8 +607,33 @@ export default function Home() {
             </dl>
             <p className="provenance-explanation">{t.lineageExplanation}</p>
             <p className="provenance-note">{t.provenance}</p>
-          </article>
-        </section>
+              </article>
+              <article className="panel interval-coverage">
+                <div className="panel-heading">
+                  <div>
+                    <p className="eyebrow">{t.datasetHealth}</p>
+                    <h3>BTC / ETH</h3>
+                  </div>
+                  <span className="badge warning">2 / 10</span>
+                </div>
+                <div className="coverage-table">
+                  {["5m", "15m", "1h", "4h", "1d"].map((interval) => (
+                    <div key={interval}>
+                      <strong>{interval}</strong>
+                      <span className={interval === "4h" ? "loaded" : "pending"}>
+                        {interval === "4h" ? t.verified : "Pending"}
+                      </span>
+                      <span className={interval === "4h" ? "loaded" : "pending"}>
+                        {interval === "4h" ? t.verified : "Pending"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p>{t.datasetNote}</p>
+              </article>
+            </section>
+          </>
+        ) : null}
 
         <footer>
           <span>{t.product}</span>

@@ -27,3 +27,4 @@ Accepted decisions:
 - [ADR-0010: Serve experiment visualization as a derived read model](0010-experiment-visualization-read-model.md)
 - [ADR-0011: Separate strategy library from research lifecycle](0011-strategy-library-and-research-lifecycle.md)
 - [ADR-0012: Separate deterministic sentiment scoring from agent-authored daily intelligence](0012-deterministic-daily-market-intelligence.md)
+- [ADR-0013: Organize the product workspace around four result-first views](0013-result-first-product-workspace.md)
