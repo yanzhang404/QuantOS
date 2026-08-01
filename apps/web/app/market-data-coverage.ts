@@ -9,6 +9,7 @@ type CoverageMember = {
   dataset_version: string;
   content_sha256: string;
   row_count: number;
+  missing_interval_count: number;
   status: "verified";
 };
 
@@ -18,6 +19,8 @@ type CoverageEvidence = {
   requested_start: string;
   requested_end: string;
   member_count: number;
+  total_row_count: number;
+  missing_interval_count: number;
   members: CoverageMember[];
 };
 

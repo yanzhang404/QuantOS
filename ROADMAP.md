@@ -40,14 +40,14 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 - Tool-driven AI research assistant for querying and reviewing artifacts.
 - Daily source-linked market brief and deterministic sentiment index. **Initial contract, local publisher, read-only API, and homepage view implemented.**
 - Manifest-driven strategy parameters and candidate-to-promotion lifecycle. **Initial catalog and evidence view implemented.**
-- Multi-timeframe research datasets. **BTC/ETH 5m/15m/1h/4h/1d immutable bundle and coverage evidence implemented; backtest task resolution pending.**
+- Multi-timeframe research datasets. **BTC/ETH 5m/15m/1h/4h/1d immutable bundle, 2021-to-current coverage evidence, and incremental current-data sync implemented; backtest task resolution pending.**
 - Result-first product information architecture. **Overview, Strategies, Runs,
   and Data views accepted; initial workspace split in progress.**
 
 The accepted delivery order for the remaining V0.3 work is:
 
 1. split and simplify the four product views; **Implemented.**
-2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d; **Implemented for a fixed 2024 Q1 research bundle.**
+2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d; **Implemented from 2021-01-01 through the latest complete UTC day, with immutable incremental refresh.**
 3. add immutable Run filtering, archival, and up-to-four comparison;
 4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market gates;
 5. add candidate strategy lifecycle and bounded Agent proposal contracts;

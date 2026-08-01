@@ -40,6 +40,7 @@ class DatasetBundleMember:
     requested_start: str
     requested_end: str
     dataset_path: str
+    missing_interval_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +70,15 @@ class DatasetBundleManifest:
                 requested_start=str(raw["requested_start"]),
                 requested_end=str(raw["requested_end"]),
                 created_at=str(raw["created_at"]),
-                members=tuple(DatasetBundleMember(**item) for item in raw["members"]),
+                members=tuple(
+                    DatasetBundleMember(
+                        **item,
+                        missing_interval_count=int(item.get("missing_interval_count", 0)),
+                    )
+                    if "missing_interval_count" not in item
+                    else DatasetBundleMember(**item)
+                    for item in raw["members"]
+                ),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise DatasetError("invalid dataset bundle manifest") from exc
@@ -133,6 +142,7 @@ class DatasetBundleStore:
                     requested_start=manifest.requested_start,
                     requested_end=manifest.requested_end,
                     dataset_path=relative_path.as_posix(),
+                    missing_interval_count=int(manifest.validation.get("missing_count", 0)),
                 )
             )
 
@@ -183,6 +193,23 @@ class DatasetBundleStore:
             raise DatasetError("dataset bundle manifest must contain an object")
         return DatasetBundleManifest.from_dict(raw)
 
+    def find_latest(self, *, requested_start: str) -> PublishedDatasetBundle | None:
+        """Find and verify the newest bundle for one historical start boundary."""
+
+        parent = self.root / "bundles" / "market" / "spot" / "exchange=binance"
+        candidates: list[tuple[str, str, Path, DatasetBundleManifest]] = []
+        for manifest_path in parent.glob("version=*/manifest.json"):
+            manifest = self.load_manifest(manifest_path)
+            if manifest.requested_start == requested_start:
+                candidates.append(
+                    (manifest.requested_end, manifest.created_at, manifest_path.parent, manifest)
+                )
+        if not candidates:
+            return None
+        _, _, path, manifest = max(candidates, key=lambda item: (item[0], item[1]))
+        self.verify(path)
+        return PublishedDatasetBundle(path, manifest)
+
     def verify(self, bundle: Path) -> DatasetBundleManifest:
         manifest = self.load_manifest(bundle)
         if manifest.schema_version != BUNDLE_SCHEMA_VERSION:
@@ -202,6 +229,7 @@ class DatasetBundleStore:
                 or source.row_count != member.row_count
                 or source.requested_start != member.requested_start
                 or source.requested_end != member.requested_end
+                or int(source.validation.get("missing_count", 0)) != member.missing_interval_count
             ):
                 raise DatasetError(f"dataset bundle member identity mismatch: {dataset_path}")
         digest = _bundle_hash(
@@ -226,6 +254,8 @@ def coverage_evidence(manifest: DatasetBundleManifest) -> dict[str, Any]:
         "requested_start": manifest.requested_start,
         "requested_end": manifest.requested_end,
         "member_count": len(manifest.members),
+        "total_row_count": sum(item.row_count for item in manifest.members),
+        "missing_interval_count": sum(item.missing_interval_count for item in manifest.members),
         "members": [
             {
                 "symbol": item.symbol,
@@ -233,6 +263,7 @@ def coverage_evidence(manifest: DatasetBundleManifest) -> dict[str, Any]:
                 "dataset_version": item.dataset_version,
                 "content_sha256": item.content_sha256,
                 "row_count": item.row_count,
+                "missing_interval_count": item.missing_interval_count,
                 "status": "verified",
             }
             for item in manifest.members

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from enum import StrEnum
 from typing import Any, ClassVar
 
@@ -130,4 +130,6 @@ class Kline:
 
 
 def _decimal_string(value: Decimal) -> str:
-    return format(value.quantize(DECIMAL_QUANTUM), "f")
+    with localcontext() as context:
+        context.prec = 38
+        return format(value.quantize(DECIMAL_QUANTUM), "f")

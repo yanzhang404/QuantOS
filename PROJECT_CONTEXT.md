@@ -19,9 +19,11 @@ requires a bounded external Agent/OpenClaw adapter; strategy robustness,
 feature lineage, walk-forward validation, and broader market datasets remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
-and 1d over a fixed 2024 Q1 research range. The next boundary resolves those
-exact versions into immutable backtest Runs before richer robustness and Agent
-candidate workflows. Paper reproduction remains a later research workflow.
+and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync
+extends the newest matching bundle without mutating prior evidence and records
+real exchange maintenance gaps. The next boundary resolves those exact versions
+into immutable backtest Runs before richer robustness and Agent candidate
+workflows. Paper reproduction remains a later research workflow.
 
 ## Product principles
 

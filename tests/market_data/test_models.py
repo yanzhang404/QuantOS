@@ -60,3 +60,23 @@ def test_normalizes_binance_row() -> None:
 def test_rejects_short_binance_row() -> None:
     with pytest.raises(DownloadError, match="expected at least 11"):
         Kline.from_binance_row("BTCUSDT", Interval.ONE_HOUR, [1, 2])
+
+
+def test_canonicalizes_decimal128_scale_without_default_context_overflow() -> None:
+    row = [
+        1_704_067_200_000,
+        "42000.1",
+        "42100.2",
+        "41900.3",
+        "42050.4",
+        "10.5",
+        1_704_070_799_999,
+        "12345678901234567890.123456789012345678",
+        100,
+        "5.2",
+        "218000.3",
+    ]
+
+    kline = Kline.from_binance_row("BTCUSDT", Interval.ONE_HOUR, row)
+
+    assert kline.canonical_values()[10] == "12345678901234567890.123456789012345678"

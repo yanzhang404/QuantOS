@@ -151,6 +151,10 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
   const evidence = JSON.parse(coverage);
   assert.equal(evidence.schema_version, "dataset-coverage.v1");
   assert.equal(evidence.member_count, 10);
+  assert.equal(evidence.requested_start, "2021-01-01T00:00:00Z");
+  assert.equal(evidence.requested_end, "2026-08-01T00:00:00Z");
+  assert.equal(evidence.total_row_count, 1690946);
+  assert.equal(evidence.missing_interval_count, 594);
   assert.deepEqual(
     [...new Set(evidence.members.map((member) => member.interval))],
     ["5m", "15m", "1h", "4h", "1d"],
@@ -160,6 +164,8 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
     ["BTCUSDT", "ETHUSDT"],
   );
   assert.match(page, /marketDataCoverage\.member_count/);
+  assert.match(page, /marketDataCoverage\.total_row_count/);
+  assert.match(page, /marketDataCoverage\.missing_interval_count/);
   assert.match(page, /getCoverageMember\("BTCUSDT", interval\)/);
   assert.doesNotMatch(page, /interval === "4h" \? t\.verified : "Pending"/);
 });

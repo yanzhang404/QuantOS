@@ -34,6 +34,28 @@ Already published content-addressed datasets may be reused safely. Bundle
 identity is a SHA-256 digest over the schema, requested range, and ordered member
 identities. Repeating the same synchronization is idempotent.
 
+Current-data synchronization uses the latest fully closed boundary shared by
+the complete matrix. Because the matrix contains `1d`, this is the current UTC
+midnight boundary; data ending at that boundary contains the daily candle that
+opened one day earlier and no incomplete daily candle. The command discovers a
+verified bundle with the requested historical start, downloads only each
+member's missing tail, combines it with the prior immutable dataset, validates
+the full range, and publishes new dataset and bundle versions. It never mutates
+the source bundle or its members.
+
+Binance maintenance windows can omit expected intervals or shorten the reported
+close time of the final bar before a halt. QuantOS preserves that source truth:
+open times must remain aligned, unique, ordered, and reach both requested range
+boundaries, while missing intervals are counted in dataset and coverage
+evidence. The ingestion layer never synthesizes prices or volume to hide a
+source gap.
+
+If no compatible source bundle exists, current-data synchronization performs a
+full historical backfill. If the source already ends at the target boundary,
+the operation is a no-op and returns the same bundle identity. A failed member
+may leave reusable content-addressed dataset versions below the ignored data
+root, but it cannot publish a partial bundle or coverage claim.
+
 Generated Parquet data and local bundle manifests stay below the ignored data
 root. A compact, repository-owned coverage evidence file may be exported from a
 verified bundle for the product workspace. That evidence records the bundle
@@ -54,6 +76,8 @@ Positive:
 - partial downloads cannot be mistaken for a complete research input set;
 - repeated synchronization produces the same identity for the same normalized
   rows and range;
+- daily refreshes transfer only missing Klines after the first backfill;
+- every refresh retains the prior bundle as reproducible Run evidence;
 - no authenticated exchange or trading capability is introduced.
 
 Tradeoffs:
@@ -62,5 +86,7 @@ Tradeoffs:
 - the initial common range must align to every requested interval, which means
   day boundaries when `1d` is included;
 - local data storage grows materially for long `5m` ranges;
+- extending a dataset currently revalidates and republishes its complete
+  normalized history, trading local compute for a simple deterministic contract;
 - coverage evidence is a compact projection and must always retain its source
   bundle identity.

@@ -14,7 +14,7 @@ from .bundle import DatasetBundleStore, write_coverage_evidence
 from .errors import MarketDataError
 from .models import Interval
 from .query import json_value, query_klines
-from .service import download_dataset, sync_product_matrix
+from .service import download_dataset, sync_current_product_matrix, sync_product_matrix
 from .storage import DatasetStore
 
 
@@ -46,6 +46,16 @@ def register_parser(commands: Any) -> None:
     sync_matrix.add_argument("--end", required=True, type=_datetime, help="exclusive UTC ISO-8601")
     sync_matrix.add_argument("--data-root", type=Path, default=Path("data"))
     sync_matrix.add_argument("--base-url", default=DEFAULT_BASE_URL, help=argparse.SUPPRESS)
+
+    sync_current = data_commands.add_parser(
+        "sync-current", help="backfill or increment the matrix to the latest closed UTC day"
+    )
+    sync_current.add_argument(
+        "--start", required=True, type=_datetime, help="fixed historical UTC start"
+    )
+    sync_current.add_argument("--data-root", type=Path, default=Path("data"))
+    sync_current.add_argument("--coverage-output", type=Path)
+    sync_current.add_argument("--base-url", default=DEFAULT_BASE_URL, help=argparse.SUPPRESS)
 
     export_coverage = data_commands.add_parser(
         "export-coverage", help="export compact verified coverage evidence"
@@ -104,6 +114,28 @@ def run(args: argparse.Namespace) -> int:
                     }
                     for item in result.manifest.members
                 ],
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "sync-current":
+        result = sync_current_product_matrix(
+            start=args.start,
+            data_root=args.data_root,
+            base_url=args.base_url,
+        )
+        if args.coverage_output is not None:
+            write_coverage_evidence(result.manifest, args.coverage_output)
+        _print_json(
+            {
+                "bundle": str(result.path),
+                "bundle_version": result.manifest.bundle_version,
+                "requested_start": result.manifest.requested_start,
+                "requested_end": result.manifest.requested_end,
+                "members": len(result.manifest.members),
+                "rows": sum(item.row_count for item in result.manifest.members),
+                "coverage_output": (
+                    str(args.coverage_output) if args.coverage_output is not None else None
+                ),
             }
         )
         return 0

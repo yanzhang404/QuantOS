@@ -90,7 +90,9 @@ benchmark strategies expose different editable parameters without duplicating
 form definitions.
 
 The product recognizes `5m`, `15m`, `1h`, `4h`, and `1d`. The Data and Overview
-views import a compact projection of verified bundle `27d21dafc1ae305e`, which
-contains BTCUSDT and ETHUSDT for all five intervals over 2024 Q1. Strategy
+views import a compact projection of verified bundle `47a8b29be444e2ba`, which
+contains BTCUSDT and ETHUSDT for all five intervals from 2021-01-01 through the
+exclusive 2026-08-01 UTC boundary. The workspace exposes the latest boundary,
+total row count, and preserved exchange-source gaps. Strategy
 visualization and committed comparison evidence remain 4-hour data until the
 backtest task resolver is connected to these new immutable versions.

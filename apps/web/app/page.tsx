@@ -47,10 +47,13 @@ const copy = {
     candidateNote: "Agent proposals require tests, robustness review, and owner approval.",
     datasetHealth: "Dataset coverage",
     datasetNote:
-      "BTC/ETH 5m–1d are verified for 2024 Q1. Every cell resolves to an immutable dataset version.",
+      "BTC/ETH 5m–1d are verified through the latest complete UTC day. Source maintenance gaps remain visible and are never filled with synthetic bars.",
     coverageWindow: "Verified coverage window",
     bundle: "Dataset bundle",
     barsUnit: "bars",
+    totalBars: "Total verified bars",
+    sourceGaps: "Source gaps",
+    currentThrough: "Current through",
     runsIntro:
       "Every result stays attributable to its dataset, parameters, costs, and Run ID.",
     dataIntro:
@@ -169,10 +172,13 @@ const copy = {
     candidateNote: "Agent 提案必须通过测试、稳健性评审和所有者批准。",
     datasetHealth: "数据覆盖",
     datasetNote:
-      "BTC/ETH 的 5分钟至日线数据已完成 2024 年第一季度验证，每个单元格均对应不可变数据版本。",
+      "BTC/ETH 的 5 分钟至日线数据已验证至最近完整 UTC 日；交易所维护造成的历史缺口会如实展示，不使用合成 K 线填补。",
     coverageWindow: "已验证覆盖区间",
     bundle: "数据集 Bundle",
     barsUnit: "根 K 线",
+    totalBars: "已验证 K 线总数",
+    sourceGaps: "数据源缺口",
+    currentThrough: "最新数据截至",
     runsIntro: "每个结果都关联到确切的数据集、参数、成本和 Run ID。",
     dataIntro: "查看当前证据究竟使用了哪些不可变市场数据。",
     researchMode: "研究模式",
@@ -419,8 +425,10 @@ export default function Home() {
               </article>
               <article className="panel overview-status-card">
                 <p className="eyebrow">{t.datasetHealth}</p>
-                <strong>{marketDataCoverage.member_count} / 10</strong>
-                <span>BTCUSDT · ETHUSDT · 5m–1d</span>
+                <strong>{marketDataCoverage.total_row_count.toLocaleString(localeTag)}</strong>
+                <span>
+                  {t.currentThrough} {marketDataCoverage.requested_end.slice(0, 10)} UTC
+                </span>
                 <p>{t.datasetNote}</p>
               </article>
             </section>
@@ -662,6 +670,14 @@ export default function Home() {
                   <div>
                     <dt>{t.bundle}</dt>
                     <dd>{marketDataCoverage.bundle_version}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.totalBars}</dt>
+                    <dd>{marketDataCoverage.total_row_count.toLocaleString(localeTag)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.sourceGaps}</dt>
+                    <dd>{marketDataCoverage.missing_interval_count.toLocaleString(localeTag)}</dd>
                   </div>
                 </dl>
                 <p>{t.datasetNote}</p>

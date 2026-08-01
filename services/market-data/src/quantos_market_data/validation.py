@@ -89,7 +89,8 @@ def validate_klines(
         open_ms = int(kline.open_time.timestamp() * 1_000)
         if (
             open_ms % first.interval.milliseconds
-            or kline.close_time - kline.open_time != expected_close_delta
+            or kline.close_time < kline.open_time
+            or kline.close_time - kline.open_time > expected_close_delta
         ):
             invalid_time_count += 1
 
@@ -114,8 +115,6 @@ def validate_klines(
 
     if duplicate_count:
         errors.append(f"found {duplicate_count} duplicate open times")
-    if missing_count:
-        errors.append(f"found {missing_count} missing intervals")
     if invalid_time_count:
         errors.append(f"found {invalid_time_count} invalid time ranges")
     if invalid_ohlc_count:
@@ -130,17 +129,13 @@ def validate_klines(
         else:
             normalized_start = requested_start.astimezone(UTC)
             normalized_end = requested_end.astimezone(UTC)
-            expected_rows = int((normalized_end - normalized_start) / expected_delta)
             if normalized_start >= normalized_end:
                 errors.append("requested range must be positive")
             elif (
                 klines[0].open_time != normalized_start
                 or klines[-1].open_time + expected_delta != normalized_end
-                or len(klines) != expected_rows
             ):
-                errors.append(
-                    f"dataset does not fully cover requested range; expected {expected_rows} rows"
-                )
+                errors.append("dataset does not reach both requested range boundaries")
 
     return ValidationReport(
         row_count=len(klines),

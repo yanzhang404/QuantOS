@@ -104,6 +104,92 @@ def test_sync_product_matrix_downloads_every_member(monkeypatch, tmp_path, start
     assert len(bundle.manifest.members) == 10
 
 
+def test_extend_dataset_downloads_only_missing_tail(monkeypatch, tmp_path, start_time) -> None:
+    source = DatasetStore(tmp_path).publish(
+        [make_kline(start_time), make_kline(start_time + timedelta(hours=1))],
+        requested_start=start_time,
+        requested_end=start_time + timedelta(hours=2),
+        source="https://example.test/api/v3/klines",
+    )
+    observed: dict[str, object] = {}
+
+    class FakeClient:
+        def __init__(self, *, base_url: str) -> None:
+            observed["base_url"] = base_url
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return None
+
+        def fetch_klines(self, **kwargs):
+            observed.update(kwargs)
+            return [make_kline(start_time + timedelta(hours=2))]
+
+    monkeypatch.setattr(service, "BinanceSpotClient", FakeClient)
+    refreshed = service.extend_dataset(
+        dataset=source.path,
+        end=start_time + timedelta(hours=3),
+        data_root=tmp_path,
+        base_url="https://example.test",
+        now=start_time + timedelta(days=1),
+    )
+
+    assert observed["start"] == start_time + timedelta(hours=2)
+    assert refreshed.path != source.path
+    assert refreshed.manifest.row_count == 3
+    assert source.manifest.row_count == 2
+
+
+def test_extend_dataset_is_noop_at_existing_boundary(monkeypatch, tmp_path, start_time) -> None:
+    source = DatasetStore(tmp_path).publish(
+        [make_kline(start_time)],
+        requested_start=start_time,
+        requested_end=start_time + timedelta(hours=1),
+        source="https://example.test/api/v3/klines",
+    )
+    monkeypatch.setattr(
+        service,
+        "BinanceSpotClient",
+        lambda **_: pytest.fail("no network call expected"),
+    )
+
+    refreshed = service.extend_dataset(
+        dataset=source.path,
+        end=start_time + timedelta(hours=1),
+        data_root=tmp_path,
+        base_url="https://example.test",
+    )
+
+    assert refreshed.path == source.path
+
+
+def test_latest_closed_matrix_end_uses_utc_midnight() -> None:
+    observed = datetime(2026, 8, 1, 16, 30, tzinfo=UTC)
+
+    assert service.latest_closed_matrix_end(observed) == datetime(2026, 8, 1, tzinfo=UTC)
+
+
+def test_sync_current_backfills_when_start_has_no_bundle(monkeypatch, tmp_path, start_time) -> None:
+    sentinel = object()
+    observed: dict[str, object] = {}
+
+    def fake_sync(**kwargs):
+        observed.update(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(service, "sync_product_matrix", fake_sync)
+    result = service.sync_current_product_matrix(
+        start=start_time,
+        data_root=tmp_path,
+        now=start_time + timedelta(days=3, hours=12),
+    )
+
+    assert result is sentinel
+    assert observed["end"] == start_time + timedelta(days=3)
+
+
 def test_cli_download_prints_machine_readable_result(monkeypatch, capsys, tmp_path) -> None:
     published = SimpleNamespace(
         path=tmp_path / "version=abc",
@@ -157,6 +243,41 @@ def test_cli_sync_matrix_prints_exact_member_identities(monkeypatch, capsys, tmp
     assert payload["members"] == [
         {"dataset_version": "abc", "interval": "5m", "rows": 288, "symbol": "BTCUSDT"}
     ]
+
+
+def test_cli_sync_current_exports_coverage(monkeypatch, capsys, tmp_path) -> None:
+    manifest = SimpleNamespace(
+        bundle_version="current",
+        requested_start="2021-01-01T00:00:00Z",
+        requested_end="2026-08-01T00:00:00Z",
+        members=(SimpleNamespace(row_count=100), SimpleNamespace(row_count=50)),
+    )
+    published = SimpleNamespace(path=tmp_path / "version=current", manifest=manifest)
+    monkeypatch.setattr(cli, "sync_current_product_matrix", lambda **_: published)
+    observed: dict[str, object] = {}
+    monkeypatch.setattr(
+        cli,
+        "write_coverage_evidence",
+        lambda value, output: observed.update(manifest=value, output=output),
+    )
+    output = tmp_path / "coverage.json"
+
+    result = cli.main(
+        [
+            "data",
+            "sync-current",
+            "--start",
+            "2021-01-01T00:00:00Z",
+            "--coverage-output",
+            str(output),
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert payload["bundle_version"] == "current"
+    assert payload["rows"] == 150
+    assert observed == {"manifest": manifest, "output": output}
 
 
 def test_cli_validate_and_query(capsys, monkeypatch, tmp_path, start_time) -> None:
