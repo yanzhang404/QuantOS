@@ -15,6 +15,7 @@ import (
 	"github.com/yanzhang404/QuantOS/apps/api/internal/backtest"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/intelligence"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/readiness"
+	"github.com/yanzhang404/QuantOS/apps/api/internal/robustness"
 )
 
 func main() {
@@ -31,6 +32,11 @@ func main() {
 			"intelligence-root",
 			envOrDefault("QUANTOS_INTELLIGENCE_ROOT", "var/quantos/intelligence"),
 			"trusted daily intelligence snapshot root",
+		)
+		robustnessRoot = flag.String(
+			"robustness-root",
+			envOrDefault("QUANTOS_ROBUSTNESS_ROOT", "artifacts/robustness"),
+			"trusted robustness review root",
 		)
 		allowedOrigin = flag.String(
 			"allowed-origin",
@@ -64,7 +70,7 @@ func main() {
 	orchestrator := backtest.NewOrchestrator(store, runner, *queueSize, nil)
 	defer orchestrator.Close()
 	experiments := backtest.NewExperimentStore(filepath.Clean(*artifactRoot))
-	for _, root := range []string{*artifactRoot, *intelligenceRoot} {
+	for _, root := range []string{*artifactRoot, *intelligenceRoot, *robustnessRoot} {
 		if err := os.MkdirAll(filepath.Clean(root), 0o755); err != nil {
 			log.Fatalf("create persistence root %s: %v", root, err)
 		}
@@ -75,6 +81,7 @@ func main() {
 		ArtifactRoot:     filepath.Clean(*artifactRoot),
 		StateRoot:        filepath.Clean(*stateRoot),
 		IntelligenceRoot: filepath.Clean(*intelligenceRoot),
+		RobustnessRoot:   filepath.Clean(*robustnessRoot),
 		UVBinary:         *uvBinary,
 		RequiredBundle:   *requiredBundle,
 	}
@@ -83,6 +90,20 @@ func main() {
 		"/api/v1/intelligence/",
 		intelligence.NewHTTPHandler(
 			intelligence.NewStore(filepath.Clean(*intelligenceRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/api/v1/robustness",
+		robustness.NewHTTPHandler(
+			robustness.NewStore(filepath.Clean(*robustnessRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/api/v1/robustness/",
+		robustness.NewHTTPHandler(
+			robustness.NewStore(filepath.Clean(*robustnessRoot)),
 			*allowedOrigin,
 		),
 	)

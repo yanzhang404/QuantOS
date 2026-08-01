@@ -86,6 +86,11 @@ and archive filtering. A researcher may select two to four Runs for normalized
 equity comparison, inspect metric/input differences, and reversibly archive a
 Run without changing its immutable experiment artifacts.
 
+The same view reads the latest validated robustness review and shows four
+explicit promotion gates. Green/red status always includes PASS/FAIL text and a
+reason. Passing supports a later human promotion decision and never changes a
+strategy lifecycle state automatically.
+
 ## Strategy manifests and intervals
 
 The versioned strategy catalog supplies category, lifecycle stage,

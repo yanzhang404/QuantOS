@@ -109,3 +109,90 @@ class ResearchStudy:
     test_run_id: str
     stress_run_id: str
     findings: tuple[ReviewFinding, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessConfig:
+    fold_count: int = 3
+    min_bars_per_window: int = 20
+    minimum_positive_fold_ratio: Decimal = Decimal("0.6")
+    neighbor_retention_ratio: Decimal = Decimal("0.5")
+    cost_retention_ratio: Decimal = Decimal("0.5")
+
+    def __post_init__(self) -> None:
+        if self.fold_count < 2 or self.fold_count > 10:
+            raise ResearchConfigurationError("fold_count must be between 2 and 10")
+        if self.min_bars_per_window < 3:
+            raise ResearchConfigurationError("min_bars_per_window must be at least 3")
+        for name, value in (
+            ("minimum_positive_fold_ratio", self.minimum_positive_fold_ratio),
+            ("neighbor_retention_ratio", self.neighbor_retention_ratio),
+            ("cost_retention_ratio", self.cost_retention_ratio),
+        ):
+            if value <= 0 or value > 1:
+                raise ResearchConfigurationError(f"{name} must be greater than 0 and at most 1")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fold_count": self.fold_count,
+            "min_bars_per_window": self.min_bars_per_window,
+            "minimum_positive_fold_ratio": str(self.minimum_positive_fold_ratio),
+            "neighbor_retention_ratio": str(self.neighbor_retention_ratio),
+            "cost_retention_ratio": str(self.cost_retention_ratio),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessRun:
+    label: str
+    symbol: str
+    fast_period: int
+    slow_period: int
+    run_id: str
+    result: BacktestResult
+
+
+@dataclass(frozen=True, slots=True)
+class WalkForwardFold:
+    index: int
+    train: tuple[Kline, ...]
+    validation: tuple[Kline, ...]
+    test: tuple[Kline, ...]
+    winner_fast_period: int
+    winner_slow_period: int
+    validation_run_id: str
+    test_run_id: str
+    test_result: BacktestResult
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessGate:
+    name: str
+    passed: bool
+    reason: str
+    observations: dict[str, Any]
+    run_ids: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "passed": self.passed,
+            "reason": self.reason,
+            "observations": self.observations,
+            "run_ids": list(self.run_ids),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessReview:
+    config: RobustnessConfig
+    research_config: ResearchConfig
+    primary_study: ResearchStudy
+    folds: tuple[WalkForwardFold, ...]
+    neighbors: tuple[RobustnessRun, ...]
+    markets: tuple[RobustnessRun, ...]
+    gates: tuple[RobustnessGate, ...]
+
+    @property
+    def passed(self) -> bool:
+        return all(gate.passed for gate in self.gates)

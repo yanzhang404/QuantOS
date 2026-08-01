@@ -18,6 +18,8 @@ The normative language-neutral schema is
 | `GET` | `/api/v1/experiments` | Filter saved completed Run summaries |
 | `PUT` | `/api/v1/experiment-archives/{run_id}` | Archive a Run in the review catalog |
 | `DELETE` | `/api/v1/experiment-archives/{run_id}` | Restore an archived Run |
+| `GET` | `/api/v1/robustness` | List validated robustness review summaries |
+| `GET` | `/api/v1/robustness/{review_id}` | Read one complete robustness review |
 | `GET` | `/api/v1/intelligence/latest` | Read the latest validated daily brief and sentiment snapshot |
 
 Submitting the same HTTP request twice with one idempotency key returns the same

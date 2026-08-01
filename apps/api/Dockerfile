@@ -19,6 +19,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     QUANTOS_LISTEN=0.0.0.0:8080 \
     QUANTOS_DATA_ROOT=/var/lib/quantos/data \
     QUANTOS_ARTIFACT_ROOT=/var/lib/quantos/artifacts/experiments \
+    QUANTOS_ROBUSTNESS_ROOT=/var/lib/quantos/artifacts/robustness \
     QUANTOS_STATE_ROOT=/var/lib/quantos/tasks \
     QUANTOS_INTELLIGENCE_ROOT=/var/lib/quantos/intelligence
 
@@ -36,6 +37,7 @@ RUN useradd --create-home --uid 10001 quantos \
     && mkdir -p \
         /var/lib/quantos/data \
         /var/lib/quantos/artifacts/experiments \
+        /var/lib/quantos/artifacts/robustness \
         /var/lib/quantos/tasks \
         /var/lib/quantos/intelligence \
     && chown -R quantos:quantos /var/lib/quantos

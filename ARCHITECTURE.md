@@ -119,6 +119,12 @@ portfolio, metrics, and artifact pipeline. Research candidates require
 reproducible evidence and explicit human promotion before their lifecycle state
 can advance.
 
+Candidate evidence passes through four deterministic robustness gates before a
+promotion proposal: walk-forward consistency, neighboring-parameter
+sensitivity, doubled-cost retention, and aligned multi-market results. Each
+gate links ordinary immutable Run IDs; passing never changes lifecycle state by
+itself. See [ADR-0017](docs/adr/0017-deterministic-robustness-gates.md).
+
 V0.1 strategies observe a bar at its close and approved targets execute at the
 next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).
 

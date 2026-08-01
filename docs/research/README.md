@@ -51,6 +51,27 @@ Comparison emits normalized JSON including evaluation ranges, assumptions, and
 metrics. Review findings are evidence prompts, not claims that a strategy is
 safe or profitable.
 
+## Robustness gates
+
+The robustness workflow repeats chronological selection across expanding
+walk-forward folds, checks adjacent EMA parameters on the original holdout,
+reuses the doubled-cost holdout, and applies the fixed winner to an aligned peer
+market:
+
+```bash
+uv run quantos experiment robustness \
+  --dataset "<BTC immutable dataset>" \
+  --peer-dataset "<ETH immutable dataset>" \
+  --fast 10,20,30 \
+  --slow 40,50,80 \
+  --folds 3 \
+  --output-root artifacts
+```
+
+The output is a content-addressed review. A failed gate means the evidence is
+insufficient for promotion; a passed review never promotes a strategy or
+authorizes trading automatically. See [ADR-0017](../adr/0017-deterministic-robustness-gates.md).
+
 ## Formal strategy studies
 
 - [Donchian ATR strategy study](donchian-atr-study.md)

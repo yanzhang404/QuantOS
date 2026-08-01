@@ -26,8 +26,11 @@ bundle members, and each new immutable Run carries a bounded Kline projection
 for synchronized price, fill, equity, and drawdown views. A Run catalog now
 filters immutable experiment summaries, stores reversible archive markers
 outside Run artifacts, and compares up to four normalized portfolio curves
-with their exact inputs. The next boundary is robustness gates before richer
-Agent candidate workflows. The canonical Go/Python research service now has a production
+with their exact inputs. Deterministic EMA robustness reviews now link
+walk-forward, neighboring-parameter, doubled-cost, and aligned BTC/ETH evidence
+through ordinary immutable Runs and expose promotion gates in the workspace.
+The next boundary is candidate lifecycle persistence and bounded Agent proposal
+contracts. The canonical Go/Python research service now has a production
 container, environment contract, and data-aware readiness check; provisioning a
 stateful container host and connecting its stable HTTPS URL remain before the
 workspace can drop its localhost dependency. Paper reproduction remains a later

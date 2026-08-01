@@ -31,3 +31,4 @@ Accepted decisions:
 - [ADR-0014: Version multi-timeframe datasets as atomic research bundles](0014-version-multi-timeframe-dataset-bundles.md)
 - [ADR-0015: Deploy the canonical research service without duplicating compute](0015-deploy-canonical-research-service.md)
 - [ADR-0016: Keep Run evidence immutable while managing a separate review catalog](0016-run-catalog-archives-and-comparison.md)
+- [ADR-0017: Treat robustness checks as deterministic promotion gates](0017-deterministic-robustness-gates.md)

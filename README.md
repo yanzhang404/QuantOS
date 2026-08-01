@@ -27,6 +27,8 @@ Paper and live trading are not implemented.
 - Compare experiment runs and generate automated validity findings.
 - Filter saved Runs, reversibly archive review clutter, and compare up to four
   normalized portfolio curves with their exact parameters and costs.
+- Build deterministic promotion evidence from expanding walk-forward folds,
+  adjacent parameters, doubled costs, and aligned BTC/ETH holdouts.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.

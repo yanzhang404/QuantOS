@@ -12,8 +12,9 @@ from quantos_backtest import BacktestConfig
 from quantos_backtest.artifacts import ExperimentStore
 from quantos_market_data.storage import DatasetStore
 
-from .artifacts import StudyStore, compare_runs
-from .models import ResearchConfig
+from .artifacts import RobustnessStore, StudyStore, compare_runs
+from .models import ResearchConfig, RobustnessConfig
+from .robustness import RobustnessRunner
 from .workflow import ResearchRunner
 
 
@@ -39,6 +40,28 @@ def register_parser(commands: Any) -> None:
     sweep.add_argument("--max-target-exposure", type=_decimal, default=Decimal("1"))
     sweep.add_argument("--no-liquidate", action="store_false", dest="liquidate_at_end")
     sweep.add_argument("--output-root", type=Path, default=Path("artifacts"))
+
+    robustness = experiment_commands.add_parser(
+        "robustness",
+        help="evaluate walk-forward, neighboring-parameter, cost, and peer-market gates",
+    )
+    robustness.add_argument("--dataset", required=True, type=Path)
+    robustness.add_argument("--peer-dataset", required=True, action="append", type=Path)
+    robustness.add_argument("--fast", required=True, type=_periods)
+    robustness.add_argument("--slow", required=True, type=_periods)
+    robustness.add_argument("--train-ratio", type=_decimal, default=Decimal("0.6"))
+    robustness.add_argument("--validation-ratio", type=_decimal, default=Decimal("0.2"))
+    robustness.add_argument("--min-bars", type=int, default=20)
+    robustness.add_argument("--folds", type=int, default=3)
+    robustness.add_argument("--minimum-positive-fold-ratio", type=_decimal, default=Decimal("0.6"))
+    robustness.add_argument("--neighbor-retention-ratio", type=_decimal, default=Decimal("0.5"))
+    robustness.add_argument("--cost-retention-ratio", type=_decimal, default=Decimal("0.5"))
+    robustness.add_argument("--initial-cash", type=_decimal, default=Decimal("100000"))
+    robustness.add_argument("--fee-bps", type=_decimal, default=Decimal("10"))
+    robustness.add_argument("--slippage-bps", type=_decimal, default=Decimal("5"))
+    robustness.add_argument("--max-target-exposure", type=_decimal, default=Decimal("1"))
+    robustness.add_argument("--no-liquidate", action="store_false", dest="liquidate_at_end")
+    robustness.add_argument("--output-root", type=Path, default=Path("artifacts"))
 
     compare = experiment_commands.add_parser("compare", help="compare completed runs")
     compare.add_argument("--run", required=True, action="append", type=Path)
@@ -75,16 +98,56 @@ def run(args: argparse.Namespace) -> int:
             liquidate_at_end=args.liquidate_at_end,
         ),
     )
+    experiment_store = ExperimentStore(args.output_root / "experiments")
     study = ResearchRunner().run(
         klines,
         manifest=manifest,
         config=config,
-        experiment_store=ExperimentStore(args.output_root / "experiments"),
+        experiment_store=experiment_store,
     )
     study_id, path, reused = StudyStore(args.output_root / "studies").publish(
         study,
         dataset=manifest,
     )
+    if args.command == "robustness":
+        peers = tuple(_load_dataset(path) for path in args.peer_dataset)
+        robustness_config = RobustnessConfig(
+            fold_count=args.folds,
+            min_bars_per_window=args.min_bars,
+            minimum_positive_fold_ratio=args.minimum_positive_fold_ratio,
+            neighbor_retention_ratio=args.neighbor_retention_ratio,
+            cost_retention_ratio=args.cost_retention_ratio,
+        )
+        review = RobustnessRunner().run(
+            klines,
+            primary_manifest=manifest,
+            primary_study=study,
+            research_config=config,
+            robustness_config=robustness_config,
+            experiment_store=experiment_store,
+            peer_datasets=peers,
+        )
+        review_id, review_path, review_reused = RobustnessStore(
+            args.output_root / "robustness"
+        ).publish(
+            review,
+            datasets=(manifest, *(peer_manifest for _, peer_manifest in peers)),
+        )
+        print(
+            json.dumps(
+                {
+                    "study_id": study_id,
+                    "review_id": review_id,
+                    "artifacts": str(review_path),
+                    "reused": review_reused,
+                    "passed": review.passed,
+                    "gates": [item.to_dict() for item in review.gates],
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+
     print(
         json.dumps(
             {
@@ -103,6 +166,12 @@ def run(args: argparse.Namespace) -> int:
         )
     )
     return 0
+
+
+def _load_dataset(path: Path):
+    store = DatasetStore(path)
+    store.verify(path)
+    return store.load_klines(path), store.load_manifest(path)
 
 
 def _periods(value: str) -> tuple[int, ...]:

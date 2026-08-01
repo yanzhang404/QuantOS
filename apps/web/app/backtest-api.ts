@@ -124,7 +124,7 @@ type ExperimentList = {
   experiments: ExperimentSummary[];
 };
 
-const apiBase =
+export const apiBase =
   process.env.NEXT_PUBLIC_QUANTOS_API_URL ?? "http://localhost:8080";
 
 export class APIError extends Error {
@@ -223,7 +223,7 @@ export async function getStrategyCatalog(
   return response.strategies;
 }
 
-async function requestJSON<T>(
+export async function requestJSON<T>(
   path: string,
   init: RequestInit,
   signal?: AbortSignal,

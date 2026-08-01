@@ -11,6 +11,7 @@ import {
   setExperimentArchived,
 } from "./backtest-api";
 import type { StrategyName } from "./research-data";
+import { RobustnessEvidence } from "./robustness-evidence";
 
 type Locale = "en" | "zh";
 type Interval = "5m" | "15m" | "1h" | "4h" | "1d";
@@ -183,6 +184,8 @@ export function RunLibrary({ locale }: { locale: Locale }) {
           <span>{t.selected}</span>
         </div>
       </header>
+
+      <RobustnessEvidence locale={locale} />
 
       <div className="run-filterbar">
         <select aria-label={t.allMarkets} onChange={(event) => setSymbol(event.target.value)} value={symbol}>

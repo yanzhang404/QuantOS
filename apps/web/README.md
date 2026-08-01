@@ -23,7 +23,9 @@ The Backtest Lab connects to the local Go API and supports:
   drawdown charts;
 - filtering immutable Run summaries and reversibly archiving review clutter;
 - selecting two to four Runs for normalized return, parameter, cost, and metric
-  comparison.
+  comparison;
+- reading the latest four-gate robustness review with explicit PASS/FAIL
+  reasons and no automatic promotion.
 
 The workspace uses a result-first layout: global workflows are in the top
 navigation, reusable strategies are grouped in a folder-style library, and

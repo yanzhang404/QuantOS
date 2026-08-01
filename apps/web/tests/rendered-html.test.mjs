@@ -161,6 +161,22 @@ test("manages immutable Runs with filters, archives, and four-way comparison", a
   assert.match(api, /archived\?: "exclude" \| "include" \| "only"/);
 });
 
+test("shows deterministic robustness promotion gates without automatic promotion", async () => {
+  const [component, api, library] = await Promise.all([
+    readFile(new URL("../app/robustness-evidence.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/robustness-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/run-library.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(library, /<RobustnessEvidence locale=\{locale\}/);
+  assert.match(api, /\/api\/v1\/robustness/);
+  assert.match(component, /walk_forward/);
+  assert.match(component, /neighboring_parameters/);
+  assert.match(component, /doubled_costs/);
+  assert.match(component, /multiple_markets/);
+  assert.match(component, /never promotes or trades automatically/);
+});
+
 test("renders verified BTC and ETH coverage from an immutable bundle", async () => {
   const [page, coverage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

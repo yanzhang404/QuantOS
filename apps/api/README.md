@@ -26,6 +26,8 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `GET /api/v1/tasks/{task_id}`
 - `GET /api/v1/experiments`
 - `GET /api/v1/experiments/{run_id}`
+- `GET /api/v1/robustness`
+- `GET /api/v1/robustness/{review_id}`
 - `PUT /api/v1/experiment-archives/{run_id}`
 - `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
@@ -59,6 +61,7 @@ artifacts. Mount `/var/lib/quantos` on persistent storage and configure:
   `/readyz`;
 - `QUANTOS_DATA_ROOT`, `QUANTOS_ARTIFACT_ROOT`, `QUANTOS_STATE_ROOT`, and
   `QUANTOS_INTELLIGENCE_ROOT`: persistent paths when the defaults are unsuitable;
+- `QUANTOS_ROBUSTNESS_ROOT`: content-addressed robustness review artifacts;
 - `PORT` or `QUANTOS_LISTEN`: host-assigned network binding;
 - `QUANTOS_QUEUE_SIZE`: bounded in-process task queue size.
 

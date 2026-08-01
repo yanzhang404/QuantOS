@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import timedelta
 from decimal import Decimal
 
@@ -10,9 +11,10 @@ from quantos_backtest.artifacts import ExperimentStore
 from quantos_backtest.strategies import EmaCrossStrategy
 from quantos_cli import main
 from quantos_market_data.storage import DatasetStore
-from quantos_research.artifacts import StudyStore, compare_runs
+from quantos_research.artifacts import RobustnessStore, StudyStore, compare_runs
 from quantos_research.errors import ResearchConfigurationError, ResearchError
-from quantos_research.models import ResearchConfig
+from quantos_research.models import ResearchConfig, RobustnessConfig
+from quantos_research.robustness import RobustnessRunner, walk_forward_windows
 from quantos_research.workflow import ResearchRunner, split_chronologically
 
 
@@ -168,3 +170,122 @@ def test_cli_sweep_compare_and_review(capsys, tmp_path, research_klines) -> None
 def test_compare_rejects_one_run(tmp_path) -> None:
     with pytest.raises(ResearchError, match="at least two"):
         compare_runs([tmp_path / "run.json"])
+
+
+def test_walk_forward_windows_expand_without_future_leakage(research_klines) -> None:
+    windows = walk_forward_windows(
+        research_klines,
+        fold_count=3,
+        min_bars_per_window=20,
+    )
+
+    assert [(len(train), len(validation), len(test)) for train, validation, test in windows] == [
+        (24, 24, 24),
+        (48, 24, 24),
+        (72, 24, 24),
+    ]
+    for train, validation, test in windows:
+        assert train[-1].open_time < validation[0].open_time
+        assert validation[-1].open_time < test[0].open_time
+
+    with pytest.raises(ResearchConfigurationError, match="walk-forward blocks"):
+        walk_forward_windows(
+            research_klines[:50],
+            fold_count=3,
+            min_bars_per_window=20,
+        )
+
+
+def test_robustness_review_links_all_four_gates_and_is_reusable(
+    tmp_path,
+    research_klines,
+) -> None:
+    primary = _dataset(tmp_path / "primary", research_klines)
+    peer_klines = [replace(item, symbol="ETHUSDT") for item in research_klines]
+    peer = _dataset(tmp_path / "peer", peer_klines)
+    experiments = ExperimentStore(tmp_path / "artifacts" / "experiments")
+    study = ResearchRunner().run(
+        research_klines,
+        manifest=primary.manifest,
+        config=_config(),
+        experiment_store=experiments,
+    )
+    review = RobustnessRunner().run(
+        research_klines,
+        primary_manifest=primary.manifest,
+        primary_study=study,
+        research_config=_config(),
+        robustness_config=RobustnessConfig(),
+        experiment_store=experiments,
+        peer_datasets=((peer_klines, peer.manifest),),
+    )
+
+    assert [gate.name for gate in review.gates] == [
+        "walk_forward",
+        "neighboring_parameters",
+        "doubled_costs",
+        "multiple_markets",
+    ]
+    assert len(review.folds) == 3
+    assert len(review.neighbors) >= 2
+    assert {item.symbol for item in review.markets} == {"BTCUSDT", "ETHUSDT"}
+    assert review.passed == all(gate.passed for gate in review.gates)
+
+    store = RobustnessStore(tmp_path / "artifacts" / "robustness")
+    first_id, first_path, first_reused = store.publish(
+        review,
+        datasets=(primary.manifest, peer.manifest),
+    )
+    second_id, second_path, second_reused = store.publish(
+        review,
+        datasets=(primary.manifest, peer.manifest),
+    )
+    assert not first_reused
+    assert second_reused
+    assert first_id == second_id
+    assert first_path == second_path
+    payload = json.loads((first_path / "robustness.json").read_text())
+    assert payload["schema_version"] == "robustness-review.v1"
+    assert len(payload["gates"]) == 4
+    assert len(payload["walk_forward"]) == 3
+    assert (first_path / "walk-forward.csv").is_file()
+    assert "does not promote" in (first_path / "review.md").read_text()
+
+
+def test_cli_builds_robustness_review(capsys, tmp_path, research_klines) -> None:
+    primary = _dataset(tmp_path / "primary", research_klines)
+    peer_klines = [replace(item, symbol="ETHUSDT") for item in research_klines]
+    peer = _dataset(tmp_path / "peer", peer_klines)
+    output = tmp_path / "artifacts"
+
+    assert (
+        main(
+            [
+                "experiment",
+                "robustness",
+                "--dataset",
+                str(primary.path),
+                "--peer-dataset",
+                str(peer.path),
+                "--fast",
+                "2,3",
+                "--slow",
+                "5,7",
+                "--train-ratio",
+                "0.5",
+                "--validation-ratio",
+                "0.25",
+                "--min-bars",
+                "20",
+                "--folds",
+                "3",
+                "--output-root",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert len(payload["review_id"]) == 16
+    assert len(payload["gates"]) == 4
+    assert (output / "robustness" / payload["review_id"] / "robustness.json").is_file()
