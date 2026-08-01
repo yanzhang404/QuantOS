@@ -15,7 +15,9 @@ The normative language-neutral schema is
 | `POST` | `/api/v1/backtests` | Accept a historical backtest and return a Task |
 | `GET` | `/api/v1/tasks/{task_id}` | Read task state and resulting Run ID |
 | `GET` | `/api/v1/experiments/{run_id}` | Read one reproducible experiment and its chart series |
-| `GET` | `/api/v1/experiments` | Filter saved completed experiments (planned) |
+| `GET` | `/api/v1/experiments` | Filter saved completed Run summaries |
+| `PUT` | `/api/v1/experiment-archives/{run_id}` | Archive a Run in the review catalog |
+| `DELETE` | `/api/v1/experiment-archives/{run_id}` | Restore an archived Run |
 | `GET` | `/api/v1/intelligence/latest` | Read the latest validated daily brief and sentiment snapshot |
 
 Submitting the same HTTP request twice with one idempotency key returns the same
@@ -66,5 +68,8 @@ queued/running + service restart → failed(service_restarted, retryable)
 
 Completed Python experiment directories remain the Run source of truth. The
 implemented Experiment detail resource derives normalized metrics, fills,
-equity, position, and drawdown from those immutable artifacts. Experiment
-listing and comparison are the next API increments.
+equity, position, and drawdown from those immutable artifacts. Run listing
+reads only validated `run.json` metadata and is bounded to 200 records. Exact
+`symbol`, `interval`, and `strategy` filters are available;
+`archived=exclude|include|only` defaults to `exclude`. Archive timestamps live
+under the API state root and never modify or delete experiment artifacts.

@@ -143,6 +143,24 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.doesNotMatch(lab, /const parameters: Record/);
 });
 
+test("manages immutable Runs with filters, archives, and four-way comparison", async () => {
+  const [library, api, page] = await Promise.all([
+    readFile(new URL("../app/run-library.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/backtest-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /<RunLibrary locale=\{locale\}/);
+  assert.match(library, /listExperiments\(filters/);
+  assert.match(library, /setExperimentArchived/);
+  assert.match(library, /current\.length < 4/);
+  assert.match(library, /selectedRuns\.length >= 2/);
+  assert.match(library, /point\.equity \/ run\.metrics\.initial_equity - 1/);
+  assert.match(library, /formatParameters\(run\.strategy\.parameters\)/);
+  assert.match(api, /\/api\/v1\/experiment-archives/);
+  assert.match(api, /archived\?: "exclude" \| "include" \| "only"/);
+});
+
 test("renders verified BTC and ETH coverage from an immutable bundle", async () => {
   const [page, coverage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

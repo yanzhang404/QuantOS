@@ -30,3 +30,4 @@ Accepted decisions:
 - [ADR-0013: Organize the product workspace around four result-first views](0013-result-first-product-workspace.md)
 - [ADR-0014: Version multi-timeframe datasets as atomic research bundles](0014-version-multi-timeframe-dataset-bundles.md)
 - [ADR-0015: Deploy the canonical research service without duplicating compute](0015-deploy-canonical-research-service.md)
+- [ADR-0016: Keep Run evidence immutable while managing a separate review catalog](0016-run-catalog-archives-and-comparison.md)

@@ -24,7 +24,10 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `POST /api/v1/backtests`
 - `GET /api/v1/tasks`
 - `GET /api/v1/tasks/{task_id}`
+- `GET /api/v1/experiments`
 - `GET /api/v1/experiments/{run_id}`
+- `PUT /api/v1/experiment-archives/{run_id}`
+- `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
 
 Task metadata is stored as atomic JSON files. The API first verifies that a
@@ -36,6 +39,11 @@ through the Python CLI and links successful Tasks to deterministic Run IDs.
 Experiment detail is read-only. It normalizes the selected Run's metrics,
 bars, fills, equity, position, and running drawdown from bounded immutable artifacts;
 the browser never receives local artifact paths.
+
+Experiment listing returns at most 200 validated summaries and supports exact
+symbol, interval, strategy, and archive-state filters. Archive operations write
+only a reversible marker below the Task state root; they never change or remove
+the immutable Run directory.
 
 This local file store supports one API process. PostgreSQL replaces it before
 multi-user or multi-process operation.

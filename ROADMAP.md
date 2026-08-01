@@ -49,7 +49,7 @@ The accepted delivery order for the remaining V0.3 work is:
 
 1. split and simplify the four product views; **Implemented.**
 2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d; **Implemented from 2021-01-01 through the latest complete UTC day, with immutable incremental refresh.**
-3. add immutable Run filtering, archival, and up-to-four comparison;
+3. add immutable Run filtering, archival, and up-to-four comparison; **Implemented.**
 4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market gates;
 5. add candidate strategy lifecycle and bounded Agent proposal contracts;
 6. schedule at most one or two explainable candidates per week through draft PRs;

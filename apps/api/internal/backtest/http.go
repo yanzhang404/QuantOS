@@ -5,11 +5,14 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type HTTPHandler struct {
 	orchestrator  *Orchestrator
 	experiments   *ExperimentStore
+	archives      *ExperimentArchiveStore
 	allowedOrigin string
 	mux           *http.ServeMux
 }
@@ -18,10 +21,16 @@ func NewHTTPHandler(
 	orchestrator *Orchestrator,
 	experiments *ExperimentStore,
 	allowedOrigin string,
+	archives ...*ExperimentArchiveStore,
 ) http.Handler {
+	var archiveStore *ExperimentArchiveStore
+	if len(archives) > 0 {
+		archiveStore = archives[0]
+	}
 	handler := &HTTPHandler{
 		orchestrator:  orchestrator,
 		experiments:   experiments,
+		archives:      archiveStore,
 		allowedOrigin: allowedOrigin,
 		mux:           http.NewServeMux(),
 	}
@@ -30,7 +39,10 @@ func NewHTTPHandler(
 	handler.mux.HandleFunc("POST /api/v1/backtests", handler.submit)
 	handler.mux.HandleFunc("GET /api/v1/tasks", handler.list)
 	handler.mux.HandleFunc("GET /api/v1/tasks/{task_id}", handler.get)
+	handler.mux.HandleFunc("GET /api/v1/experiments", handler.listExperiments)
 	handler.mux.HandleFunc("GET /api/v1/experiments/{run_id}", handler.getExperiment)
+	handler.mux.HandleFunc("PUT /api/v1/experiment-archives/{run_id}", handler.archiveExperiment)
+	handler.mux.HandleFunc("DELETE /api/v1/experiment-archives/{run_id}", handler.restoreExperiment)
 	return handler
 }
 
@@ -38,7 +50,7 @@ func (h *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Requ
 	if h.allowedOrigin != "" && request.Header.Get("Origin") == h.allowedOrigin {
 		response.Header().Set("Access-Control-Allow-Origin", h.allowedOrigin)
 		response.Header().Set("Access-Control-Allow-Headers", "Content-Type, Idempotency-Key")
-		response.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		response.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		response.Header().Set("Vary", "Origin")
 	}
 	if request.Method == http.MethodOptions {
@@ -153,6 +165,83 @@ func (h *HTTPHandler) getExperiment(response http.ResponseWriter, request *http.
 		return
 	}
 	writeJSON(response, http.StatusOK, experiment)
+}
+
+func (h *HTTPHandler) listExperiments(response http.ResponseWriter, request *http.Request) {
+	query := request.URL.Query()
+	filters := ExperimentFilters{
+		Symbol: query.Get("symbol"), Interval: query.Get("interval"),
+		Strategy: query.Get("strategy"), ArchivedMode: query.Get("archived"), Limit: 100,
+	}
+	if filters.ArchivedMode == "" {
+		filters.ArchivedMode = "exclude"
+	}
+	if filters.ArchivedMode != "exclude" && filters.ArchivedMode != "include" &&
+		filters.ArchivedMode != "only" {
+		writeAPIError(response, http.StatusUnprocessableEntity, "invalid_filter", "archived must be exclude, include, or only.")
+		return
+	}
+	if filters.Symbol != "" && !symbolPattern.MatchString(filters.Symbol) ||
+		filters.Interval != "" && !supportedInterval(filters.Interval) ||
+		filters.Strategy != "" && !knownStrategy(filters.Strategy) {
+		writeAPIError(response, http.StatusUnprocessableEntity, "invalid_filter", "One or more Run filters are invalid.")
+		return
+	}
+	if value := query.Get("limit"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 1 || parsed > 200 {
+			writeAPIError(response, http.StatusUnprocessableEntity, "invalid_filter", "limit must be between 1 and 200.")
+			return
+		}
+		filters.Limit = parsed
+	}
+	archiveSnapshot := map[string]time.Time{}
+	if h.archives != nil {
+		archiveSnapshot = h.archives.Snapshot()
+	}
+	experiments, err := h.experiments.List(filters, archiveSnapshot)
+	if err != nil {
+		writeAPIError(response, http.StatusInternalServerError, "experiment_list_failed", "Experiment list failed.")
+		return
+	}
+	writeJSON(response, http.StatusOK, map[string]any{"experiments": experiments})
+}
+
+func (h *HTTPHandler) archiveExperiment(response http.ResponseWriter, request *http.Request) {
+	h.setExperimentArchive(response, request, true)
+}
+
+func (h *HTTPHandler) restoreExperiment(response http.ResponseWriter, request *http.Request) {
+	h.setExperimentArchive(response, request, false)
+}
+
+func (h *HTTPHandler) setExperimentArchive(response http.ResponseWriter, request *http.Request, archived bool) {
+	if h.archives == nil {
+		writeAPIError(response, http.StatusServiceUnavailable, "archive_store_unavailable", "Experiment archive store is unavailable.")
+		return
+	}
+	runID := request.PathValue("run_id")
+	if _, err := h.experiments.readArtifact(runID); errors.Is(err, ErrExperimentNotFound) {
+		writeAPIError(response, http.StatusNotFound, "experiment_not_found", "Experiment not found.")
+		return
+	} else if err != nil {
+		writeAPIError(response, http.StatusUnprocessableEntity, "experiment_invalid", "Experiment artifacts are invalid.")
+		return
+	}
+	if archived {
+		archivedAt, err := h.archives.Archive(runID)
+		if err != nil {
+			writeAPIError(response, http.StatusInternalServerError, "archive_write_failed", "Experiment archive state could not be saved.")
+			return
+		}
+		writeJSON(response, http.StatusOK, map[string]any{"run_id": runID, "archived_at": archivedAt})
+		return
+	}
+	if err := h.archives.Restore(runID); err != nil {
+		writeAPIError(response, http.StatusInternalServerError, "archive_write_failed", "Experiment archive state could not be saved.")
+		return
+	}
+	writeJSON(response, http.StatusOK, map[string]any{"run_id": runID, "archived_at": nil})
 }
 
 func writeJSON(response http.ResponseWriter, status int, value any) {

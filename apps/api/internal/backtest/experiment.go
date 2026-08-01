@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -76,6 +77,39 @@ type ExperimentVisualization struct {
 	Fills          []ExperimentFill        `json:"fills"`
 }
 
+type ExperimentSummary struct {
+	SchemaVersion  string            `json:"schema_version"`
+	RunID          string            `json:"run_id"`
+	CreatedAt      time.Time         `json:"created_at"`
+	ArchivedAt     *time.Time        `json:"archived_at"`
+	Dataset        DatasetRef        `json:"dataset"`
+	Strategy       StrategyRef       `json:"strategy"`
+	Config         Config            `json:"config"`
+	EngineVersion  string            `json:"engine_version"`
+	MetricsVersion string            `json:"metrics_version"`
+	Metrics        ExperimentMetrics `json:"metrics"`
+}
+
+type ExperimentFilters struct {
+	Symbol       string
+	Interval     string
+	Strategy     string
+	ArchivedMode string
+	Limit        int
+}
+
+type experimentArtifact struct {
+	RunID          string            `json:"run_id"`
+	Status         string            `json:"status"`
+	CreatedAt      time.Time         `json:"created_at"`
+	Dataset        DatasetRef        `json:"dataset"`
+	Strategy       StrategyRef       `json:"strategy"`
+	Config         Config            `json:"config"`
+	EngineVersion  string            `json:"engine_version"`
+	MetricsVersion string            `json:"metrics_version"`
+	Metrics        ExperimentMetrics `json:"metrics"`
+}
+
 type ExperimentStore struct {
 	root string
 }
@@ -85,38 +119,11 @@ func NewExperimentStore(root string) *ExperimentStore {
 }
 
 func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
-	if !hex16Pattern.MatchString(runID) {
-		return ExperimentVisualization{}, ErrExperimentNotFound
+	artifact, err := s.readArtifact(runID)
+	if err != nil {
+		return ExperimentVisualization{}, err
 	}
 	runPath := filepath.Join(s.root, runID, "run.json")
-	var artifact struct {
-		RunID          string            `json:"run_id"`
-		Status         string            `json:"status"`
-		CreatedAt      time.Time         `json:"created_at"`
-		Dataset        DatasetRef        `json:"dataset"`
-		Strategy       StrategyRef       `json:"strategy"`
-		Config         Config            `json:"config"`
-		EngineVersion  string            `json:"engine_version"`
-		MetricsVersion string            `json:"metrics_version"`
-		Metrics        ExperimentMetrics `json:"metrics"`
-	}
-	if err := decodeArtifactJSON(runPath, maxRunArtifactBytes, &artifact); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return ExperimentVisualization{}, ErrExperimentNotFound
-		}
-		return ExperimentVisualization{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
-	}
-	if artifact.RunID != runID ||
-		artifact.Status != "completed" ||
-		artifact.CreatedAt.IsZero() ||
-		artifact.Dataset.validate() != nil ||
-		artifact.Strategy.validate() != nil ||
-		artifact.Config.validate() != nil ||
-		!semanticVersionPattern.MatchString(artifact.EngineVersion) ||
-		!semanticVersionPattern.MatchString(artifact.MetricsVersion) ||
-		!validExperimentMetrics(artifact.Metrics) {
-		return ExperimentVisualization{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
-	}
 	directory := filepath.Dir(runPath)
 	barsPath := filepath.Join(directory, "bars.csv")
 	bars := []ExperimentBar{}
@@ -151,6 +158,90 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 		Equity:         equity,
 		Fills:          fills,
 	}, nil
+}
+
+func (s *ExperimentStore) List(
+	filters ExperimentFilters,
+	archives map[string]time.Time,
+) ([]ExperimentSummary, error) {
+	entries, err := os.ReadDir(s.root)
+	if errors.Is(err, os.ErrNotExist) {
+		return []ExperimentSummary{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read experiment root: %w", err)
+	}
+	limit := filters.Limit
+	if limit < 1 || limit > 200 {
+		limit = 100
+	}
+	summaries := make([]ExperimentSummary, 0, min(limit, len(entries)))
+	for _, entry := range entries {
+		if !entry.IsDir() || !hex16Pattern.MatchString(entry.Name()) {
+			continue
+		}
+		artifact, readErr := s.readArtifact(entry.Name())
+		if readErr != nil {
+			if errors.Is(readErr, ErrExperimentInvalid) ||
+				errors.Is(readErr, ErrExperimentNotFound) {
+				continue
+			}
+			return nil, readErr
+		}
+		archivedAt, archived := archives[artifact.RunID]
+		if filters.Symbol != "" && artifact.Dataset.Symbol != filters.Symbol ||
+			filters.Interval != "" && artifact.Dataset.Interval != filters.Interval ||
+			filters.Strategy != "" && artifact.Strategy.Name != filters.Strategy ||
+			filters.ArchivedMode == "exclude" && archived ||
+			filters.ArchivedMode == "only" && !archived {
+			continue
+		}
+		var archivedAtPointer *time.Time
+		if archived {
+			value := archivedAt
+			archivedAtPointer = &value
+		}
+		summaries = append(summaries, ExperimentSummary{
+			SchemaVersion: SchemaVersion, RunID: artifact.RunID,
+			CreatedAt: artifact.CreatedAt, ArchivedAt: archivedAtPointer,
+			Dataset: artifact.Dataset, Strategy: artifact.Strategy, Config: artifact.Config,
+			EngineVersion: artifact.EngineVersion, MetricsVersion: artifact.MetricsVersion,
+			Metrics: artifact.Metrics,
+		})
+	}
+	sort.Slice(summaries, func(i, j int) bool {
+		return summaries[i].CreatedAt.After(summaries[j].CreatedAt)
+	})
+	if len(summaries) > limit {
+		summaries = summaries[:limit]
+	}
+	return summaries, nil
+}
+
+func (s *ExperimentStore) readArtifact(runID string) (experimentArtifact, error) {
+	if !hex16Pattern.MatchString(runID) {
+		return experimentArtifact{}, ErrExperimentNotFound
+	}
+	runPath := filepath.Join(s.root, runID, "run.json")
+	var artifact experimentArtifact
+	if err := decodeArtifactJSON(runPath, maxRunArtifactBytes, &artifact); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return experimentArtifact{}, ErrExperimentNotFound
+		}
+		return experimentArtifact{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
+	}
+	if artifact.RunID != runID ||
+		artifact.Status != "completed" ||
+		artifact.CreatedAt.IsZero() ||
+		artifact.Dataset.validate() != nil ||
+		artifact.Strategy.validate() != nil ||
+		artifact.Config.validate() != nil ||
+		!semanticVersionPattern.MatchString(artifact.EngineVersion) ||
+		!semanticVersionPattern.MatchString(artifact.MetricsVersion) ||
+		!validExperimentMetrics(artifact.Metrics) {
+		return experimentArtifact{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
+	}
+	return artifact, nil
 }
 
 func readExperimentBars(path string) ([]ExperimentBar, error) {

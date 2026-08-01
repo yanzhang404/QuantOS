@@ -51,6 +51,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("open task store: %v", err)
 	}
+	archives, err := backtest.OpenExperimentArchiveStore(filepath.Clean(*stateRoot), nil)
+	if err != nil {
+		log.Fatalf("open experiment archive store: %v", err)
+	}
 	runner := backtest.CommandRunner{
 		UVBinary:     *uvBinary,
 		WorkingDir:   workingDirectory,
@@ -84,7 +88,7 @@ func main() {
 	)
 	rootHandler.Handle(
 		"/",
-		backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin),
+		backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin, archives),
 	)
 
 	server := &http.Server{

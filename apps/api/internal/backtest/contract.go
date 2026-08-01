@@ -121,6 +121,15 @@ func strategySupportsInterval(strategy, interval string) bool {
 	}
 }
 
+func knownStrategy(value string) bool {
+	switch value {
+	case "buy-and-hold", "ema-cross", "donchian-atr":
+		return true
+	default:
+		return false
+	}
+}
+
 func (s Submission) validateExposureBoundary() error {
 	maximum, _ := strconv.ParseFloat(s.Config.MaxTargetExposure, 64)
 	var strategyMaximum float64

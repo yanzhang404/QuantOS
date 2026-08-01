@@ -17,6 +17,7 @@ import {
   marketDataCoverage,
 } from "./market-data-coverage";
 import { StrategyWorkbench } from "./strategy-workbench";
+import { RunLibrary } from "./run-library";
 
 type Locale = "en" | "zh";
 type WorkspaceView = "overview" | "strategies" | "runs" | "data";
@@ -56,6 +57,7 @@ const copy = {
     currentThrough: "Current through",
     runsIntro:
       "Every result stays attributable to its dataset, parameters, costs, and Run ID.",
+    committedReview: "Open the original committed research review",
     dataIntro:
       "Inspect exactly which immutable market data supports the displayed evidence.",
     researchMode: "Research mode",
@@ -180,6 +182,7 @@ const copy = {
     sourceGaps: "数据源缺口",
     currentThrough: "最新数据截至",
     runsIntro: "每个结果都关联到确切的数据集、参数、成本和 Run ID。",
+    committedReview: "展开原始研究评审",
     dataIntro: "查看当前证据究竟使用了哪些不可变市场数据。",
     researchMode: "研究模式",
     liveDisabled: "实盘交易已禁用",
@@ -448,6 +451,9 @@ export default function Home() {
         {activeView === "runs" ? (
           <>
             <p className="view-intro">{t.runsIntro}</p>
+            <RunLibrary locale={locale} />
+            <details className="committed-review">
+              <summary>{t.committedReview}</summary>
             <div className="view-filters" aria-label={t.filters}>
               {(["btc", "eth"] as const).map((value) => (
                 <button
@@ -593,6 +599,7 @@ export default function Home() {
           </article>
 
             </section>
+            </details>
           </>
         ) : null}
 

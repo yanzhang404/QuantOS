@@ -96,6 +96,21 @@ export type ExperimentVisualization = {
   }>;
 };
 
+export type ExperimentSummary = Omit<
+  ExperimentVisualization,
+  "bars" | "equity" | "fills"
+> & {
+  archived_at: string | null;
+};
+
+export type ExperimentFilters = {
+  symbol?: string;
+  interval?: BacktestSubmission["dataset"]["interval"];
+  strategy?: StrategyName;
+  archived?: "exclude" | "include" | "only";
+  limit?: number;
+};
+
 type TaskList = {
   tasks: BacktestTask[];
 };
@@ -103,6 +118,10 @@ type TaskList = {
 type StrategyCatalog = {
   schema_version: "1.0";
   strategies: StrategyDefinition[];
+};
+
+type ExperimentList = {
+  experiments: ExperimentSummary[];
 };
 
 const apiBase =
@@ -160,6 +179,35 @@ export async function getExperiment(
   return requestJSON<ExperimentVisualization>(
     `/api/v1/experiments/${encodeURIComponent(runID)}`,
     {},
+    signal,
+  );
+}
+
+export async function listExperiments(
+  filters: ExperimentFilters = {},
+  signal?: AbortSignal,
+): Promise<ExperimentSummary[]> {
+  const query = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  });
+  const suffix = query.size ? `?${query.toString()}` : "";
+  const response = await requestJSON<ExperimentList>(
+    `/api/v1/experiments${suffix}`,
+    {},
+    signal,
+  );
+  return response.experiments;
+}
+
+export async function setExperimentArchived(
+  runID: string,
+  archived: boolean,
+  signal?: AbortSignal,
+): Promise<void> {
+  await requestJSON(
+    `/api/v1/experiment-archives/${encodeURIComponent(runID)}`,
+    { method: archived ? "PUT" : "DELETE" },
     signal,
   );
 }

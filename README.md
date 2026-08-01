@@ -25,6 +25,8 @@ Paper and live trading are not implemented.
 - Select EMA parameters with chronological train/validation/test splits.
 - Evaluate only the validation winner on an untouched holdout and doubled costs.
 - Compare experiment runs and generate automated validity findings.
+- Filter saved Runs, reversibly archive review clutter, and compare up to four
+  normalized portfolio curves with their exact parameters and costs.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.

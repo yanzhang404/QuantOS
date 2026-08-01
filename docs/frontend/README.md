@@ -81,7 +81,10 @@ position, and drawdown across supported timeframes. Changing the strategy,
 asset, interval, or observation window returns the workspace to its committed
 baseline until another compatible history record is selected.
 
-Multi-Run comparison and Experiment filtering are the next frontend boundary.
+The Runs view uses the API Run catalog for exact strategy, symbol, timeframe,
+and archive filtering. A researcher may select two to four Runs for normalized
+equity comparison, inspect metric/input differences, and reversibly archive a
+Run without changing its immutable experiment artifacts.
 
 ## Strategy manifests and intervals
 

@@ -83,6 +83,134 @@ func TestExperimentHTTPReturnsDetailAndSafeErrors(t *testing.T) {
 	}
 }
 
+func TestExperimentCatalogFiltersAndArchivesWithoutChangingArtifacts(t *testing.T) {
+	root := t.TempDir()
+	stateRoot := t.TempDir()
+	writeExperimentFixture(t, root, "336fe16f3f221153")
+	writeExperimentFixture(t, root, "436fe16f3f221153")
+	archives, err := OpenExperimentArchiveStore(
+		stateRoot,
+		func() time.Time { return time.Date(2026, 8, 1, 2, 3, 4, 0, time.UTC) },
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewHTTPHandler(nil, NewExperimentStore(root), "", archives)
+
+	list := httptest.NewRecorder()
+	handler.ServeHTTP(list, httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/experiments?symbol=BTCUSDT&interval=4h&strategy=donchian-atr",
+		nil,
+	))
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d body=%s", list.Code, list.Body)
+	}
+	var result struct {
+		Experiments []ExperimentSummary `json:"experiments"`
+	}
+	if err := json.Unmarshal(list.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Experiments) != 2 {
+		t.Fatalf("experiments = %#v", result.Experiments)
+	}
+	if len(result.Experiments[0].Strategy.Parameters) == 0 ||
+		result.Experiments[0].Metrics.FinalEquity != 99000 {
+		t.Fatalf("summary missing inputs or metrics: %#v", result.Experiments[0])
+	}
+
+	runPath := filepath.Join(root, "336fe16f3f221153", "run.json")
+	before, err := os.ReadFile(runPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive := httptest.NewRecorder()
+	handler.ServeHTTP(archive, httptest.NewRequest(
+		http.MethodPut,
+		"/api/v1/experiment-archives/336fe16f3f221153",
+		nil,
+	))
+	if archive.Code != http.StatusOK {
+		t.Fatalf("archive status = %d body=%s", archive.Code, archive.Body)
+	}
+	after, err := os.ReadFile(runPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(before) != string(after) {
+		t.Fatal("archive operation changed immutable Run artifact")
+	}
+
+	active := httptest.NewRecorder()
+	handler.ServeHTTP(active, httptest.NewRequest(http.MethodGet, "/api/v1/experiments", nil))
+	if err := json.Unmarshal(active.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Experiments) != 1 || result.Experiments[0].RunID != "436fe16f3f221153" {
+		t.Fatalf("active experiments = %#v", result.Experiments)
+	}
+
+	archived := httptest.NewRecorder()
+	handler.ServeHTTP(archived, httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/experiments?archived=only",
+		nil,
+	))
+	if err := json.Unmarshal(archived.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Experiments) != 1 || result.Experiments[0].ArchivedAt == nil {
+		t.Fatalf("archived experiments = %#v", result.Experiments)
+	}
+
+	restore := httptest.NewRecorder()
+	handler.ServeHTTP(restore, httptest.NewRequest(
+		http.MethodDelete,
+		"/api/v1/experiment-archives/336fe16f3f221153",
+		nil,
+	))
+	if restore.Code != http.StatusOK {
+		t.Fatalf("restore status = %d body=%s", restore.Code, restore.Body)
+	}
+	reopened, err := OpenExperimentArchiveStore(stateRoot, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reopened.Snapshot()) != 0 {
+		t.Fatal("restored archive marker persisted")
+	}
+}
+
+func TestExperimentCatalogRejectsInvalidFiltersAndArchiveTargets(t *testing.T) {
+	root := t.TempDir()
+	archives, err := OpenExperimentArchiveStore(t.TempDir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := NewHTTPHandler(nil, NewExperimentStore(root), "", archives)
+	for _, target := range []string{
+		"/api/v1/experiments?interval=1minute",
+		"/api/v1/experiments?archived=yes",
+		"/api/v1/experiments?limit=201",
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, target, nil))
+		if response.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("target %s status = %d", target, response.Code)
+		}
+	}
+	missing := httptest.NewRecorder()
+	handler.ServeHTTP(missing, httptest.NewRequest(
+		http.MethodPut,
+		"/api/v1/experiment-archives/336fe16f3f221153",
+		nil,
+	))
+	if missing.Code != http.StatusNotFound {
+		t.Fatalf("missing archive status = %d", missing.Code)
+	}
+}
+
 func writeExperimentFixture(t *testing.T, root, runID string) {
 	t.Helper()
 	directory := filepath.Join(root, runID)

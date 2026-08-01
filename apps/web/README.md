@@ -20,7 +20,10 @@ The Backtest Lab connects to the local Go API and supports:
 - polling queued and running Tasks to a terminal state;
 - browsing persisted Task history and resulting Run IDs;
 - loading a completed Run into the metric cards, Kline fills, equity, and
-  drawdown charts.
+  drawdown charts;
+- filtering immutable Run summaries and reversibly archiving review clutter;
+- selecting two to four Runs for normalized return, parameter, cost, and metric
+  comparison.
 
 The workspace uses a result-first layout: global workflows are in the top
 navigation, reusable strategies are grouped in a folder-style library, and
