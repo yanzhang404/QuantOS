@@ -8,7 +8,8 @@ fields. The worker:
 - optionally applies a half-open evaluation range;
 - constructs one built-in strategy with explicit parameters;
 - runs the deterministic engine;
-- publishes content-addressed experiment artifacts;
+- publishes content-addressed experiment artifacts, including a bounded Kline
+  visualization tail;
 - returns Run ID, reuse state, and metrics as JSON.
 
 Task metadata remains owned by the Go control plane. The Python worker receives

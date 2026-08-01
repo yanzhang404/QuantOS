@@ -37,10 +37,15 @@ class DatasetRef:
     content_sha256: str
     symbol: str
     interval: Literal["5m", "15m", "1h", "4h", "1d"]
+    bundle_version: str | None = None
     data_start: datetime | None = None
     data_end: datetime | None = None
 
     def __post_init__(self) -> None:
+        if self.bundle_version is not None and not _HEX_16.fullmatch(self.bundle_version):
+            raise ContractValidationError(
+                "dataset bundle_version must be 16 lowercase hex characters"
+            )
         if not _HEX_16.fullmatch(self.version):
             raise ContractValidationError("dataset version must be 16 lowercase hex characters")
         if not _HEX_64.fullmatch(self.content_sha256):
@@ -64,7 +69,7 @@ class DatasetRef:
         data = _object(
             value,
             required={"version", "content_sha256", "symbol", "interval"},
-            optional={"data_start", "data_end"},
+            optional={"bundle_version", "data_start", "data_end"},
             name="dataset",
         )
         return cls(
@@ -72,6 +77,7 @@ class DatasetRef:
             content_sha256=_string(data["content_sha256"], "dataset.content_sha256"),
             symbol=_string(data["symbol"], "dataset.symbol"),
             interval=_string(data["interval"], "dataset.interval"),  # type: ignore[arg-type]
+            bundle_version=_optional_string(data.get("bundle_version"), "dataset.bundle_version"),
             data_start=_optional_time(data.get("data_start"), "dataset.data_start"),
             data_end=_optional_time(data.get("data_end"), "dataset.data_end"),
         )
@@ -83,6 +89,8 @@ class DatasetRef:
             "symbol": self.symbol,
             "interval": self.interval,
         }
+        if self.bundle_version is not None:
+            result["bundle_version"] = self.bundle_version
         if self.data_start is not None:
             result["data_start"] = _isoformat(self.data_start)
             result["data_end"] = _isoformat(self.data_end)  # type: ignore[arg-type]
@@ -203,6 +211,13 @@ class BacktestSubmission:
             raise ContractValidationError("idempotency_key has an invalid format")
         _optional_text(self.label, "label", maximum=120)
         _optional_text(self.note, "note", maximum=500)
+        supported = {
+            "buy-and-hold": {"5m", "15m", "1h", "4h", "1d"},
+            "ema-cross": {"15m", "1h", "4h", "1d"},
+            "donchian-atr": {"1h", "4h", "1d"},
+        }[self.strategy.name]
+        if self.dataset.interval not in supported:
+            raise ContractValidationError("strategy does not support dataset.interval")
         if self.strategy.name == "buy-and-hold":
             strategy_exposure = Decimal(self.strategy.parameters["target_exposure"])
         elif self.strategy.name == "donchian-atr":

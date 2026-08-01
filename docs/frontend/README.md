@@ -66,18 +66,20 @@ backtests. A researcher can edit the active strategy parameters, initial cash,
 fees, slippage, exposure limit, and final-liquidation assumption. The client:
 
 - generates a unique idempotency key for each intentional submission;
-- binds the immutable dataset version and content hash automatically;
+- binds the immutable bundle, dataset version, content hash, symbol, interval,
+  and evaluation range automatically;
 - polls queued/running Tasks until success or failure;
 - displays persisted Task history and resulting Run IDs;
 - loads a successful Experiment into every synchronized result view;
 - preserves the read-only safety boundary around live execution.
 
-Completed manual runs now replace the build-time strategy result when their
-immutable dataset identity matches the selected workspace view. The selected
-Run drives aggregate metrics, Kline fill markers, the fill table, portfolio
-equity, position, and drawdown. Changing the strategy, asset, or observation
-window returns the workspace to its committed baseline until another compatible
-history record is selected.
+Completed manual runs replace the build-time strategy result when their exact
+immutable dataset identity matches the selected workspace member. Each new Run
+serves a bounded Kline tail from its own `bars.csv`, so the selected Run drives
+aggregate metrics, Kline fill markers, the fill table, portfolio equity,
+position, and drawdown across supported timeframes. Changing the strategy,
+asset, interval, or observation window returns the workspace to its committed
+baseline until another compatible history record is selected.
 
 Multi-Run comparison and Experiment filtering are the next frontend boundary.
 
@@ -93,6 +95,7 @@ The product recognizes `5m`, `15m`, `1h`, `4h`, and `1d`. The Data and Overview
 views import a compact projection of verified bundle `47a8b29be444e2ba`, which
 contains BTCUSDT and ETHUSDT for all five intervals from 2021-01-01 through the
 exclusive 2026-08-01 UTC boundary. The workspace exposes the latest boundary,
-total row count, and preserved exchange-source gaps. Strategy
-visualization and committed comparison evidence remain 4-hour data until the
-backtest task resolver is connected to these new immutable versions.
+total row count, and preserved exchange-source gaps. The interval selector now
+submits the matching immutable bundle member, while strategy manifests prevent
+unsupported strategy/timeframe combinations. Committed comparison evidence
+remains 4-hour data; newly submitted Runs provide their own exact Kline view.

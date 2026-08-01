@@ -14,10 +14,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from quantos_events import MarketEvent
 from quantos_market_data.storage import DatasetManifest
 
 from .engine import BacktestResult
 from .errors import BacktestError
+
+ARTIFACT_SCHEMA_VERSION = "experiment-artifacts.v2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,7 +48,14 @@ class ExperimentStore:
     ) -> ExperimentArtifacts:
         run_id = _run_id(result, dataset)
         final_path = self.root / run_id
-        required = ("run.json", "metrics.json", "fills.csv", "equity.csv", "report.md")
+        required = (
+            "run.json",
+            "metrics.json",
+            "bars.csv",
+            "fills.csv",
+            "equity.csv",
+            "report.md",
+        )
         if final_path.exists():
             if not all((final_path / name).is_file() for name in required):
                 raise BacktestError(f"incomplete existing experiment: {final_path}")
@@ -56,6 +66,7 @@ class ExperimentStore:
         try:
             metrics = result.metrics.to_dict()
             run = {
+                "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
                 "run_id": run_id,
                 "status": "completed",
                 "created_at": _isoformat(self._now()),
@@ -65,6 +76,8 @@ class ExperimentStore:
                     "schema_version": dataset.schema_version,
                     "symbol": dataset.symbol,
                     "interval": dataset.interval,
+                    "data_start": _isoformat(result.data_start),
+                    "data_end": _isoformat(result.data_end),
                     "evaluation": {
                         "data_start": _isoformat(result.data_start),
                         "data_end": _isoformat(result.data_end),
@@ -80,10 +93,17 @@ class ExperimentStore:
                 "metrics_version": result.metrics_version,
                 "config": result.config.to_dict(),
                 "metrics": metrics,
-                "artifacts": ["metrics.json", "fills.csv", "equity.csv", "report.md"],
+                "artifacts": [
+                    "metrics.json",
+                    "bars.csv",
+                    "fills.csv",
+                    "equity.csv",
+                    "report.md",
+                ],
             }
             _write_json(temporary_path / "run.json", run)
             _write_json(temporary_path / "metrics.json", metrics)
+            _write_bars(temporary_path / "bars.csv", result)
             _write_fills(temporary_path / "fills.csv", result)
             _write_equity(temporary_path / "equity.csv", result)
             (temporary_path / "report.md").write_text(
@@ -99,6 +119,7 @@ class ExperimentStore:
 
 def _run_id(result: BacktestResult, dataset: DatasetManifest) -> str:
     identity = {
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
         "dataset_version": dataset.dataset_version,
         "dataset_content_sha256": dataset.content_sha256,
         "evaluation_data_start": _isoformat(result.data_start),
@@ -133,6 +154,24 @@ def _write_fills(path: Path, result: BacktestResult) -> None:
                     str(item.notional),
                     str(item.fee),
                     item.reason,
+                ]
+            )
+
+
+def _write_bars(path: Path, result: BacktestResult) -> None:
+    bars = [item for item in result.events if isinstance(item, MarketEvent)][-2000:]
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["open_time", "open", "high", "low", "close", "volume"])
+        for item in bars:
+            writer.writerow(
+                [
+                    _isoformat(item.open_time),
+                    str(item.open),
+                    str(item.high),
+                    str(item.low),
+                    str(item.close),
+                    str(item.volume),
                 ]
             )
 
@@ -206,6 +245,7 @@ def _markdown_report(
 
 - `run.json`
 - `metrics.json`
+- `bars.csv`
 - `fills.csv`
 - `equity.csv`
 

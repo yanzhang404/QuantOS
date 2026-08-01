@@ -25,6 +25,9 @@ func TestExperimentStoreDerivesNormalizedVisualization(t *testing.T) {
 	if len(experiment.Equity) != 3 {
 		t.Fatalf("equity points = %d", len(experiment.Equity))
 	}
+	if len(experiment.Bars) != 3 || experiment.Bars[2].Close != 95 {
+		t.Fatalf("bars = %#v", experiment.Bars)
+	}
 	if difference := math.Abs(experiment.Equity[1].Drawdown - (-0.1)); difference > 1e-12 {
 		t.Fatalf("drawdown = %f", experiment.Equity[1].Drawdown)
 	}
@@ -60,7 +63,7 @@ func TestExperimentHTTPReturnsDetailAndSafeErrors(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &detail); err != nil {
 		t.Fatal(err)
 	}
-	if len(detail.Equity) != 3 || len(detail.Fills) != 2 {
+	if len(detail.Bars) != 3 || len(detail.Equity) != 3 || len(detail.Fills) != 2 {
 		t.Fatalf("unexpected detail = %#v", detail)
 	}
 
@@ -133,6 +136,14 @@ func writeExperimentFixture(t *testing.T, root, runID string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(directory, "run.json"), payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	bars := `open_time,open,high,low,close,volume
+2026-01-01T00:00:00Z,100,105,95,100,10
+2026-01-01T04:00:00Z,100,102,88,90,12
+2026-01-01T08:00:00Z,90,98,89,95,11
+`
+	if err := os.WriteFile(filepath.Join(directory, "bars.csv"), []byte(bars), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	equity := `timestamp,cash,position_quantity,market_price,equity

@@ -40,7 +40,7 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 - Tool-driven AI research assistant for querying and reviewing artifacts.
 - Daily source-linked market brief and deterministic sentiment index. **Initial contract, local publisher, read-only API, and homepage view implemented.**
 - Manifest-driven strategy parameters and candidate-to-promotion lifecycle. **Initial catalog and evidence view implemented.**
-- Multi-timeframe research datasets. **BTC/ETH 5m/15m/1h/4h/1d immutable bundle, 2021-to-current coverage evidence, and incremental current-data sync implemented; backtest task resolution pending.**
+- Multi-timeframe research datasets. **BTC/ETH 5m/15m/1h/4h/1d immutable bundle, 2021-to-current coverage evidence, incremental sync, verified backtest member resolution, and Run Kline projections implemented.**
 - Result-first product information architecture. **Overview, Strategies, Runs,
   and Data views accepted; initial workspace split in progress.**
 

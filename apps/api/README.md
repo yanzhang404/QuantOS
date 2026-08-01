@@ -2,8 +2,8 @@
 
 Future Go composition root for the platform API and orchestration modules.
 
-The first implementation increment consumes
-`packages/api-schema/schemas/backtest.v1.schema.json` and will expose strategy,
+The API consumes
+`packages/api-schema/schemas/backtest.v1.schema.json` and exposes strategy,
 backtest submission, task, and experiment resources. It owns idempotency and
 task lifecycle; Python remains responsible for deterministic research compute.
 
@@ -26,13 +26,14 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `GET /api/v1/experiments/{run_id}`
 - `GET /api/v1/intelligence/latest`
 
-Task metadata is stored as atomic JSON files. The API resolves dataset paths
-from the configured trusted data root; requests cannot choose local paths or
-commands. One background worker runs historical simulations through the Python
-CLI and links successful Tasks to deterministic Run IDs.
+Task metadata is stored as atomic JSON files. The API first verifies that a
+submitted dataset identity belongs to its immutable Bundle, then resolves the
+dataset path from the configured trusted data root; requests cannot choose
+local paths or commands. One background worker runs historical simulations
+through the Python CLI and links successful Tasks to deterministic Run IDs.
 
 Experiment detail is read-only. It normalizes the selected Run's metrics,
-fills, equity, position, and running drawdown from bounded immutable artifacts;
+bars, fills, equity, position, and running drawdown from bounded immutable artifacts;
 the browser never receives local artifact paths.
 
 This local file store supports one API process. PostgreSQL replaces it before

@@ -20,7 +20,8 @@ should reuse the same Run ID and artifacts.
 Define a language-neutral `backtest.v1` JSON contract under
 `packages/api-schema`. Version `1.0` covers:
 
-- a backtest submission with an idempotency key, immutable dataset identity,
+- a backtest submission with an idempotency key, immutable bundle and resolved
+  dataset identity,
   bounded evaluation range, strategy identity and parameters, and explicit
   cost/risk assumptions;
 - a task record with queued, running, succeeded, failed, or cancelled state;
@@ -31,7 +32,8 @@ Python validation models implement the same boundary for the compute plane.
 The future Go API will implement the JSON schema independently and contract
 tests will keep the two representations compatible.
 
-The API will resolve a dataset version and Run ID server-side. Requests cannot
+The API verifies bundle membership, then resolves a dataset version and Run ID
+server-side. Requests cannot
 contain filesystem paths, commands, arbitrary strategy names, or execution
 instructions. This contract schedules historical simulations only and has no
 live-trading capability.

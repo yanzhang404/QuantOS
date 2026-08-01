@@ -28,13 +28,22 @@ func TestDatasetAcceptsResearchTimeframesAndRejectsUnknownValues(t *testing.T) {
 	for _, interval := range []string{"5m", "15m", "1h", "4h", "1d"} {
 		request := validSubmission()
 		request.Dataset.Interval = interval
-		if err := request.Validate(); err != nil {
+		if err := request.Dataset.validate(); err != nil {
 			t.Fatalf("interval %s: %v", interval, err)
 		}
 	}
 	request := validSubmission()
 	request.Dataset.Interval = "30m"
-	if err := request.Validate(); err == nil {
+	if err := request.Dataset.validate(); err == nil {
 		t.Fatal("expected unsupported interval error")
+	}
+}
+
+func TestSubmissionRejectsStrategyOnUnsupportedInterval(t *testing.T) {
+	request := validSubmission()
+	request.Dataset.Interval = "15m"
+
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected strategy interval validation error")
 	}
 }

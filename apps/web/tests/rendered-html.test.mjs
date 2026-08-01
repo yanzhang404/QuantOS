@@ -125,6 +125,10 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.match(lab, /onExperimentLoaded\(experiment\)/);
   assert.match(workbench, /selectedExperimentMatches/);
   assert.match(workbench, /const run: VisualizationRun = selectedExperimentMatches/);
+  assert.match(workbench, /getBacktestDataset/);
+  assert.match(workbench, /selectedExperiment\.bars/);
+  assert.match(workbench, /setSelectedInterval\(interval\)/);
+  assert.match(lab, /dataset\.bundle_version/);
   assert.match(workbench, /getStrategyCatalog/);
   assert.match(workbench, /mergeStrategyCatalog\(records\)/);
   assert.match(

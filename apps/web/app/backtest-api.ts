@@ -14,10 +14,13 @@ export type BacktestSubmission = {
   label?: string;
   note?: string;
   dataset: {
+    bundle_version?: string;
     version: string;
     content_sha256: string;
     symbol: string;
     interval: "5m" | "15m" | "1h" | "4h" | "1d";
+    data_start?: string;
+    data_end?: string;
   };
   strategy: {
     name: StrategyName;
@@ -69,6 +72,14 @@ export type ExperimentVisualization = {
     fill_count: number;
     fees_paid: number;
   };
+  bars: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
   equity: Array<{
     time: string;
     equity: number;

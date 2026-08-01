@@ -32,6 +32,7 @@ The command writes a content-addressed experiment directory containing:
 
 - `run.json` with dataset, strategy, engine, parameter, and metric versions;
 - `metrics.json`;
+- `bars.csv` with at most the latest 2,000 evaluated OHLCV bars for visualization;
 - `fills.csv`;
 - `equity.csv`;
 - `report.md`.

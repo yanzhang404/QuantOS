@@ -26,12 +26,18 @@ The response contains:
 - experiment, dataset, strategy, engine, metrics, and configuration identity;
 - normalized fills with an explicit buy or sell side;
 - equity points with position quantity and running-peak drawdown.
+- a bounded tail of normalized OHLCV bars copied from the exact evaluated
+  immutable dataset.
 
 The endpoint never accepts an artifact path. It validates file names, bounds
 artifact sizes, parses numeric values strictly, and returns safe structured
-errors. Kline bars remain sourced from the immutable dataset visualization
-already selected in the workspace; a Run can replace a chart only when its
-dataset version and content hash match that view.
+errors. Each new Run stores at most the latest 2,000 evaluated bars in
+`bars.csv`; this is a visualization projection, not a replacement dataset.
+A Run can replace a chart only when its dataset version, content hash, symbol,
+and interval match the selected immutable member.
+Adding this required artifact advances the artifact identity to
+`experiment-artifacts.v2`, so pre-existing Runs remain readable evidence and
+new executions never collide with directories that lack `bars.csv`.
 
 Selecting a successful Task loads its Experiment and makes that Run the single
 source for metric cards, fill markers, equity, drawdown, and the fill table.
@@ -50,5 +56,5 @@ Positive:
 Tradeoffs:
 
 - the Go API performs bounded CSV parsing for each uncached detail request;
-- Kline coverage remains limited to the selected compact visualization window;
+- Kline coverage remains limited to the bounded Run visualization tail;
 - experiment comparison and server-side caching remain later increments.

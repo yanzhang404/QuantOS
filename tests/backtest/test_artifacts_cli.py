@@ -49,13 +49,17 @@ def test_experiment_store_is_content_addressed_and_reusable(
     assert {item.name for item in first.path.iterdir()} == {
         "run.json",
         "metrics.json",
+        "bars.csv",
         "fills.csv",
         "equity.csv",
         "report.md",
     }
     run = json.loads((first.path / "run.json").read_text())
     assert run["dataset"]["version"] == dataset.manifest.dataset_version
+    assert run["artifact_schema_version"] == "experiment-artifacts.v2"
+    assert run["dataset"]["data_start"] == "2024-01-01T00:00:00Z"
     assert run["status"] == "completed"
+    assert len((first.path / "bars.csv").read_text().splitlines()) == 5
     assert "next Kline open" in (first.path / "report.md").read_text()
 
 

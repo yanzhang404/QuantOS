@@ -62,10 +62,12 @@ verified bundle for the product workspace. That evidence records the bundle
 version, range, member dataset versions, row counts, and validation status; it
 does not replace the source manifests or contain market rows.
 
-Backtests continue to accept one explicit immutable dataset path. Later
-multi-timeframe or multi-market orchestration must resolve its inputs from a
-specific bundle version and persist those resolved dataset identities in the
-Run; it must never resolve “latest” during execution.
+Backtest submissions identify a specific bundle version plus one symbol and
+interval member. The control plane verifies that the submitted dataset version
+and content hash are an exact member of that bundle before resolving its trusted
+local path. Tasks retain the bundle identity, and Runs retain the resolved
+immutable dataset identity and evaluation range. Execution must never resolve
+“latest”; the workspace may choose the current bundle only before submission.
 
 ## Consequences
 

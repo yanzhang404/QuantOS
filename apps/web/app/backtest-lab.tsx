@@ -17,12 +17,11 @@ import {
   parameterLabelsZh,
   type StrategyDefinition,
 } from "./strategy-catalog";
-import type { VisualizationDataset } from "./visualization-data";
 
 type Locale = "en" | "zh";
 
 type Props = {
-  dataset: VisualizationDataset;
+  dataset: BacktestSubmission["dataset"];
   definition: StrategyDefinition;
   locale: Locale;
   strategy: StrategyName;
@@ -85,6 +84,7 @@ const copy = {
     return: "Return",
     drawdown: "Drawdown",
     finalCapital: "Final",
+    bundle: "Bundle",
   },
   zh: {
     eyebrow: "回测实验室",
@@ -124,6 +124,7 @@ const copy = {
     return: "收益",
     drawdown: "回撤",
     finalCapital: "金额",
+    bundle: "Bundle",
   },
 } as const;
 
@@ -464,7 +465,9 @@ export function BacktestLab({
             <span>
               {dataset.symbol} · {dataset.interval}
             </span>
-            <code>{dataset.dataset_version}</code>
+            <code>
+              {t.bundle} {dataset.bundle_version} · {dataset.version}
+            </code>
           </div>
           <button
             className="run-backtest"
@@ -540,7 +543,7 @@ export function BacktestLab({
                         task.request.strategy.name.replaceAll("-", " ")}
                     </strong>
                     <small>
-                      {task.request.dataset.symbol} ·{" "}
+                      {task.request.dataset.symbol} · {task.request.dataset.interval} ·{" "}
                       {formatTaskTime(task.created_at, localeTag)}
                     </small>
                     {experiment ? (
@@ -646,7 +649,7 @@ function buildSubmission({
   liquidateAtEnd,
   label,
 }: {
-  dataset: VisualizationDataset;
+  dataset: BacktestSubmission["dataset"];
   definition: StrategyDefinition;
   strategy: StrategyName;
   values: Record<string, string>;
@@ -669,12 +672,7 @@ function buildSubmission({
     schema_version: "1.0",
     idempotency_key: `web:${crypto.randomUUID()}`,
     ...(label.trim() ? { label: label.trim() } : {}),
-    dataset: {
-      version: dataset.dataset_version,
-      content_sha256: dataset.content_sha256,
-      symbol: dataset.symbol,
-      interval: dataset.interval as BacktestSubmission["dataset"]["interval"],
-    },
+    dataset,
     strategy: {
       name: strategy,
       version: definition.version,

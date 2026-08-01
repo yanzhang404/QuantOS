@@ -1,4 +1,5 @@
 import coverage from "./multi-timeframe-coverage.v1.json";
+import type { BacktestSubmission } from "./backtest-api";
 
 export type CoverageInterval = "5m" | "15m" | "1h" | "4h" | "1d";
 export type CoverageSymbol = "BTCUSDT" | "ETHUSDT";
@@ -38,4 +39,23 @@ export function getCoverageMember(
     throw new Error(`missing coverage member: ${symbol}/${interval}`);
   }
   return member;
+}
+
+export function getBacktestDataset(
+  symbol: CoverageSymbol,
+  interval: CoverageInterval,
+  window: "development" | "evaluation",
+): BacktestSubmission["dataset"] {
+  const member = getCoverageMember(symbol, interval);
+  const split = "2024-01-01T00:00:00Z";
+  return {
+    bundle_version: marketDataCoverage.bundle_version,
+    version: member.dataset_version,
+    content_sha256: member.content_sha256,
+    symbol,
+    interval,
+    data_start:
+      window === "development" ? marketDataCoverage.requested_start : split,
+    data_end: window === "development" ? split : marketDataCoverage.requested_end,
+  };
 }

@@ -6,6 +6,7 @@ import {
   getStrategyCatalog,
 } from "./backtest-api";
 import { BacktestLab } from "./backtest-lab";
+import { getBacktestDataset } from "./market-data-coverage";
 import type {
   Asset,
   Period,
@@ -20,7 +21,6 @@ import {
 import {
   type Bar,
   type Fill,
-  findVisualizationDatasetContext,
   getVisualizationDataset,
   type VisualizationRun,
   visualizationSchemaVersion,
@@ -111,8 +111,9 @@ const copy = {
     feesPaid: "Fees paid",
     totalReturn: "Total return",
     interval: "Timeframe",
-    intervalUnavailable: "dataset not loaded",
+    intervalUnavailable: "not supported by this strategy",
     selectedMetrics: "Selected run results",
+    pendingRun: "Run a backtest to load this timeframe's exact Klines and results.",
   },
   zh: {
     eyebrow: "策略工作台",
@@ -178,8 +179,9 @@ const copy = {
     feesPaid: "支付费用",
     totalReturn: "总收益",
     interval: "时间尺度",
-    intervalUnavailable: "尚未加载数据",
+    intervalUnavailable: "当前策略不支持此时间尺度",
     selectedMetrics: "当前回测结果",
+    pendingRun: "运行一次回测后，将加载该时间尺度的真实 K 线与结果。",
   },
 } as const;
 
@@ -191,6 +193,8 @@ export function StrategyWorkbench({
   onPeriodChange,
 }: Props) {
   const [strategy, setStrategy] = useState<StrategyName>("donchian-atr");
+  const [selectedInterval, setSelectedInterval] =
+    useState<StrategyInterval>("4h");
   const [barCount, setBarCount] = useState(120);
   const [focus, setFocus] = useState<{ context: string; time: string }>();
   const [selectedExperiment, setSelectedExperiment] =
@@ -201,18 +205,31 @@ export function StrategyWorkbench({
     () => getVisualizationDataset(asset, period),
     [asset, period],
   );
+  const executionDataset = useMemo(
+    () =>
+      getBacktestDataset(
+        asset === "btc" ? "BTCUSDT" : "ETHUSDT",
+        selectedInterval,
+        period,
+      ),
+    [asset, period, selectedInterval],
+  );
   const definition =
     catalog.find((item) => item.name === strategy) ??
     fallbackStrategyCatalog.find((item) => item.name === strategy)!;
   const selectedExperimentMatches =
-    selectedExperiment?.dataset.version === dataset.dataset_version &&
-    selectedExperiment.dataset.content_sha256 === dataset.content_sha256 &&
-    selectedExperiment.dataset.symbol === dataset.symbol &&
+    selectedExperiment?.dataset.version === executionDataset.version &&
+    selectedExperiment.dataset.content_sha256 === executionDataset.content_sha256 &&
+    selectedExperiment.dataset.symbol === executionDataset.symbol &&
+    selectedExperiment.dataset.interval === executionDataset.interval &&
     selectedExperiment.strategy.name === strategy;
   const run: VisualizationRun = selectedExperimentMatches
     ? selectedExperiment
     : dataset.runs[strategy];
-  const visibleBars = dataset.bars.slice(-barCount);
+  const chartBars = selectedExperimentMatches && selectedExperiment.bars.length
+    ? selectedExperiment.bars
+    : dataset.bars;
+  const visibleBars = chartBars.slice(-barCount);
   const visibleStart = Date.parse(visibleBars[0]?.time ?? "");
   const visibleEnd = Date.parse(visibleBars.at(-1)?.time ?? "");
   const visibleFills = run.fills.filter((fill) => {
@@ -220,7 +237,7 @@ export function StrategyWorkbench({
     return timestamp >= visibleStart && timestamp <= visibleEnd + 4 * 60 * 60 * 1000;
   });
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
-  const focusContext = `${asset}-${period}-${strategy}-${barCount}`;
+  const focusContext = `${asset}-${period}-${selectedInterval}-${strategy}-${barCount}`;
   const focusTime = focus?.context === focusContext ? focus.time : undefined;
   const finalEquity =
     run.metrics.final_equity ?? run.equity.at(-1)?.equity ?? 0;
@@ -232,15 +249,13 @@ export function StrategyWorkbench({
   const netProfit = finalEquity - initialEquity;
   const loadExperiment = useCallback(
     (experiment: ExperimentVisualization) => {
-      const context = findVisualizationDatasetContext(
-        experiment.dataset.symbol,
-        experiment.dataset.version,
-        experiment.dataset.content_sha256,
+      onAssetChange(experiment.dataset.symbol === "ETHUSDT" ? "eth" : "btc");
+      setSelectedInterval(experiment.dataset.interval);
+      onPeriodChange(
+        experiment.dataset.data_start === "2021-01-01T00:00:00Z"
+          ? "development"
+          : "evaluation",
       );
-      if (context) {
-        onAssetChange(context.asset);
-        onPeriodChange(context.period);
-      }
       setStrategy(experiment.strategy.name);
       setFocus(undefined);
       setSelectedExperiment(experiment);
@@ -269,7 +284,10 @@ export function StrategyWorkbench({
             <span>{t.selectedMetrics}</span>
             <strong>{t.names[strategy]}</strong>
             <small>
-              {asset.toUpperCase()} / USDT · {dataset.interval} ·{" "}
+              {asset.toUpperCase()} / USDT ·{" "}
+              {selectedExperimentMatches
+                ? selectedExperiment.dataset.interval
+                : dataset.interval} ·{" "}
               {t.periods[period]}
             </small>
           </div>
@@ -278,7 +296,10 @@ export function StrategyWorkbench({
               {t.run} {run.run_id}
             </span>
             <small>
-              {t.source} · {dataset.dataset_version} · schema{" "}
+              {t.source} ·{" "}
+              {selectedExperimentMatches
+                ? selectedExperiment.dataset.version
+                : dataset.dataset_version} · schema{" "}
               {visualizationSchemaVersion}
             </small>
           </div>
@@ -350,6 +371,11 @@ export function StrategyWorkbench({
                     onClick={() => {
                       clearManualResult();
                       setStrategy(item.name);
+                      setSelectedInterval((current) =>
+                        item.supported_intervals.includes(current)
+                          ? current
+                          : item.supported_intervals[0],
+                      );
                     }}
                     type="button"
                   >
@@ -376,15 +402,17 @@ export function StrategyWorkbench({
           <span>{t.interval}</span>
           <div>
           {intervals.map((interval) => {
-            const available =
-              definition.supported_intervals.includes(interval) &&
-              interval === dataset.interval;
+            const available = definition.supported_intervals.includes(interval);
             return (
             <button
-              aria-pressed={interval === dataset.interval}
-              className={interval === dataset.interval ? "selected" : ""}
+              aria-pressed={interval === selectedInterval}
+              className={interval === selectedInterval ? "selected" : ""}
               disabled={!available}
               key={interval}
+              onClick={() => {
+                clearManualResult();
+                setSelectedInterval(interval);
+              }}
               title={!available ? t.intervalUnavailable : undefined}
               type="button"
             >
@@ -425,7 +453,7 @@ export function StrategyWorkbench({
       </div>
 
       <BacktestLab
-        dataset={dataset}
+        dataset={executionDataset}
         definition={definition}
         locale={locale}
         onExperimentLoaded={loadExperiment}
@@ -444,6 +472,16 @@ export function StrategyWorkbench({
               .map(([key, value]) => `${key}=${value}`)
               .join(" · ")}
           </p>
+        </div>
+      ) : null}
+
+      {!selectedExperimentMatches && selectedInterval !== dataset.interval ? (
+        <div className="active-run-banner pending-run" role="status">
+          <div>
+            <span>{selectedInterval}</span>
+            <code>{executionDataset.version}</code>
+          </div>
+          <p>{t.pendingRun}</p>
         </div>
       ) : null}
 

@@ -81,6 +81,11 @@ func (r CommandRunner) Run(ctx context.Context, request Submission) (RunResult, 
 }
 
 func (r CommandRunner) resolveDataset(reference DatasetRef) (string, error) {
+	if reference.BundleVersion != "" {
+		if err := r.verifyBundleMembership(reference); err != nil {
+			return "", err
+		}
+	}
 	path := filepath.Join(
 		r.DataRoot,
 		"market",
@@ -125,6 +130,58 @@ func (r CommandRunner) resolveDataset(reference DatasetRef) (string, error) {
 		}
 	}
 	return path, nil
+}
+
+func (r CommandRunner) verifyBundleMembership(reference DatasetRef) error {
+	manifestPath := filepath.Join(
+		r.DataRoot,
+		"bundles",
+		"market",
+		"spot",
+		"exchange=binance",
+		"version="+reference.BundleVersion,
+		"manifest.json",
+	)
+	handle, err := os.Open(manifestPath)
+	if err != nil {
+		return &RunError{
+			Code:      "bundle_not_found",
+			Message:   "The selected immutable dataset bundle is unavailable.",
+			Retryable: false,
+		}
+	}
+	defer handle.Close()
+	var manifest struct {
+		BundleVersion string `json:"bundle_version"`
+		Members       []struct {
+			Symbol         string `json:"symbol"`
+			Interval       string `json:"interval"`
+			DatasetVersion string `json:"dataset_version"`
+			ContentSHA256  string `json:"content_sha256"`
+		} `json:"members"`
+	}
+	decoder := json.NewDecoder(io.LimitReader(handle, 1<<20))
+	if err := decoder.Decode(&manifest); err != nil ||
+		manifest.BundleVersion != reference.BundleVersion {
+		return &RunError{
+			Code:      "bundle_invalid",
+			Message:   "The selected dataset bundle manifest is invalid.",
+			Retryable: false,
+		}
+	}
+	for _, member := range manifest.Members {
+		if member.Symbol == reference.Symbol &&
+			member.Interval == reference.Interval &&
+			member.DatasetVersion == reference.Version &&
+			member.ContentSHA256 == reference.ContentSHA256 {
+			return nil
+		}
+	}
+	return &RunError{
+		Code:      "dataset_bundle_mismatch",
+		Message:   "The selected dataset is not a member of the immutable bundle.",
+		Retryable: false,
+	}
 }
 
 func commandArguments(request Submission, dataset, artifactRoot string) ([]string, error) {

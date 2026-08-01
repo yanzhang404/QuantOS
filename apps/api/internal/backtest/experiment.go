@@ -52,6 +52,15 @@ type ExperimentFill struct {
 	Reason   string  `json:"reason"`
 }
 
+type ExperimentBar struct {
+	Time   string  `json:"time"`
+	Open   float64 `json:"open"`
+	High   float64 `json:"high"`
+	Low    float64 `json:"low"`
+	Close  float64 `json:"close"`
+	Volume float64 `json:"volume"`
+}
+
 type ExperimentVisualization struct {
 	SchemaVersion  string                  `json:"schema_version"`
 	RunID          string                  `json:"run_id"`
@@ -62,6 +71,7 @@ type ExperimentVisualization struct {
 	EngineVersion  string                  `json:"engine_version"`
 	MetricsVersion string                  `json:"metrics_version"`
 	Metrics        ExperimentMetrics       `json:"metrics"`
+	Bars           []ExperimentBar         `json:"bars"`
 	Equity         []ExperimentEquityPoint `json:"equity"`
 	Fills          []ExperimentFill        `json:"fills"`
 }
@@ -108,6 +118,17 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 		return ExperimentVisualization{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
 	}
 	directory := filepath.Dir(runPath)
+	barsPath := filepath.Join(directory, "bars.csv")
+	bars := []ExperimentBar{}
+	if _, statErr := os.Stat(barsPath); statErr == nil {
+		loadedBars, readErr := readExperimentBars(barsPath)
+		if readErr != nil {
+			return ExperimentVisualization{}, readErr
+		}
+		bars = loadedBars
+	} else if !errors.Is(statErr, os.ErrNotExist) {
+		return ExperimentVisualization{}, fmt.Errorf("%w: bars", ErrExperimentInvalid)
+	}
 	equity, err := readExperimentEquity(filepath.Join(directory, "equity.csv"))
 	if err != nil {
 		return ExperimentVisualization{}, err
@@ -126,9 +147,48 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 		EngineVersion:  artifact.EngineVersion,
 		MetricsVersion: artifact.MetricsVersion,
 		Metrics:        artifact.Metrics,
+		Bars:           bars,
 		Equity:         equity,
 		Fills:          fills,
 	}, nil
+}
+
+func readExperimentBars(path string) ([]ExperimentBar, error) {
+	records, err := openArtifactCSV(
+		path,
+		[]string{"open_time", "open", "high", "low", "close", "volume"},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 || len(records) > 2000 {
+		return nil, fmt.Errorf("%w: bar count", ErrExperimentInvalid)
+	}
+	bars := make([]ExperimentBar, 0, len(records))
+	for _, record := range records {
+		timestamp, err := parseArtifactTime(record[0])
+		if err != nil {
+			return nil, fmt.Errorf("%w: bar timestamp", ErrExperimentInvalid)
+		}
+		values := make([]float64, 5)
+		for index := range values {
+			values[index], err = parseFiniteFloat(record[index+1])
+			if err != nil {
+				return nil, fmt.Errorf("%w: bar value", ErrExperimentInvalid)
+			}
+		}
+		if values[0] <= 0 || values[1] <= 0 || values[2] <= 0 ||
+			values[3] <= 0 || values[4] < 0 ||
+			values[1] < max(values[0], values[2], values[3]) ||
+			values[2] > min(values[0], values[1], values[3]) {
+			return nil, fmt.Errorf("%w: bar OHLCV", ErrExperimentInvalid)
+		}
+		bars = append(bars, ExperimentBar{
+			Time: timestamp, Open: values[0], High: values[1], Low: values[2],
+			Close: values[3], Volume: values[4],
+		})
+	}
+	return bars, nil
 }
 
 func decodeArtifactJSON(path string, maximum int64, target any) error {

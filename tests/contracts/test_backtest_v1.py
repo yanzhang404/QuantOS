@@ -27,6 +27,7 @@ def submission_payload() -> dict:
         "label": "BTC Donchian sensitivity",
         "note": "Manual parameter review before comparison.",
         "dataset": {
+            "bundle_version": "47a8b29be444e2ba",
             "version": "024f23d9a629502e",
             "content_sha256": ("024f23d9a629502eabf7c8186735938cb585ab76286b072e20ded76c1b4bc7b3"),
             "symbol": "BTCUSDT",
@@ -66,12 +67,20 @@ def test_submission_round_trips_exact_versioned_values() -> None:
     assert submission.strategy.parameters["target_annual_volatility"] == "0.20"
 
 
-@pytest.mark.parametrize("interval", ["5m", "15m", "1h", "4h", "1d"])
-def test_submission_accepts_supported_research_intervals(interval: str) -> None:
+@pytest.mark.parametrize("interval", ["1h", "4h", "1d"])
+def test_submission_accepts_strategy_intervals(interval: str) -> None:
     payload = submission_payload()
     payload["dataset"]["interval"] = interval
 
     assert BacktestSubmission.from_dict(payload).dataset.interval == interval
+
+
+def test_submission_rejects_strategy_on_unsupported_interval() -> None:
+    payload = submission_payload()
+    payload["dataset"]["interval"] = "15m"
+
+    with pytest.raises(ContractValidationError, match="does not support"):
+        BacktestSubmission.from_dict(payload)
 
 
 @pytest.mark.parametrize(

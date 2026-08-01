@@ -22,6 +22,7 @@ var (
 )
 
 type DatasetRef struct {
+	BundleVersion string  `json:"bundle_version,omitempty"`
 	Version       string  `json:"version"`
 	ContentSHA256 string  `json:"content_sha256"`
 	Symbol        string  `json:"symbol"`
@@ -98,10 +99,26 @@ func (s Submission) Validate() error {
 	if err := s.Strategy.validate(); err != nil {
 		return err
 	}
+	if !strategySupportsInterval(s.Strategy.Name, s.Dataset.Interval) {
+		return errors.New("strategy does not support dataset.interval")
+	}
 	if err := s.Config.validate(); err != nil {
 		return err
 	}
 	return s.validateExposureBoundary()
+}
+
+func strategySupportsInterval(strategy, interval string) bool {
+	switch strategy {
+	case "buy-and-hold":
+		return supportedInterval(interval)
+	case "ema-cross":
+		return interval != "5m" && supportedInterval(interval)
+	case "donchian-atr":
+		return interval == "1h" || interval == "4h" || interval == "1d"
+	default:
+		return false
+	}
 }
 
 func (s Submission) validateExposureBoundary() error {
@@ -128,6 +145,9 @@ func (s Submission) validateExposureBoundary() error {
 }
 
 func (d DatasetRef) validate() error {
+	if d.BundleVersion != "" && !hex16Pattern.MatchString(d.BundleVersion) {
+		return errors.New("dataset.bundle_version must be 16 lowercase hex characters")
+	}
 	if !hex16Pattern.MatchString(d.Version) {
 		return errors.New("dataset.version must be 16 lowercase hex characters")
 	}
