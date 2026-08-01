@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from quantos_market_data import cli, service
+from quantos_market_data.bundle import PRODUCT_INTERVALS, PRODUCT_SYMBOLS
 from quantos_market_data.errors import ConfigurationError
 from quantos_market_data.models import Interval
 from quantos_market_data.storage import DatasetStore
@@ -66,6 +67,43 @@ def test_download_service_rejects_incomplete_interval(tmp_path, start_time) -> N
         )
 
 
+def test_sync_product_matrix_downloads_every_member(monkeypatch, tmp_path, start_time) -> None:
+    calls: list[tuple[str, Interval]] = []
+
+    def fake_download_dataset(**kwargs):
+        symbol = kwargs["symbol"]
+        interval = kwargs["interval"]
+        calls.append((symbol, interval))
+        rows = int(timedelta(days=1).total_seconds() * 1_000 / interval.milliseconds)
+        return DatasetStore(tmp_path).publish(
+            [
+                make_kline(
+                    start_time + timedelta(milliseconds=interval.milliseconds * index),
+                    symbol=symbol,
+                    interval=interval,
+                )
+                for index in range(rows)
+            ],
+            requested_start=start_time,
+            requested_end=start_time + timedelta(days=1),
+            source="https://example.test/api/v3/klines",
+        )
+
+    monkeypatch.setattr(service, "download_dataset", fake_download_dataset)
+    bundle = service.sync_product_matrix(
+        start=start_time,
+        end=start_time + timedelta(days=1),
+        data_root=tmp_path,
+        base_url="https://example.test",
+        now=start_time + timedelta(days=2),
+    )
+
+    assert calls == [
+        (symbol, interval) for symbol in PRODUCT_SYMBOLS for interval in PRODUCT_INTERVALS
+    ]
+    assert len(bundle.manifest.members) == 10
+
+
 def test_cli_download_prints_machine_readable_result(monkeypatch, capsys, tmp_path) -> None:
     published = SimpleNamespace(
         path=tmp_path / "version=abc",
@@ -92,6 +130,33 @@ def test_cli_download_prints_machine_readable_result(monkeypatch, capsys, tmp_pa
     assert result == 0
     assert payload["dataset_version"] == "abc"
     assert payload["rows"] == 24
+
+
+def test_cli_sync_matrix_prints_exact_member_identities(monkeypatch, capsys, tmp_path) -> None:
+    member = SimpleNamespace(symbol="BTCUSDT", interval="5m", dataset_version="abc", row_count=288)
+    published = SimpleNamespace(
+        path=tmp_path / "version=bundle",
+        manifest=SimpleNamespace(bundle_version="bundle", members=(member,)),
+    )
+    monkeypatch.setattr(cli, "sync_product_matrix", lambda **_: published)
+
+    result = cli.main(
+        [
+            "data",
+            "sync-matrix",
+            "--start",
+            "2024-01-01T00:00:00Z",
+            "--end",
+            "2024-01-02T00:00:00Z",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert payload["bundle_version"] == "bundle"
+    assert payload["members"] == [
+        {"dataset_version": "abc", "interval": "5m", "rows": 288, "symbol": "BTCUSDT"}
+    ]
 
 
 def test_cli_validate_and_query(capsys, monkeypatch, tmp_path, start_time) -> None:

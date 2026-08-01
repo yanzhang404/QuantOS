@@ -15,7 +15,8 @@ Paper and live trading are not implemented.
 ## V0.1 capabilities
 
 - Download public Binance historical Klines for BTCUSDT and ETHUSDT.
-- Store 1h and 4h bars as versioned Parquet datasets.
+- Store 5m, 15m, 1h, 4h, and 1d bars as versioned Parquet datasets.
+- Version the complete BTC/ETH interval matrix as one immutable dataset bundle.
 - Query local datasets with DuckDB.
 - Run an event-driven EMA cross example backtest.
 - Model fees and fixed slippage.
@@ -30,8 +31,8 @@ Paper and live trading are not implemented.
 - Display the sentiment result, factor detail, daily brief, and citations on
   the bilingual workspace homepage.
 
-The research loop is implemented with Markdown reports. Feature lineage,
-walk-forward validation, broader market datasets, and HTML presentation remain.
+The research loop is implemented with Markdown reports and a product workspace.
+Feature lineage, walk-forward validation, and broader derivatives datasets remain.
 
 ## Architecture at a glance
 

@@ -77,6 +77,8 @@ The Backtest Lab generates its inputs from that manifest, so EMA, Donchian, and
 benchmark strategies expose different editable parameters without duplicating
 form definitions.
 
-The product recognizes `5m`, `15m`, `1h`, `4h`, and `1d`. The selector clearly
-disables combinations whose immutable dataset has not been loaded. The current
-committed visualization evidence remains 4-hour data.
+The product recognizes `5m`, `15m`, `1h`, `4h`, and `1d`. The Data and Overview
+views import a compact projection of verified bundle `27d21dafc1ae305e`, which
+contains BTCUSDT and ETHUSDT for all five intervals over 2024 Q1. Strategy
+visualization and committed comparison evidence remain 4-hour data until the
+backtest task resolver is connected to these new immutable versions.

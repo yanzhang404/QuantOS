@@ -21,3 +21,12 @@ uv run quantos data query --dataset "<dataset>" --limit 5
 Do not commit the generated `data/` directory. A research experiment should
 record the printed `dataset_version` and retain the corresponding manifest and
 artifact in managed storage.
+
+## Multi-timeframe coverage evidence
+
+`multi-timeframe-coverage.v1.json` is the compact projection of verified bundle
+`27d21dafc1ae305e`. It records real public Binance Spot coverage for BTCUSDT and
+ETHUSDT at `5m`, `15m`, `1h`, `4h`, and `1d` from 2024-01-01 through the
+exclusive 2024-04-01 boundary. The ignored local bundle retains the source
+manifests and Parquet rows; this committed evidence retains exact dataset
+versions, hashes, row counts, and the bundle identity used by the workspace.

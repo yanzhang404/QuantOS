@@ -17,10 +17,11 @@ increment also includes a deterministic daily market-intelligence contract,
 read-only API, and bilingual homepage view. Current data collection still
 requires a bounded external Agent/OpenClaw adapter; strategy robustness,
 feature lineage, walk-forward validation, and broader market datasets remain.
-The next accepted product increment starts by splitting the workspace into
-Overview, Strategies, Runs, and Data views before expanding immutable intervals
-and Agent-proposed strategy candidates. Paper reproduction remains a later
-research workflow rather than part of this increment.
+The workspace is split into Overview, Strategies, Runs, and Data views. A real
+public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
+and 1d over a fixed 2024 Q1 research range. The next boundary resolves those
+exact versions into immutable backtest Runs before richer robustness and Agent
+candidate workflows. Paper reproduction remains a later research workflow.
 
 ## Product principles
 

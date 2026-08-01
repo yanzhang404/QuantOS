@@ -11,6 +11,11 @@ import {
   studyAsOf,
 } from "./research-data";
 import { DailyIntelligence } from "./daily-intelligence";
+import {
+  coverageIntervals,
+  getCoverageMember,
+  marketDataCoverage,
+} from "./market-data-coverage";
 import { StrategyWorkbench } from "./strategy-workbench";
 
 type Locale = "en" | "zh";
@@ -41,7 +46,11 @@ const copy = {
     candidateQueue: "Candidate queue",
     candidateNote: "Agent proposals require tests, robustness review, and owner approval.",
     datasetHealth: "Dataset coverage",
-    datasetNote: "BTC/ETH 4h evidence loaded. Intraday and daily immutable datasets are next.",
+    datasetNote:
+      "BTC/ETH 5m–1d are verified for 2024 Q1. Every cell resolves to an immutable dataset version.",
+    coverageWindow: "Verified coverage window",
+    bundle: "Dataset bundle",
+    barsUnit: "bars",
     runsIntro:
       "Every result stays attributable to its dataset, parameters, costs, and Run ID.",
     dataIntro:
@@ -159,7 +168,11 @@ const copy = {
     candidateQueue: "候选策略队列",
     candidateNote: "Agent 提案必须通过测试、稳健性评审和所有者批准。",
     datasetHealth: "数据覆盖",
-    datasetNote: "BTC/ETH 4小时证据已加载；日内与日线不可变数据集是下一步。",
+    datasetNote:
+      "BTC/ETH 的 5分钟至日线数据已完成 2024 年第一季度验证，每个单元格均对应不可变数据版本。",
+    coverageWindow: "已验证覆盖区间",
+    bundle: "数据集 Bundle",
+    barsUnit: "根 K 线",
     runsIntro: "每个结果都关联到确切的数据集、参数、成本和 Run ID。",
     dataIntro: "查看当前证据究竟使用了哪些不可变市场数据。",
     researchMode: "研究模式",
@@ -406,8 +419,8 @@ export default function Home() {
               </article>
               <article className="panel overview-status-card">
                 <p className="eyebrow">{t.datasetHealth}</p>
-                <strong>2 × 4h</strong>
-                <span>BTCUSDT · ETHUSDT</span>
+                <strong>{marketDataCoverage.member_count} / 10</strong>
+                <span>BTCUSDT · ETHUSDT · 5m–1d</span>
                 <p>{t.datasetNote}</p>
               </article>
             </section>
@@ -614,21 +627,43 @@ export default function Home() {
                     <p className="eyebrow">{t.datasetHealth}</p>
                     <h3>BTC / ETH</h3>
                   </div>
-                  <span className="badge warning">2 / 10</span>
+                  <span className="verified">{marketDataCoverage.member_count} / 10</span>
                 </div>
                 <div className="coverage-table">
-                  {["5m", "15m", "1h", "4h", "1d"].map((interval) => (
-                    <div key={interval}>
-                      <strong>{interval}</strong>
-                      <span className={interval === "4h" ? "loaded" : "pending"}>
-                        {interval === "4h" ? t.verified : "Pending"}
-                      </span>
-                      <span className={interval === "4h" ? "loaded" : "pending"}>
-                        {interval === "4h" ? t.verified : "Pending"}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="coverage-header" aria-hidden="true">
+                    <strong>UTC</strong>
+                    <span>BTC</span>
+                    <span>ETH</span>
+                  </div>
+                  {coverageIntervals.map((interval) => {
+                    const btc = getCoverageMember("BTCUSDT", interval);
+                    const eth = getCoverageMember("ETHUSDT", interval);
+                    return (
+                      <div key={interval}>
+                        <strong>{interval}</strong>
+                        <span className="loaded" title={btc.dataset_version}>
+                          {btc.row_count.toLocaleString(localeTag)} {t.barsUnit}
+                        </span>
+                        <span className="loaded" title={eth.dataset_version}>
+                          {eth.row_count.toLocaleString(localeTag)} {t.barsUnit}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
+                <dl className="coverage-meta">
+                  <div>
+                    <dt>{t.coverageWindow}</dt>
+                    <dd>
+                      {marketDataCoverage.requested_start.slice(0, 10)} →{" "}
+                      {marketDataCoverage.requested_end.slice(0, 10)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t.bundle}</dt>
+                    <dd>{marketDataCoverage.bundle_version}</dd>
+                  </div>
+                </dl>
                 <p>{t.datasetNote}</p>
               </article>
             </section>

@@ -1,0 +1,91 @@
+{
+  "bundle_version": "27d21dafc1ae305e",
+  "market_type": "spot",
+  "member_count": 10,
+  "members": [
+    {
+      "content_sha256": "70a79eb6a17d8cd6ca7dd9bf0c2b432763712b382031d0a445696daa1ba2efb8",
+      "dataset_version": "70a79eb6a17d8cd6",
+      "interval": "5m",
+      "row_count": 26208,
+      "status": "verified",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "content_sha256": "4af399d34056b337c15de166e4dd1ce0170eabea32644b9f0829fb3d7f1e8058",
+      "dataset_version": "4af399d34056b337",
+      "interval": "15m",
+      "row_count": 8736,
+      "status": "verified",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "content_sha256": "883f5117b6e57617b8e5e4cdca314a7c3d4055d1aeeb2c7e40623b3a3c7ca9f3",
+      "dataset_version": "883f5117b6e57617",
+      "interval": "1h",
+      "row_count": 2184,
+      "status": "verified",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "content_sha256": "d341f3676745a24ba982170fb5ecbdd0ee0fc0dc750b391a6f6f80686eaa93d2",
+      "dataset_version": "d341f3676745a24b",
+      "interval": "4h",
+      "row_count": 546,
+      "status": "verified",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "content_sha256": "f9a705f34d263e25317b2f409ed483d927eace0fa225c20b200983f38fa196d2",
+      "dataset_version": "f9a705f34d263e25",
+      "interval": "1d",
+      "row_count": 91,
+      "status": "verified",
+      "symbol": "BTCUSDT"
+    },
+    {
+      "content_sha256": "ab24515e2b2c900770f14042b70019418488b4a292758d72a3b786d9d1ab126a",
+      "dataset_version": "ab24515e2b2c9007",
+      "interval": "5m",
+      "row_count": 26208,
+      "status": "verified",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "content_sha256": "42f987d98044a15e19ea982e468eb058d55e479333339564d86e3baa5e384dcf",
+      "dataset_version": "42f987d98044a15e",
+      "interval": "15m",
+      "row_count": 8736,
+      "status": "verified",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "content_sha256": "f15a40b702f39eb9184b04e4b5f8faa8cf5aa50faa2ea56c51b0f792f0f58ff6",
+      "dataset_version": "f15a40b702f39eb9",
+      "interval": "1h",
+      "row_count": 2184,
+      "status": "verified",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "content_sha256": "325d316d792ca1496beb5d329e90872c1b079edd59bb8e5e083ba29973edf3e8",
+      "dataset_version": "325d316d792ca149",
+      "interval": "4h",
+      "row_count": 546,
+      "status": "verified",
+      "symbol": "ETHUSDT"
+    },
+    {
+      "content_sha256": "b067053abdced459f235c513f3f7a319262e90e020c0e9860a78963ffe622529",
+      "dataset_version": "b067053abdced459",
+      "interval": "1d",
+      "row_count": 91,
+      "status": "verified",
+      "symbol": "ETHUSDT"
+    }
+  ],
+  "requested_end": "2024-04-01T00:00:00Z",
+  "requested_start": "2024-01-01T00:00:00Z",
+  "schema_version": "dataset-coverage.v1",
+  "source": "https://data-api.binance.vision/api/v3/klines"
+}

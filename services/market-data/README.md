@@ -9,8 +9,9 @@ version manifests, and read-only analytical queries.
 - `models.py`: exchange-neutral `kline.v1` contract.
 - `validation.py`: deterministic quality rules.
 - `storage.py`: atomic, immutable Parquet publication and verification.
+- `bundle.py`: atomic identity and publication for a verified dataset matrix.
 - `query.py`: DuckDB queries scoped to one dataset version.
-- `service.py`: download → validate → publish orchestration.
+- `service.py`: single-dataset and complete-matrix orchestration.
 - `cli.py`: human and automation entry point.
 
 The adapter has no authenticated endpoint, API-key parameter, account model, or

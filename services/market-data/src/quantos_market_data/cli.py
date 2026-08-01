@@ -10,10 +10,11 @@ from pathlib import Path
 from typing import Any
 
 from .binance import DEFAULT_BASE_URL
+from .bundle import DatasetBundleStore, write_coverage_evidence
 from .errors import MarketDataError
 from .models import Interval
 from .query import json_value, query_klines
-from .service import download_dataset
+from .service import download_dataset, sync_product_matrix
 from .storage import DatasetStore
 
 
@@ -35,6 +36,23 @@ def register_parser(commands: Any) -> None:
     download.add_argument("--end", required=True, type=_datetime, help="exclusive UTC ISO-8601")
     download.add_argument("--data-root", type=Path, default=Path("data"))
     download.add_argument("--base-url", default=DEFAULT_BASE_URL, help=argparse.SUPPRESS)
+
+    sync_matrix = data_commands.add_parser(
+        "sync-matrix", help="download and version the BTC/ETH five-interval matrix"
+    )
+    sync_matrix.add_argument(
+        "--start", required=True, type=_datetime, help="inclusive UTC ISO-8601"
+    )
+    sync_matrix.add_argument("--end", required=True, type=_datetime, help="exclusive UTC ISO-8601")
+    sync_matrix.add_argument("--data-root", type=Path, default=Path("data"))
+    sync_matrix.add_argument("--base-url", default=DEFAULT_BASE_URL, help=argparse.SUPPRESS)
+
+    export_coverage = data_commands.add_parser(
+        "export-coverage", help="export compact verified coverage evidence"
+    )
+    export_coverage.add_argument("--bundle", required=True, type=Path)
+    export_coverage.add_argument("--data-root", type=Path, default=Path("data"))
+    export_coverage.add_argument("--output", required=True, type=Path)
 
     validate = data_commands.add_parser("validate", help="verify a published dataset")
     validate.add_argument("--dataset", required=True, type=Path)
@@ -62,6 +80,42 @@ def run(args: argparse.Namespace) -> int:
                 "manifest": str(result.path / "manifest.json"),
                 "dataset_version": result.manifest.dataset_version,
                 "rows": result.manifest.row_count,
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "sync-matrix":
+        result = sync_product_matrix(
+            start=args.start,
+            end=args.end,
+            data_root=args.data_root,
+            base_url=args.base_url,
+        )
+        _print_json(
+            {
+                "bundle": str(result.path),
+                "manifest": str(result.path / "manifest.json"),
+                "bundle_version": result.manifest.bundle_version,
+                "members": [
+                    {
+                        "symbol": item.symbol,
+                        "interval": item.interval,
+                        "dataset_version": item.dataset_version,
+                        "rows": item.row_count,
+                    }
+                    for item in result.manifest.members
+                ],
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "export-coverage":
+        store = DatasetBundleStore(args.data_root)
+        manifest = store.verify(args.bundle)
+        write_coverage_evidence(manifest, args.output)
+        _print_json(
+            {
+                "bundle_version": manifest.bundle_version,
+                "members": len(manifest.members),
+                "output": str(args.output),
             }
         )
         return 0

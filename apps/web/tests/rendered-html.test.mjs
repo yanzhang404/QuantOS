@@ -138,3 +138,28 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.match(lab, /setExperiments/);
   assert.doesNotMatch(lab, /const parameters: Record/);
 });
+
+test("renders verified BTC and ETH coverage from an immutable bundle", async () => {
+  const [page, coverage] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../../../examples/market-data/multi-timeframe-coverage.v1.json", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  const evidence = JSON.parse(coverage);
+  assert.equal(evidence.schema_version, "dataset-coverage.v1");
+  assert.equal(evidence.member_count, 10);
+  assert.deepEqual(
+    [...new Set(evidence.members.map((member) => member.interval))],
+    ["5m", "15m", "1h", "4h", "1d"],
+  );
+  assert.deepEqual(
+    [...new Set(evidence.members.map((member) => member.symbol))],
+    ["BTCUSDT", "ETHUSDT"],
+  );
+  assert.match(page, /marketDataCoverage\.member_count/);
+  assert.match(page, /getCoverageMember\("BTCUSDT", interval\)/);
+  assert.doesNotMatch(page, /interval === "4h" \? t\.verified : "Pending"/);
+});

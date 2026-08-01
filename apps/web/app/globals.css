@@ -672,12 +672,9 @@ h1 {
   font-size: 9px;
 }
 
-.coverage-table span::before {
-  content: "BTC ";
-}
-
-.coverage-table span:last-child::before {
-  content: "ETH ";
+.coverage-table .coverage-header {
+  color: var(--subtle);
+  text-transform: uppercase;
 }
 
 .coverage-table .loaded {
@@ -686,6 +683,34 @@ h1 {
 
 .coverage-table .pending {
   color: var(--subtle);
+}
+
+.coverage-meta {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin: 14px 0 18px;
+}
+
+.coverage-meta div {
+  min-width: 0;
+}
+
+.coverage-meta dt {
+  color: var(--subtle);
+  font-size: 8px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.coverage-meta dd {
+  color: var(--text);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 8px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hero-grid {

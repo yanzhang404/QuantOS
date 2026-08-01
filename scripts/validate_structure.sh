@@ -20,6 +20,7 @@ required_files=(
   docs/adr/0006-read-only-research-workspace.md
   docs/adr/0012-deterministic-daily-market-intelligence.md
   docs/adr/0013-result-first-product-workspace.md
+  docs/adr/0014-version-multi-timeframe-dataset-bundles.md
   packages/api-schema/schemas/intelligence.v1.schema.json
   apps/web/package.json
   apps/web/sites-vite-plugin.ts

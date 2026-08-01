@@ -28,3 +28,4 @@ Accepted decisions:
 - [ADR-0011: Separate strategy library from research lifecycle](0011-strategy-library-and-research-lifecycle.md)
 - [ADR-0012: Separate deterministic sentiment scoring from agent-authored daily intelligence](0012-deterministic-daily-market-intelligence.md)
 - [ADR-0013: Organize the product workspace around four result-first views](0013-result-first-product-workspace.md)
+- [ADR-0014: Version multi-timeframe datasets as atomic research bundles](0014-version-multi-timeframe-dataset-bundles.md)
