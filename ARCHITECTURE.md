@@ -52,6 +52,8 @@ flowchart LR
     R --> Q["DuckDB Query Layer"]
     B --> Q
     B --> X["Experiment Artifacts & Reports"]
+    R --> I["Daily Intelligence & Sentiment"]
+    I --> API
     API --> M["Metadata Store (future)"]
     API -. "future, disabled" .-> K["Risk & Execution Boundary"]
 ```
@@ -70,6 +72,27 @@ flowchart LR
 Adapters cannot leak exchange-specific response models past normalization.
 Dataset manifests will include source, symbols, intervals, time range, schema
 version, row counts, checksums, and creation metadata.
+
+## Daily intelligence flow
+
+```mermaid
+flowchart LR
+    S["Approved news and market sources"] --> C["Collectors / Agent"]
+    C --> N["Validated intelligence.v1 input"]
+    N --> F["Versioned deterministic sentiment formula"]
+    N --> B["Source-linked daily brief"]
+    F --> J["Immutable daily snapshot"]
+    B --> J
+    J --> API["Go read-only API"]
+    API --> W["Homepage sentiment and daily report"]
+```
+
+The Agent may collect, deduplicate, classify, and summarize untrusted external
+content. It cannot choose index weights, modify scores after calculation,
+execute host commands, access trading credentials, or trigger trading. Every
+snapshot records factor observations, methodology version, source links,
+timestamps, and input identity. See
+[ADR-0012](docs/adr/0012-deterministic-daily-market-intelligence.md).
 
 ## Backtest event flow
 

@@ -25,6 +25,10 @@ Paper and live trading are not implemented.
 - Evaluate only the validation winner on an untouched holdout and doubled costs.
 - Compare experiment runs and generate automated validity findings.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
+- Publish a deterministic daily market-sentiment snapshot from seven market
+  factors and source-linked news classifications.
+- Display the sentiment result, factor detail, daily brief, and citations on
+  the bilingual workspace homepage.
 
 The research loop is implemented with Markdown reports. Feature lineage,
 walk-forward validation, broader market datasets, and HTML presentation remain.
@@ -109,6 +113,18 @@ uv run quantos experiment sweep \
 See [`docs/research`](docs/research/README.md) for study, comparison, and review
 commands.
 
+Build a validated sample of the daily intelligence contract:
+
+```bash
+uv run quantos intelligence build \
+  --input examples/intelligence/sample-input.v1.json \
+  --output-root var/quantos/intelligence
+```
+
+The example is labeled as sample data. A scheduled Agent or OpenClaw collector
+can later publish current inputs through the same contract without controlling
+the deterministic index methodology. See [`services/agent`](services/agent/README.md).
+
 The first predeclared strategy study and its reproducible result artifact are
 available in
 [`docs/research/donchian-atr-study.md`](docs/research/donchian-atr-study.md).
@@ -121,8 +137,9 @@ npm ci
 npm run dev
 ```
 
-The first dashboard presents the committed BTC/ETH strategy study, cost stress,
-research findings, and immutable evidence identities. See
+The dashboard presents daily market intelligence, the committed BTC/ETH
+strategy study, cost stress, research findings, and immutable evidence
+identities. See
 [`docs/frontend`](docs/frontend/README.md).
 
 ## Roadmap

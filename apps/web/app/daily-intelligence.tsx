@@ -1,0 +1,185 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import sampleSnapshot from "../../../examples/intelligence/sample-snapshot.v1.json";
+import {
+  getLatestIntelligence,
+  type IntelligenceSnapshot,
+} from "./intelligence-api";
+
+type Locale = "en" | "zh";
+
+const fallback = sampleSnapshot as IntelligenceSnapshot;
+
+const text = {
+  en: {
+    eyebrow: "Daily market intelligence",
+    title: "Sentiment first. Sources attached.",
+    live: "Published snapshot",
+    partial: "Partial snapshot",
+    sample: "Sample snapshot · not current market data",
+    asOf: "As of",
+    previous: "vs previous",
+    market: "Market score",
+    news: "News score",
+    drivers: "Factor detail",
+    brief: "Daily brief",
+    sources: "Source-linked news",
+    methodology: "Deterministic methodology",
+    labels: {
+      extreme_fear: "Extreme fear",
+      fear: "Fear",
+      neutral: "Neutral",
+      greed: "Greed",
+      extreme_greed: "Extreme greed",
+    },
+    factors: {
+      crypto_volatility: "Crypto volatility",
+      options_positioning: "Options positioning",
+      perpetual_positioning: "Perpetual positioning",
+      momentum_volume: "Momentum & volume",
+      liquidation_balance: "Liquidation balance",
+      market_breadth: "Market breadth",
+      macro_risk: "Macro risk",
+    },
+  },
+  zh: {
+    eyebrow: "每日市场情报",
+    title: "先看情绪结论，再核对数据来源。",
+    live: "已发布快照",
+    partial: "部分数据快照",
+    sample: "示例快照 · 非当前市场数据",
+    asOf: "更新于",
+    previous: "较上次",
+    market: "市场数据得分",
+    news: "新闻情绪得分",
+    drivers: "因子明细",
+    brief: "每日简报",
+    sources: "带来源的新闻",
+    methodology: "确定性计算方法",
+    labels: {
+      extreme_fear: "极度恐惧",
+      fear: "恐惧",
+      neutral: "中性",
+      greed: "贪婪",
+      extreme_greed: "极度贪婪",
+    },
+    factors: {
+      crypto_volatility: "加密资产波动率",
+      options_positioning: "期权仓位",
+      perpetual_positioning: "永续合约仓位",
+      momentum_volume: "动量与成交量",
+      liquidation_balance: "多空清算结构",
+      market_breadth: "市场广度",
+      macro_risk: "宏观风险",
+    },
+  },
+} as const;
+
+export function DailyIntelligence({ locale }: { locale: Locale }) {
+  const [snapshot, setSnapshot] = useState<IntelligenceSnapshot>(fallback);
+  const t = text[locale];
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getLatestIntelligence(controller.signal)
+      .then(setSnapshot)
+      .catch(() => setSnapshot(fallback));
+    return () => controller.abort();
+  }, []);
+
+  const statusText =
+    snapshot.status === "complete"
+      ? t.live
+      : snapshot.status === "partial"
+        ? t.partial
+        : t.sample;
+  const date = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(snapshot.as_of));
+  const summary = locale === "zh" ? snapshot.brief.summary_zh : snapshot.brief.summary;
+  const highlights =
+    locale === "zh" ? snapshot.brief.highlights_zh : snapshot.brief.highlights;
+
+  return (
+    <section className="intelligence panel" id="intelligence">
+      <div className="intelligence-heading">
+        <div>
+          <p className="eyebrow">{t.eyebrow}</p>
+          <h2>{t.title}</h2>
+        </div>
+        <div className={`intelligence-status ${snapshot.status}`}>{statusText}</div>
+      </div>
+
+      <div className="intelligence-overview">
+        <div className="sentiment-score">
+          <strong>{snapshot.score.toFixed(1)}</strong>
+          <span>/ 100</span>
+          <em>{t.labels[snapshot.label]}</em>
+          <small>
+            {t.asOf} {date}
+          </small>
+        </div>
+        <div className="intelligence-kpis">
+          <div>
+            <span>{t.previous}</span>
+            <strong className={(snapshot.change ?? 0) < 0 ? "negative" : "positive"}>
+              {snapshot.change === null
+                ? "—"
+                : `${snapshot.change >= 0 ? "+" : ""}${snapshot.change.toFixed(1)}`}
+            </strong>
+          </div>
+          <div>
+            <span>{t.market}</span>
+            <strong>{snapshot.market_score.toFixed(1)}</strong>
+          </div>
+          <div>
+            <span>{t.news}</span>
+            <strong>{snapshot.news_score.toFixed(1)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="intelligence-detail">
+        <div className="factor-list">
+          <h3>{t.drivers}</h3>
+          {snapshot.factors.map((factor) => (
+            <a href={factor.source} key={factor.key} rel="noreferrer" target="_blank">
+              <span>{t.factors[factor.key as keyof typeof t.factors] ?? factor.key}</span>
+              <i><b style={{ width: `${factor.score}%` }} /></i>
+              <strong>{factor.score.toFixed(0)}</strong>
+            </a>
+          ))}
+        </div>
+        <article className="daily-brief">
+          <div>
+            <span className="eyebrow">{t.brief}</span>
+            <a
+              href="https://github.com/yanzhang404/QuantOS/blob/main/docs/adr/0012-deterministic-daily-market-intelligence.md"
+              rel="noreferrer"
+              target="_blank"
+            >
+              {t.methodology}
+            </a>
+          </div>
+          <p>{summary}</p>
+          <ul>
+            {highlights.map((highlight) => (
+              <li key={highlight}>{highlight}</li>
+            ))}
+          </ul>
+          <div className="news-links" aria-label={t.sources}>
+            {snapshot.brief.news.map((item) => (
+              <a href={item.url} key={item.id} rel="noreferrer" target="_blank">
+                <span>{item.source}</span>
+                {locale === "zh" ? item.title_zh ?? item.title : item.title}
+              </a>
+            ))}
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}

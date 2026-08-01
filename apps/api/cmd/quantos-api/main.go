@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/yanzhang404/QuantOS/apps/api/internal/backtest"
+	"github.com/yanzhang404/QuantOS/apps/api/internal/intelligence"
 )
 
 func main() {
@@ -23,7 +24,12 @@ func main() {
 			"artifacts/experiments",
 			"experiment artifact root",
 		)
-		stateRoot     = flag.String("state-root", "var/quantos/tasks", "durable task state root")
+		stateRoot        = flag.String("state-root", "var/quantos/tasks", "durable task state root")
+		intelligenceRoot = flag.String(
+			"intelligence-root",
+			"var/quantos/intelligence",
+			"trusted daily intelligence snapshot root",
+		)
 		allowedOrigin = flag.String(
 			"allowed-origin",
 			"http://localhost:3000",
@@ -51,10 +57,22 @@ func main() {
 	orchestrator := backtest.NewOrchestrator(store, runner, *queueSize, nil)
 	defer orchestrator.Close()
 	experiments := backtest.NewExperimentStore(filepath.Clean(*artifactRoot))
+	rootHandler := http.NewServeMux()
+	rootHandler.Handle(
+		"/api/v1/intelligence/",
+		intelligence.NewHTTPHandler(
+			intelligence.NewStore(filepath.Clean(*intelligenceRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/",
+		backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin),
+	)
 
 	server := &http.Server{
 		Addr:              *listen,
-		Handler:           backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin),
+		Handler:           rootHandler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,

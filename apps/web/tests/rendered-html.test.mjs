@@ -45,9 +45,26 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Total return/);
   assert.match(html, /Final capital/);
   assert.match(html, /AI-assisted strategy discovery/);
+  assert.match(html, /Daily market intelligence/);
+  assert.match(html, /Sample snapshot · not current market data/);
+  assert.match(html, /Market score/);
+  assert.match(html, /Source-linked news/);
   assert.match(html, />5m</);
   assert.match(html, />1d</);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("connects daily intelligence to the validated API snapshot", async () => {
+  const [component, api] = await Promise.all([
+    readFile(new URL("../app/daily-intelligence.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/intelligence-api.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(component, /getLatestIntelligence\(controller\.signal\)/);
+  assert.match(component, /sampleSnapshot/);
+  assert.match(component, /非当前市场数据/);
+  assert.match(component, /factor\.source/);
+  assert.match(api, /\/api\/v1\/intelligence\/latest/);
 });
 
 test("ships an accessible Chinese and English language switch", async () => {

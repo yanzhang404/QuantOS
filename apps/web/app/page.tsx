@@ -10,6 +10,7 @@ import {
   type Period,
   studyAsOf,
 } from "./research-data";
+import { DailyIntelligence } from "./daily-intelligence";
 import { StrategyWorkbench } from "./strategy-workbench";
 
 type Locale = "en" | "zh";
@@ -312,6 +313,8 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        <DailyIntelligence locale={locale} />
 
         <section className="hero-grid">
           <article className="verdict-card">

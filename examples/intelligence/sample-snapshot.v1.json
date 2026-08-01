@@ -1,0 +1,172 @@
+{
+  "as_of": "2026-08-01T00:00:00Z",
+  "brief": {
+    "highlights": [
+      "The API contract exposes funding-rate history for reproducible derivatives positioning inputs.",
+      "Reference documentation describes the public BTC and ETH volatility index feed; this sample is not a current market headline.",
+      "The source publishes put/call ratios used as a small macro overlay; values in this fixture are illustrative."
+    ],
+    "highlights_zh": [
+      "该接口提供资金费率历史，可用于构建可复现的衍生品仓位因子。",
+      "参考文档说明了 BTC 和 ETH 波动率指数公开数据；本条仅为示例，并非当前市场新闻。",
+      "该来源发布 Put/Call 比率，可作为小权重宏观因子；本示例中的数值仅用于演示。"
+    ],
+    "news": [
+      {
+        "assets": [
+          "BTC"
+        ],
+        "confidence": 0.8,
+        "id": "sample-coinglass-funding",
+        "published_at": "2026-08-01T00:00:00Z",
+        "relevance": 0.7,
+        "sentiment": -0.15,
+        "source": "CoinGlass Docs",
+        "summary": "The API contract exposes funding-rate history for reproducible derivatives positioning inputs.",
+        "summary_zh": "该接口提供资金费率历史，可用于构建可复现的衍生品仓位因子。",
+        "title": "Sample source: open-interest-weighted funding data",
+        "title_zh": "示例来源：未平仓量加权资金费率数据",
+        "url": "https://docs.coinglass.com/reference/oi-weight-ohlc-history"
+      },
+      {
+        "assets": [
+          "BTC",
+          "ETH"
+        ],
+        "confidence": 0.9,
+        "id": "sample-deribit-dvol",
+        "published_at": "2026-08-01T00:00:00Z",
+        "relevance": 0.8,
+        "sentiment": -0.1,
+        "source": "Deribit Docs",
+        "summary": "Reference documentation describes the public BTC and ETH volatility index feed; this sample is not a current market headline.",
+        "summary_zh": "参考文档说明了 BTC 和 ETH 波动率指数公开数据；本条仅为示例，并非当前市场新闻。",
+        "title": "Sample source: Deribit volatility index documentation",
+        "title_zh": "示例来源：Deribit 波动率指数文档",
+        "url": "https://docs.deribit.com/subscriptions/market-data/deribit_volatility_indexindex_name"
+      },
+      {
+        "assets": [
+          "MACRO"
+        ],
+        "confidence": 0.95,
+        "id": "sample-cboe-statistics",
+        "published_at": "2026-08-01T00:00:00Z",
+        "relevance": 0.45,
+        "sentiment": 0.0,
+        "source": "Cboe",
+        "summary": "The source publishes put/call ratios used as a small macro overlay; values in this fixture are illustrative.",
+        "summary_zh": "该来源发布 Put/Call 比率，可作为小权重宏观因子；本示例中的数值仅用于演示。",
+        "title": "Sample source: Cboe daily options statistics",
+        "title_zh": "示例来源：Cboe 每日期权统计",
+        "url": "https://www.cboe.com/data/mktstat.aspx"
+      }
+    ],
+    "summary": "Composite sentiment is 31.8/100. Market data scored 27.2; source-weighted news scored 45.4. The largest defensive pressures are crypto volatility, options positioning.",
+    "summary_zh": "综合情绪为 31.8/100；市场数据得分 27.2，来源加权新闻得分 45.4。主要压力来自加密资产波动率、期权仓位。",
+    "title": "QuantOS daily market brief — Fear",
+    "title_zh": "QuantOS 每日市场简报｜恐惧"
+  },
+  "change": -4.7,
+  "date": "2026-08-01",
+  "factors": [
+    {
+      "contribution": 3.6,
+      "direction": "fear_when_high",
+      "key": "crypto_volatility",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.82,
+      "raw_value": 58.2,
+      "score": 18.0,
+      "source": "https://docs.deribit.com/subscriptions/market-data/deribit_volatility_indexindex_name",
+      "unit": "DVOL",
+      "weight": 0.2
+    },
+    {
+      "contribution": 5.0,
+      "direction": "fear_when_high",
+      "key": "options_positioning",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.75,
+      "raw_value": 0.95,
+      "score": 25.0,
+      "source": "https://www.cboe.com/data/mktstat.aspx",
+      "unit": "put/call",
+      "weight": 0.2
+    },
+    {
+      "contribution": 6.0,
+      "direction": "greed_when_high",
+      "key": "perpetual_positioning",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.3,
+      "raw_value": -0.001,
+      "score": 30.0,
+      "source": "https://docs.coinglass.com/reference/oi-weight-ohlc-history",
+      "unit": "funding",
+      "weight": 0.2
+    },
+    {
+      "contribution": 4.2,
+      "direction": "greed_when_high",
+      "key": "momentum_volume",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.28,
+      "raw_value": -0.04,
+      "score": 28.0,
+      "source": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
+      "unit": "7d return",
+      "weight": 0.15
+    },
+    {
+      "contribution": 3.5,
+      "direction": "greed_when_high",
+      "key": "liquidation_balance",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.35,
+      "raw_value": -0.32,
+      "score": 35.0,
+      "source": "https://docs.coinglass.com/reference/endpoint-overview",
+      "unit": "net ratio",
+      "weight": 0.1
+    },
+    {
+      "contribution": 3.2,
+      "direction": "greed_when_high",
+      "key": "market_breadth",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.32,
+      "raw_value": 0.39,
+      "score": 32.0,
+      "source": "https://docs.coinglass.com/reference/coins-markets",
+      "unit": "advancing share",
+      "weight": 0.1
+    },
+    {
+      "contribution": 1.75,
+      "direction": "fear_when_high",
+      "key": "macro_risk",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "percentile": 0.65,
+      "raw_value": 18.2,
+      "score": 35.0,
+      "source": "https://www.cboe.com/tradable_products/vix/",
+      "unit": "VIX",
+      "weight": 0.05
+    }
+  ],
+  "label": "fear",
+  "market_score": 27.25,
+  "methodology_version": "quantos-sentiment-v1.0.0",
+  "news_score": 45.43,
+  "previous_score": 36.5,
+  "provenance": {
+    "factor_count": 7,
+    "generator_version": "0.1.0",
+    "input_sha256": "9a44ad8b1b39f45ee7022fdbc0583e66a09c14edaee735e8670e8e3e374b400d",
+    "news_count": 3
+  },
+  "schema_version": "1.0",
+  "score": 31.8,
+  "status": "sample"
+}

@@ -13,8 +13,10 @@ covers Binance Kline → validation → Parquet → DuckDB → event-driven EMA 
 backtest → metrics → versioned experiment artifacts → chronological parameter
 selection → untouched holdout and cost-stress review. Buy and Hold plus the
 first formal Donchian ATR strategy study are now implemented. The next
-increment is strategy robustness, feature lineage, walk-forward validation, and
-broader market datasets.
+increment also includes a deterministic daily market-intelligence contract,
+read-only API, and bilingual homepage view. Current data collection still
+requires a bounded external Agent/OpenClaw adapter; strategy robustness,
+feature lineage, walk-forward validation, and broader market datasets remain.
 
 ## Product principles
 

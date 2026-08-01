@@ -37,6 +37,7 @@ packages = [
   "services/backtest/src/quantos_backtest",
   "services/market-data/src/quantos_market_data",
   "services/research/src/quantos_research",
+  "services/agent/src/quantos_intelligence",
 ]
 
 [tool.pytest.ini_options]
@@ -57,6 +58,7 @@ source = [
   "quantos_backtest",
   "quantos_cli",
   "quantos_events",
+  "quantos_intelligence",
   "quantos_market_data",
   "quantos_metrics",
   "quantos_research",

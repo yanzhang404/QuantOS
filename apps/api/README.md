@@ -24,6 +24,7 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `GET /api/v1/tasks`
 - `GET /api/v1/tasks/{task_id}`
 - `GET /api/v1/experiments/{run_id}`
+- `GET /api/v1/intelligence/latest`
 
 Task metadata is stored as atomic JSON files. The API resolves dataset paths
 from the configured trusted data root; requests cannot choose local paths or
@@ -36,3 +37,8 @@ the browser never receives local artifact paths.
 
 This local file store supports one API process. PostgreSQL replaces it before
 multi-user or multi-process operation.
+
+Daily intelligence is read-only and loaded from
+`var/quantos/intelligence/latest.json` by default. Publish it through the
+validated Python workflow; the API rejects symlinks, oversized files, unknown
+fields, invalid sources, and scores that do not match the fixed methodology.

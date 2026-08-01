@@ -24,6 +24,17 @@ Library. Global navigation sits above the workspace; a folder-style strategy
 tree owns reusable strategy modules and lifecycle state. Run results are shown
 before configuration and detail charts.
 
+## Daily market intelligence
+
+The homepage requests the latest validated sentiment snapshot from
+`GET /api/v1/intelligence/latest` and presents the composite score first,
+followed by its change, market/news components, seven factor scores, daily
+brief, and source links. If no daily publication exists, the page uses a
+committed fixture that is visibly labeled as non-current sample data.
+
+The UI never calculates the index itself. The deterministic methodology and
+input provenance remain owned by the versioned Agent contract.
+
 ## Backtest Lab
 
 The workspace now consumes the versioned local Task API for manual historical

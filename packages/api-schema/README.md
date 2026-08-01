@@ -14,3 +14,8 @@ credentials, paper-trading controls, or live-execution controls.
 Contract v1 preserves exact decimal inputs as JSON strings. Strategy periods
 remain JSON integers. A submission with unknown fields or strategy parameters
 is rejected instead of silently applying defaults.
+
+`schemas/intelligence.v1.schema.json` defines the daily market-factor/news input
+and the immutable sentiment snapshot consumed by the read-only homepage API.
+The score remains deterministic; agent-authored text is stored only as
+source-linked commentary.

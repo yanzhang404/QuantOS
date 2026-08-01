@@ -18,6 +18,8 @@ required_files=(
   docs/adr/0004-next-bar-open-execution.md
   docs/adr/0005-chronological-out-of-sample-selection.md
   docs/adr/0006-read-only-research-workspace.md
+  docs/adr/0012-deterministic-daily-market-intelligence.md
+  packages/api-schema/schemas/intelligence.v1.schema.json
   apps/web/package.json
   docs/market-data/kline-schema.md
 )
@@ -39,6 +41,7 @@ required_directories=(
   services/execution
   services/risk
   services/agent
+  services/agent/src/quantos_intelligence
   packages/strategy-sdk
   packages/strategy-sdk/src/quantos_strategy
   packages/event-schema
@@ -58,6 +61,7 @@ required_directories=(
   tests/market_data
   tests/backtest
   tests/research
+  tests/intelligence
 )
 
 failed=0
@@ -77,7 +81,8 @@ for path in "${required_directories[@]}"; do
 done
 
 if git ls-files -co --exclude-standard | grep -E \
-  '(^|/)(\.env($|\.)|id_rsa$|.*\.(pem|key)$)' >/dev/null; then
+  '(^|/)(\.env($|\.)|id_rsa$|.*\.(pem|key)$)' | \
+  grep -Ev '(^|/)\.env\.(example|sample|template)$' >/dev/null; then
   echo "potential secret file detected in repository contents" >&2
   failed=1
 fi

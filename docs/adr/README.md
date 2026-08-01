@@ -26,3 +26,4 @@ Accepted decisions:
 - [ADR-0009: Persist local backtest tasks as atomic JSON records](0009-file-backed-local-task-orchestration.md)
 - [ADR-0010: Serve experiment visualization as a derived read model](0010-experiment-visualization-read-model.md)
 - [ADR-0011: Separate strategy library from research lifecycle](0011-strategy-library-and-research-lifecycle.md)
+- [ADR-0012: Separate deterministic sentiment scoring from agent-authored daily intelligence](0012-deterministic-daily-market-intelligence.md)

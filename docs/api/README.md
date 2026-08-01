@@ -16,6 +16,7 @@ The normative language-neutral schema is
 | `GET` | `/api/v1/tasks/{task_id}` | Read task state and resulting Run ID |
 | `GET` | `/api/v1/experiments/{run_id}` | Read one reproducible experiment and its chart series |
 | `GET` | `/api/v1/experiments` | Filter saved completed experiments (planned) |
+| `GET` | `/api/v1/intelligence/latest` | Read the latest validated daily brief and sentiment snapshot |
 
 Submitting the same HTTP request twice with one idempotency key returns the same
 Task. Submitting identical deterministic inputs with a new idempotency key
