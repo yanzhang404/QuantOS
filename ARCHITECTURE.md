@@ -154,6 +154,20 @@ switch.
 
 Only Parquet and DuckDB are required for the initial research loop.
 
+## Research-service deployment
+
+The first hosted compute boundary packages the Go control plane and canonical
+Python research environment into one stateful container. It remains a modular
+monolith and runs as a single replica while Tasks use the file-backed store.
+Persistent storage supplies immutable datasets, Task records, experiment
+artifacts, and daily-intelligence snapshots; none of those generated inputs are
+baked into the image.
+
+The service exposes separate liveness and data-aware readiness checks. Dataset
+synchronization is an explicit administrative command, not startup behavior.
+The Cloudflare-hosted workspace calls this service over an explicitly
+allow-listed HTTPS origin. See [ADR-0015](docs/adr/0015-deploy-canonical-research-service.md).
+
 ## Non-goals
 
 - Microservice decomposition in Phase 0/V0.1

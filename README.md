@@ -94,12 +94,16 @@ uv run quantos backtest run \
 ```
 
 See [`docs/backtest`](docs/backtest/README.md) for execution assumptions and
-artifact details. Docker Compose remains reserved for dependencies introduced
-by later phases:
+artifact details. The canonical Go/Python research service can run in its
+production container with immutable data mounted from the workspace:
 
 ```bash
-docker compose config
+docker compose --profile research up --build research-api
 ```
+
+The container never downloads data implicitly and exposes `/readyz` so a host
+can wait for the configured Bundle before sending research traffic. See
+[`apps/api`](apps/api/README.md) for deployment configuration.
 
 Run a chronological parameter study:
 

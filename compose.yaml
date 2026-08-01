@@ -7,3 +7,33 @@ services:
     image: alpine:3.20
     profiles: ["tools"]
     command: ["/bin/sh", "-c", "echo 'QuantOS Phase 0 foundation is ready'"]
+
+  research-api:
+    profiles: ["research"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      QUANTOS_ALLOWED_ORIGIN: "${QUANTOS_ALLOWED_ORIGIN:-http://localhost:3000}"
+      QUANTOS_QUEUE_SIZE: "${QUANTOS_QUEUE_SIZE:-32}"
+      QUANTOS_REQUIRED_BUNDLE: "${QUANTOS_REQUIRED_BUNDLE:-}"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/var/lib/quantos/data
+      - ./artifacts/experiments:/var/lib/quantos/artifacts/experiments
+      - ./var/quantos/tasks:/var/lib/quantos/tasks
+      - ./var/quantos/intelligence:/var/lib/quantos/intelligence
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/readyz', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped

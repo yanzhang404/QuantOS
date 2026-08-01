@@ -25,7 +25,11 @@ real exchange maintenance gaps. Strategy submissions now bind and verify exact
 bundle members, and each new immutable Run carries a bounded Kline projection
 for synchronized price, fill, equity, and drawdown views. The next boundary is
 multi-Run comparison and robustness gates before richer Agent candidate
-workflows. Paper reproduction remains a later research workflow.
+workflows. The canonical Go/Python research service now has a production
+container, environment contract, and data-aware readiness check; provisioning a
+stateful container host and connecting its stable HTTPS URL remain before the
+workspace can drop its localhost dependency. Paper reproduction remains a later
+research workflow.
 
 ## Product principles
 
