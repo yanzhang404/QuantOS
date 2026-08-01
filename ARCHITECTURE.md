@@ -131,7 +131,8 @@ Candidate state advances through a separate guarded flow:
 
 ```mermaid
 flowchart LR
-    A["Agent proposal"] --> P["Proposed"]
+    A["Agent proposal"] --> S["Weekly scheduler (max 2)"]
+    S --> P["Proposed + review package"]
     P --> I["Implemented + deterministic tests"]
     I --> G["Strategy-matched robustness review"]
     G --> H{"Human decision"}
@@ -142,7 +143,8 @@ flowchart LR
 Proposal identity is content-addressed. Only the Python lifecycle command may
 append transitions; the Go API and web workspace are read-only consumers.
 Approval does not register executable strategy code and cannot enable trading.
-See [ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md).
+See [ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md) and
+[ADR-0019](docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
 
 V0.1 strategies observe a bar at its close and approved targets execute at the
 next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).

@@ -44,6 +44,11 @@ func main() {
 			envOrDefault("QUANTOS_CANDIDATE_ROOT", "var/quantos/candidates"),
 			"trusted strategy candidate record root",
 		)
+		candidateDraftRoot = flag.String(
+			"candidate-draft-root",
+			envOrDefault("QUANTOS_CANDIDATE_DRAFT_ROOT", "var/quantos/candidate-drafts"),
+			"trusted rate-limited candidate draft root",
+		)
 		allowedOrigin = flag.String(
 			"allowed-origin",
 			envOrDefault("QUANTOS_ALLOWED_ORIGIN", "http://localhost:3000"),
@@ -77,7 +82,11 @@ func main() {
 	defer orchestrator.Close()
 	experiments := backtest.NewExperimentStore(filepath.Clean(*artifactRoot))
 	for _, root := range []string{
-		*artifactRoot, *intelligenceRoot, *robustnessRoot, *candidateRoot,
+		*artifactRoot,
+		*intelligenceRoot,
+		*robustnessRoot,
+		*candidateRoot,
+		*candidateDraftRoot,
 	} {
 		if err := os.MkdirAll(filepath.Clean(root), 0o755); err != nil {
 			log.Fatalf("create persistence root %s: %v", root, err)
@@ -85,16 +94,31 @@ func main() {
 	}
 	rootHandler := http.NewServeMux()
 	ready := readiness.Checker{
-		DataRoot:         filepath.Clean(*dataRoot),
-		ArtifactRoot:     filepath.Clean(*artifactRoot),
-		StateRoot:        filepath.Clean(*stateRoot),
-		IntelligenceRoot: filepath.Clean(*intelligenceRoot),
-		RobustnessRoot:   filepath.Clean(*robustnessRoot),
-		CandidateRoot:    filepath.Clean(*candidateRoot),
-		UVBinary:         *uvBinary,
-		RequiredBundle:   *requiredBundle,
+		DataRoot:           filepath.Clean(*dataRoot),
+		ArtifactRoot:       filepath.Clean(*artifactRoot),
+		StateRoot:          filepath.Clean(*stateRoot),
+		IntelligenceRoot:   filepath.Clean(*intelligenceRoot),
+		RobustnessRoot:     filepath.Clean(*robustnessRoot),
+		CandidateRoot:      filepath.Clean(*candidateRoot),
+		CandidateDraftRoot: filepath.Clean(*candidateDraftRoot),
+		UVBinary:           *uvBinary,
+		RequiredBundle:     *requiredBundle,
 	}
 	rootHandler.HandleFunc("/readyz", ready.Handler)
+	rootHandler.Handle(
+		"/api/v1/candidate-drafts",
+		candidates.NewDraftHTTPHandler(
+			candidates.NewDraftStore(filepath.Clean(*candidateDraftRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/api/v1/candidate-drafts/",
+		candidates.NewDraftHTTPHandler(
+			candidates.NewDraftStore(filepath.Clean(*candidateDraftRoot)),
+			*allowedOrigin,
+		),
+	)
 	rootHandler.Handle(
 		"/api/v1/candidates",
 		candidates.NewHTTPHandler(

@@ -11,20 +11,23 @@ import (
 
 func TestHandlerRequiresConfiguredBundleAndRoots(t *testing.T) {
 	root := t.TempDir()
-	for _, name := range []string{"artifacts", "state", "intelligence", "robustness", "candidates"} {
+	for _, name := range []string{
+		"artifacts", "state", "intelligence", "robustness", "candidates", "candidate-drafts",
+	} {
 		if err := os.Mkdir(filepath.Join(root, name), 0o755); err != nil {
 			t.Fatal(err)
 		}
 	}
 	checker := Checker{
-		DataRoot:         root,
-		ArtifactRoot:     filepath.Join(root, "artifacts"),
-		StateRoot:        filepath.Join(root, "state"),
-		IntelligenceRoot: filepath.Join(root, "intelligence"),
-		RobustnessRoot:   filepath.Join(root, "robustness"),
-		CandidateRoot:    filepath.Join(root, "candidates"),
-		UVBinary:         "go",
-		RequiredBundle:   "47a8b29be444e2ba",
+		DataRoot:           root,
+		ArtifactRoot:       filepath.Join(root, "artifacts"),
+		StateRoot:          filepath.Join(root, "state"),
+		IntelligenceRoot:   filepath.Join(root, "intelligence"),
+		RobustnessRoot:     filepath.Join(root, "robustness"),
+		CandidateRoot:      filepath.Join(root, "candidates"),
+		CandidateDraftRoot: filepath.Join(root, "candidate-drafts"),
+		UVBinary:           "go",
+		RequiredBundle:     "47a8b29be444e2ba",
 	}
 
 	response := httptest.NewRecorder()
@@ -68,14 +71,15 @@ func TestHandlerRequiresConfiguredBundleAndRoots(t *testing.T) {
 
 func TestHandlerRejectsUnsafeBundleVersion(t *testing.T) {
 	checker := Checker{
-		DataRoot:         t.TempDir(),
-		ArtifactRoot:     t.TempDir(),
-		StateRoot:        t.TempDir(),
-		IntelligenceRoot: t.TempDir(),
-		RobustnessRoot:   t.TempDir(),
-		CandidateRoot:    t.TempDir(),
-		UVBinary:         "go",
-		RequiredBundle:   "../../etc/passwd",
+		DataRoot:           t.TempDir(),
+		ArtifactRoot:       t.TempDir(),
+		StateRoot:          t.TempDir(),
+		IntelligenceRoot:   t.TempDir(),
+		RobustnessRoot:     t.TempDir(),
+		CandidateRoot:      t.TempDir(),
+		CandidateDraftRoot: t.TempDir(),
+		UVBinary:           "go",
+		RequiredBundle:     "../../etc/passwd",
 	}
 	if checker.Check()["required_bundle"] {
 		t.Fatal("unsafe bundle version must not be accepted")

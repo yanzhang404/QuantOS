@@ -186,9 +186,11 @@ test("connects the guarded candidate queue without adding browser mutation contr
 
   assert.match(page, /<CandidateQueue locale=\{locale\}/);
   assert.match(component, /listCandidates\(controller\.signal\)/);
+  assert.match(component, /listCandidateDrafts\(controller\.signal\)/);
   assert.match(component, /review_ready/);
   assert.match(component, /owner approval/);
   assert.match(api, /\/api\/v1\/candidates/);
+  assert.match(api, /\/api\/v1\/candidate-drafts/);
   assert.doesNotMatch(component, /fetch\([^)]*method:\s*["'](?:POST|PUT|DELETE)/i);
 });
 

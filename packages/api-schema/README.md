@@ -26,3 +26,7 @@ They contain hypotheses, manifest-shaped parameters, research plans, public
 HTTPS citations, evidence identities, and actor history—but no code, command,
 path, credential, or trading-action fields. Python owns validated mutations and
 Go exposes the same records read-only.
+
+`schemas/candidate-draft.v1.schema.json` defines the rate-limited review package
+prepared from an existing proposal. It records one of at most two weekly slots
+and fixed artifact names; preparation itself performs no GitHub mutation.

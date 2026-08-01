@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import copy
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from quantos_api_contracts import CandidateProposal
-from quantos_candidates import CandidateError, CandidateStore
+from quantos_candidates import CandidateDraftStore, CandidateError, CandidateStore
 from quantos_cli import main
 
 ROOT = Path(__file__).parents[2]
@@ -26,6 +27,13 @@ class Clock:
 
 def proposal() -> CandidateProposal:
     return CandidateProposal.from_dict(json.loads(EXAMPLE.read_text(encoding="utf-8")))
+
+
+def proposal_with(slug: str, title: str) -> CandidateProposal:
+    payload = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+    payload["strategy_slug"] = slug
+    payload["title"] = title
+    return CandidateProposal.from_dict(payload)
 
 
 def review_payload(*, strategy: str = "volatility-breakout", passed: bool = True) -> dict:
@@ -131,6 +139,87 @@ def test_candidate_can_be_rejected_before_implementation(tmp_path: Path) -> None
     assert rejected.implementation is None
 
 
+def test_candidate_store_allows_only_one_proposal_per_strategy_slug(tmp_path: Path) -> None:
+    store = CandidateStore(tmp_path, now=Clock())
+    store.propose(proposal())
+
+    with pytest.raises(CandidateError, match="strategy slug"):
+        store.propose(proposal_with("volatility-breakout", "Reworded volatility breakout"))
+
+
+def test_candidate_drafts_are_explainable_unique_and_limited_per_week(tmp_path: Path) -> None:
+    candidates = CandidateStore(tmp_path / "candidates", now=Clock())
+    first, _ = candidates.propose(proposal())
+    second, _ = candidates.propose(
+        proposal_with("mean-reversion-envelope", "Volatility envelope mean reversion")
+    )
+    third, _ = candidates.propose(
+        proposal_with("session-momentum", "Session-aware momentum continuation")
+    )
+    complex_payload = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+    complex_payload["strategy_slug"] = "over-parameterized-trend"
+    complex_payload["title"] = "Over-parameterized trend candidate"
+    base_parameter = complex_payload["parameters"][0]
+    complex_payload["parameters"] = []
+    for index in range(7):
+        parameter = copy.deepcopy(base_parameter)
+        parameter["key"] = f"period_{index}"
+        complex_payload["parameters"].append(parameter)
+    complex_candidate, _ = candidates.propose(CandidateProposal.from_dict(complex_payload))
+    drafts = CandidateDraftStore(tmp_path / "drafts", candidates, now=Clock())
+
+    prepared = drafts.prepare(first.proposal_id)
+    assert prepared.iso_week == "2026-W31"
+    assert prepared.slot == 1
+    package = tmp_path / "drafts" / prepared.iso_week / prepared.draft_id
+    assert sorted(path.name for path in package.iterdir()) == [
+        "PULL_REQUEST.md",
+        "proposal.json",
+        "record.json",
+        "review-checklist.json",
+    ]
+    body = (package / "PULL_REQUEST.md").read_text(encoding="utf-8")
+    assert "This package contains no strategy code" in body
+    assert "Time Series Momentum" in body
+
+    with pytest.raises(CandidateError, match="already has"):
+        drafts.prepare(first.proposal_id)
+    second_draft = drafts.prepare(second.proposal_id)
+    assert second_draft.slot == 2
+    with pytest.raises(CandidateError, match="weekly limit"):
+        drafts.prepare(third.proposal_id)
+    with pytest.raises(CandidateError, match="explainable"):
+        drafts.prepare(complex_candidate.proposal_id)
+    assert [item.draft_id for item in drafts.list()] == [
+        second_draft.draft_id,
+        prepared.draft_id,
+    ]
+
+
+def test_candidate_draft_requires_proposed_state_and_rejects_tampering(tmp_path: Path) -> None:
+    candidates = CandidateStore(tmp_path / "candidates", now=Clock())
+    candidate, _ = candidates.propose(proposal())
+    candidates.mark_implemented(
+        candidate.proposal_id,
+        implementation_ref="quantos_strategy.volatility.VolatilityBreakout",
+        test_ids=("tests.strategy.test_volatility_entries",),
+        actor_name="implementation-agent",
+    )
+    drafts = CandidateDraftStore(tmp_path / "drafts", candidates, now=Clock())
+    with pytest.raises(CandidateError, match="only a proposed"):
+        drafts.prepare(candidate.proposal_id)
+
+    fresh, _ = candidates.propose(proposal_with("range-expansion", "Range expansion continuation"))
+    prepared = drafts.prepare(fresh.proposal_id)
+    record_path = tmp_path / "drafts" / prepared.iso_week / prepared.draft_id / "record.json"
+    raw = json.loads(record_path.read_text(encoding="utf-8"))
+    raw["slot"] = 3
+    record_path.write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(CandidateError, match="invalid"):
+        drafts.list()
+
+
 def test_candidate_store_rejects_tampered_transition_history(tmp_path: Path) -> None:
     store = CandidateStore(tmp_path, now=Clock())
     record, _ = store.propose(proposal())
@@ -164,10 +253,44 @@ def test_candidate_cli_proposes_lists_and_reports_invalid_input(
     output = json.loads(capsys.readouterr().out)
     assert output["status"] == "proposed"
     assert output["reused"] is False
+    proposal_id = output["proposal_id"]
 
     assert main(["candidate", "list", "--output-root", str(root)]) == 0
     listing = json.loads(capsys.readouterr().out)
     assert listing[0]["proposal"]["strategy_slug"] == "volatility-breakout"
+
+    draft_root = tmp_path / "drafts"
+    assert (
+        main(
+            [
+                "candidate",
+                "prepare-draft",
+                "--id",
+                proposal_id,
+                "--candidate-root",
+                str(root),
+                "--draft-root",
+                str(draft_root),
+            ]
+        )
+        == 0
+    )
+    draft = json.loads(capsys.readouterr().out)
+    assert draft["status"] == "prepared"
+    assert (
+        main(
+            [
+                "candidate",
+                "list-drafts",
+                "--candidate-root",
+                str(root),
+                "--draft-root",
+                str(draft_root),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)[0]["draft_id"] == draft["draft_id"]
 
     invalid = tmp_path / "invalid.json"
     invalid.write_text("{}", encoding="utf-8")

@@ -10,6 +10,7 @@ from typing import Any
 from quantos_api_contracts import CandidateProposal, ContractValidationError
 
 from .errors import CandidateError
+from .scheduler import CandidateDraftStore
 from .store import CandidateStore
 
 
@@ -43,8 +44,26 @@ def register_parser(commands: Any) -> None:
     listing = actions.add_parser("list", help="list candidate lifecycle records")
     listing.add_argument("--output-root", type=Path, default=Path("var/quantos/candidates"))
 
+    draft = actions.add_parser("prepare-draft", help="prepare a rate-limited review package")
+    draft.add_argument("--id", required=True)
+    draft.add_argument("--candidate-root", type=Path, default=Path("var/quantos/candidates"))
+    draft.add_argument("--draft-root", type=Path, default=Path("var/quantos/candidate-drafts"))
+    draft.add_argument("--weekly-limit", type=int, choices=(1, 2), default=2)
+
+    draft_list = actions.add_parser("list-drafts", help="list prepared candidate drafts")
+    draft_list.add_argument("--candidate-root", type=Path, default=Path("var/quantos/candidates"))
+    draft_list.add_argument("--draft-root", type=Path, default=Path("var/quantos/candidate-drafts"))
+
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"prepare-draft", "list-drafts"}:
+        drafts = CandidateDraftStore(args.draft_root, CandidateStore(args.candidate_root))
+        if args.command == "prepare-draft":
+            draft = drafts.prepare(args.id, weekly_limit=args.weekly_limit)
+            print(json.dumps(draft.to_dict(), sort_keys=True))
+            return 0
+        print(json.dumps([draft.to_dict() for draft in drafts.list()], indent=2, sort_keys=True))
+        return 0
     store = CandidateStore(args.output_root)
     if args.command == "propose":
         try:

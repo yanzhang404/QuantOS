@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  listCandidateDrafts,
   listCandidates,
+  type CandidateDraft,
   type CandidateRecord,
   type CandidateStatus,
 } from "./candidate-api";
@@ -19,6 +21,7 @@ const copy = {
     disconnected: "Candidate records are available when the research API is connected.",
     latest: "Latest candidate",
     parameters: "parameters",
+    weeklySlots: "weekly draft slots",
     status: {
       proposed: "Proposed",
       implemented: "Implemented",
@@ -34,6 +37,7 @@ const copy = {
     disconnected: "连接研究 API 后可读取候选策略记录。",
     latest: "最新候选策略",
     parameters: "个参数",
+    weeklySlots: "本周草案名额",
     status: {
       proposed: "已提案",
       implemented: "已实现",
@@ -46,14 +50,19 @@ const copy = {
 
 export function CandidateQueue({ locale }: { locale: Locale }) {
   const [records, setRecords] = useState<CandidateRecord[]>([]);
+  const [drafts, setDrafts] = useState<CandidateDraft[]>([]);
   const [connected, setConnected] = useState<boolean>();
   const t = copy[locale];
 
   useEffect(() => {
     const controller = new AbortController();
-    void listCandidates(controller.signal)
-      .then((candidates) => {
+    void Promise.all([
+      listCandidates(controller.signal),
+      listCandidateDrafts(controller.signal),
+    ])
+      .then(([candidates, candidateDrafts]) => {
         setRecords(candidates);
+        setDrafts(candidateDrafts);
         setConnected(true);
       })
       .catch(() => {
@@ -63,6 +72,10 @@ export function CandidateQueue({ locale }: { locale: Locale }) {
   }, []);
 
   const latest = records[0];
+  const latestDraft = drafts[0];
+  const weeklyDraftCount = latestDraft
+    ? drafts.filter((draft) => draft.iso_week === latestDraft.iso_week).length
+    : 0;
   const counts = useMemo(
     () =>
       records.reduce<Partial<Record<CandidateStatus, number>>>((result, record) => {
@@ -84,6 +97,11 @@ export function CandidateQueue({ locale }: { locale: Locale }) {
       </div>
       {latest ? (
         <div className="candidate-stages" aria-label={t.note}>
+          {latestDraft ? (
+            <span className="scheduled">
+              {t.weeklySlots} {weeklyDraftCount}/{latestDraft.weekly_limit}
+            </span>
+          ) : null}
           {stages.map((stage) => (
             <span
               className={(counts[stage] ?? 0) > 0 ? "active" : ""}

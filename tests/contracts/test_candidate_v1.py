@@ -33,6 +33,7 @@ def test_candidate_proposal_round_trips_bounded_fields() -> None:
             "prose",
         ),
         (lambda value: value.__setitem__("strategy_slug", "ema-cross"), "already registered"),
+        (lambda value: value.__setitem__("title", "<b>Injected title</b>"), "plain text"),
         (
             lambda value: value["sources"][0].__setitem__("url", "http://localhost/paper"),
             "public HTTPS",

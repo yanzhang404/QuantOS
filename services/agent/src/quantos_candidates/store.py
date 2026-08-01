@@ -48,6 +48,8 @@ class CandidateStore:
             if record.proposal != proposal:
                 raise CandidateError("candidate proposal identity collision")
             return record, True
+        if any(item.proposal.strategy_slug == proposal.strategy_slug for item in self.list()):
+            raise CandidateError("strategy slug already has a candidate proposal")
         created_at = self._now()
         record = CandidateRecord(
             proposal_id=proposal_id,

@@ -30,6 +30,8 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `GET /api/v1/robustness/{review_id}`
 - `GET /api/v1/candidates`
 - `GET /api/v1/candidates/{proposal_id}`
+- `GET /api/v1/candidate-drafts`
+- `GET /api/v1/candidate-drafts/{draft_id}`
 - `PUT /api/v1/experiment-archives/{run_id}`
 - `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
@@ -65,6 +67,7 @@ artifacts. Mount `/var/lib/quantos` on persistent storage and configure:
   `QUANTOS_INTELLIGENCE_ROOT`: persistent paths when the defaults are unsuitable;
 - `QUANTOS_ROBUSTNESS_ROOT`: content-addressed robustness review artifacts;
 - `QUANTOS_CANDIDATE_ROOT`: guarded candidate lifecycle records;
+- `QUANTOS_CANDIDATE_DRAFT_ROOT`: rate-limited candidate review packages;
 - `PORT` or `QUANTOS_LISTEN`: host-assigned network binding;
 - `QUANTOS_QUEUE_SIZE`: bounded in-process task queue size.
 
@@ -92,3 +95,7 @@ bounded fields, transition order, actor authority, and evidence identifiers
 before returning at most 100 newest records. Lifecycle mutations remain in the
 Python CLI so browser requests cannot propose, approve, reject, or promote a
 strategy.
+
+Candidate draft endpoints validate the copied proposal identity, ISO week,
+slot uniqueness, weekly cap, narrow scope, and fixed artifact names. They expose
+metadata only and provide no branch, pull-request, or lifecycle mutation API.

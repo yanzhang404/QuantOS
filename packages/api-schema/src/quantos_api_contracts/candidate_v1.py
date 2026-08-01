@@ -14,6 +14,7 @@ SCHEMA_VERSION = "candidate-proposal.v1"
 _SLUG = re.compile(r"^[a-z][a-z0-9-]{2,39}$")
 _KEY = re.compile(r"^[a-z][a-z0-9_]{1,39}$")
 _VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+_AGENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{1,79}$")
 _INTERVALS = frozenset({"5m", "15m", "1h", "4h", "1d"})
 _CATEGORIES = frozenset({"trend", "mean_reversion", "intraday"})
 _RESERVED = frozenset({"buy-and-hold", "ema-cross", "donchian-atr"})
@@ -28,6 +29,8 @@ def _exact_keys(raw: Any, expected: set[str], label: str) -> None:
 def _text(value: Any, label: str, minimum: int, maximum: int) -> str:
     if not isinstance(value, str) or value != value.strip() or not minimum <= len(value) <= maximum:
         raise ContractValidationError(f"{label} must contain {minimum}-{maximum} characters")
+    if any(character in value for character in ("\n", "\r", "`", "<", ">")):
+        raise ContractValidationError(f"{label} must be bounded plain text")
     return value
 
 
@@ -194,7 +197,7 @@ class CandidateProposal:
             implementation_plan=implementation_plan,
             research_plan=research_plan,
             sources=sources,
-            agent_name=_text(proposed_by["name"], "agent name", 2, 80),
+            agent_name=_agent_name(proposed_by["name"]),
             workflow_version=proposed_by["workflow_version"],
         )
 
@@ -223,3 +226,9 @@ def _plans(raw: Any, label: str) -> tuple[str, ...]:
     if not isinstance(raw, list) or not 1 <= len(raw) <= 8:
         raise ContractValidationError(f"{label} must contain 1-8 entries")
     return tuple(_plan_text(value, label) for value in raw)
+
+
+def _agent_name(value: Any) -> str:
+    if not isinstance(value, str) or not _AGENT.fullmatch(value):
+        raise ContractValidationError("agent name is invalid")
+    return value

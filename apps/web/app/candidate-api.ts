@@ -51,6 +51,19 @@ export type CandidateRecord = {
   }>;
 };
 
+export type CandidateDraft = {
+  schema_version: "candidate-draft.v1";
+  draft_id: string;
+  proposal_id: string;
+  strategy_slug: string;
+  iso_week: string;
+  slot: 1 | 2;
+  weekly_limit: 1 | 2;
+  created_at: string;
+  status: "prepared";
+  artifacts: ["proposal.json", "review-checklist.json", "PULL_REQUEST.md"];
+};
+
 export async function listCandidates(signal?: AbortSignal): Promise<CandidateRecord[]> {
   const response = await requestJSON<{ candidates: CandidateRecord[] }>(
     "/api/v1/candidates",
@@ -58,4 +71,13 @@ export async function listCandidates(signal?: AbortSignal): Promise<CandidateRec
     signal,
   );
   return response.candidates;
+}
+
+export async function listCandidateDrafts(signal?: AbortSignal): Promise<CandidateDraft[]> {
+  const response = await requestJSON<{ drafts: CandidateDraft[] }>(
+    "/api/v1/candidate-drafts",
+    {},
+    signal,
+  );
+  return response.drafts;
 }

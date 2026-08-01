@@ -675,6 +675,12 @@ h1 {
   color: var(--mint);
 }
 
+.candidate-stages span.scheduled {
+  background: #eef4ff;
+  border-color: #cad8ef;
+  color: #43658f;
+}
+
 .candidate-stages span.rejected {
   color: var(--red);
 }

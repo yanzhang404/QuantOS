@@ -14,14 +14,15 @@ var bundleVersionPattern = regexp.MustCompile(`^[a-f0-9]{16}$`)
 
 // Checker verifies only trusted server configuration. It never downloads data.
 type Checker struct {
-	DataRoot         string
-	ArtifactRoot     string
-	StateRoot        string
-	IntelligenceRoot string
-	RobustnessRoot   string
-	CandidateRoot    string
-	UVBinary         string
-	RequiredBundle   string
+	DataRoot           string
+	ArtifactRoot       string
+	StateRoot          string
+	IntelligenceRoot   string
+	RobustnessRoot     string
+	CandidateRoot      string
+	CandidateDraftRoot string
+	UVBinary           string
+	RequiredBundle     string
 }
 
 // Handler returns a Kubernetes- and container-host-compatible readiness route.
@@ -53,13 +54,14 @@ func (checker Checker) Handler(response http.ResponseWriter, request *http.Reque
 // Check reports non-sensitive deployment prerequisites.
 func (checker Checker) Check() map[string]bool {
 	checks := map[string]bool{
-		"artifact_root":     directoryExists(checker.ArtifactRoot),
-		"candidate_root":    directoryExists(checker.CandidateRoot),
-		"data_root":         directoryExists(checker.DataRoot),
-		"intelligence_root": directoryExists(checker.IntelligenceRoot),
-		"robustness_root":   directoryExists(checker.RobustnessRoot),
-		"state_root":        directoryExists(checker.StateRoot),
-		"uv_binary":         executableExists(checker.UVBinary),
+		"artifact_root":        directoryExists(checker.ArtifactRoot),
+		"candidate_root":       directoryExists(checker.CandidateRoot),
+		"candidate_draft_root": directoryExists(checker.CandidateDraftRoot),
+		"data_root":            directoryExists(checker.DataRoot),
+		"intelligence_root":    directoryExists(checker.IntelligenceRoot),
+		"robustness_root":      directoryExists(checker.RobustnessRoot),
+		"state_root":           directoryExists(checker.StateRoot),
+		"uv_binary":            executableExists(checker.UVBinary),
 	}
 	if checker.RequiredBundle != "" {
 		checks["required_bundle"] = bundleExists(checker.DataRoot, checker.RequiredBundle)

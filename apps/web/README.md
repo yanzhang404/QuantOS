@@ -27,7 +27,9 @@ The Backtest Lab connects to the local Go API and supports:
 - reading the latest four-gate robustness review with explicit PASS/FAIL
   reasons and no automatic promotion;
 - reading the guarded candidate queue, its current stage, parameter count, and
-  evidence identity without exposing mutation controls in the browser.
+  evidence identity without exposing mutation controls in the browser;
+- showing how many of the newest UTC ISO week's one or two candidate review
+  slots have been prepared.
 
 The workspace uses a result-first layout: global workflows are in the top
 navigation, reusable strategies are grouped in a folder-style library, and

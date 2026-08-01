@@ -33,6 +33,8 @@ Paper and live trading are not implemented.
   strategy-matched robustness review, and explicit human approval or rejection.
 - Inspect the guarded candidate queue through a validated read-only API and
   bilingual Overview card.
+- Prepare at most two narrow candidate review packages per UTC ISO week without
+  automatically opening, merging, approving, or trading from a pull request.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.
@@ -151,6 +153,19 @@ Implementation evidence, a strategy-matched passed robustness artifact, and an
 explicit human decision are separate later transitions. See
 [`services/agent`](services/agent/README.md) and
 [ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md).
+
+Prepare the proposal for the current week's review budget:
+
+```bash
+uv run quantos candidate prepare-draft \
+  --id <proposal-id> \
+  --candidate-root var/quantos/candidates \
+  --draft-root var/quantos/candidate-drafts
+```
+
+The output package contains the immutable proposal, a review checklist, and a
+draft pull-request body. It performs no network or repository mutation. See
+[ADR-0019](docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
 
 The first predeclared strategy study and its reproducible result artifact are
 available in

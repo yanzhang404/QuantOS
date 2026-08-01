@@ -33,3 +33,4 @@ Accepted decisions:
 - [ADR-0016: Keep Run evidence immutable while managing a separate review catalog](0016-run-catalog-archives-and-comparison.md)
 - [ADR-0017: Treat robustness checks as deterministic promotion gates](0017-deterministic-robustness-gates.md)
 - [ADR-0018: Separate Agent proposals, evidence attachment, and human promotion](0018-guarded-candidate-lifecycle.md)
+- [ADR-0019: Rate-limit candidate discovery and prepare review-only draft packages](0019-rate-limited-candidate-draft-scheduling.md)

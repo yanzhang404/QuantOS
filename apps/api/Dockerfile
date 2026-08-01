@@ -21,6 +21,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     QUANTOS_ARTIFACT_ROOT=/var/lib/quantos/artifacts/experiments \
     QUANTOS_ROBUSTNESS_ROOT=/var/lib/quantos/artifacts/robustness \
     QUANTOS_CANDIDATE_ROOT=/var/lib/quantos/candidates \
+    QUANTOS_CANDIDATE_DRAFT_ROOT=/var/lib/quantos/candidate-drafts \
     QUANTOS_STATE_ROOT=/var/lib/quantos/tasks \
     QUANTOS_INTELLIGENCE_ROOT=/var/lib/quantos/intelligence
 
@@ -40,6 +41,7 @@ RUN useradd --create-home --uid 10001 quantos \
         /var/lib/quantos/artifacts/experiments \
         /var/lib/quantos/artifacts/robustness \
         /var/lib/quantos/candidates \
+        /var/lib/quantos/candidate-drafts \
         /var/lib/quantos/tasks \
         /var/lib/quantos/intelligence \
     && chown -R quantos:quantos /var/lib/quantos

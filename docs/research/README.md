@@ -82,6 +82,12 @@ or rejection requires a named human and rationale. See the command workflow in
 [`services/agent`](../../services/agent/README.md) and
 [ADR-0018](../adr/0018-guarded-candidate-lifecycle.md).
 
+Candidate attention is rate-limited separately from lifecycle state. The local
+draft scheduler accepts only narrow proposed candidates, prepares at most two
+review packages per UTC ISO week, and never opens or merges a remote pull
+request. See
+[ADR-0019](../adr/0019-rate-limited-candidate-draft-scheduling.md).
+
 ## Formal strategy studies
 
 - [Donchian ATR strategy study](donchian-atr-study.md)

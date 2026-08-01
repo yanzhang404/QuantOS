@@ -53,6 +53,23 @@ registers code, places orders, or enables live trading.
 `quantos candidate list` reads the atomic records. The Go API and workspace use
 the same versioned read model but expose no lifecycle mutation endpoint.
 
+To spend one of the current UTC ISO week's one or two review slots:
+
+```bash
+uv run quantos candidate prepare-draft \
+  --id <proposal-id> \
+  --candidate-root var/quantos/candidates \
+  --draft-root var/quantos/candidate-drafts \
+  --weekly-limit 2
+```
+
+Only `proposed` candidates with no more than six parameters and three intervals
+qualify. The same proposal cannot be scheduled twice, and a weekly limit cannot
+be loosened after the first package. The atomic directory contains
+`proposal.json`, `review-checklist.json`, and `PULL_REQUEST.md`; no branch or
+remote PR is created. `quantos candidate list-drafts` shows the prepared queue.
+See [ADR-0019](../../docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
+
 ## Daily market intelligence
 
 The first implemented Agent boundary is a deterministic daily sentiment and

@@ -98,6 +98,11 @@ browser has no candidate mutation endpoints or decision controls; human
 decisions remain deliberate CLI operations until authenticated identities are
 available.
 
+The same card reads `GET /api/v1/candidate-drafts` and displays the occupied
+slots for the latest scheduled ISO week. It exposes package metadata only; the
+generated proposal, checklist, and pull-request body remain server-side review
+artifacts.
+
 ## Strategy manifests and intervals
 
 The versioned strategy catalog supplies category, lifecycle stage,

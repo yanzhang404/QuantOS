@@ -32,9 +32,11 @@ through ordinary immutable Runs and expose promotion gates in the workspace.
 Candidate discovery now uses bounded Agent proposals and an atomic lifecycle
 that separates implementation evidence, strategy-matched robustness reviews,
 and explicit human decisions. The Go API and Overview queue expose these
-records read-only. The next boundary is a rate-limited proposal scheduler that
-prepares at most one or two explainable candidates per week without merging or
-promoting them automatically. The canonical Go/Python research service now has
+records read-only. A UTC ISO-week scheduler now prepares at most two narrow,
+explainable candidate review packages, exposes their occupied slots read-only,
+and performs no remote GitHub mutation. The next boundary is replacing sample
+daily intelligence with bounded public, read-only collectors. The canonical
+Go/Python research service now has
 a production container, environment contract, and data-aware readiness check;
 provisioning a stateful container host and connecting its stable HTTPS URL
 remain before the workspace can drop its localhost dependency. Paper
