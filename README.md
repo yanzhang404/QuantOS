@@ -29,6 +29,10 @@ Paper and live trading are not implemented.
   normalized portfolio curves with their exact parameters and costs.
 - Build deterministic promotion evidence from expanding walk-forward folds,
   adjacent parameters, doubled costs, and aligned BTC/ETH holdouts.
+- Persist bounded Agent strategy proposals through implementation evidence,
+  strategy-matched robustness review, and explicit human approval or rejection.
+- Inspect the guarded candidate queue through a validated read-only API and
+  bilingual Overview card.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.
@@ -36,7 +40,8 @@ Paper and live trading are not implemented.
   the bilingual workspace homepage.
 
 The research loop is implemented with Markdown reports and a product workspace.
-Feature lineage, walk-forward validation, and broader derivatives datasets remain.
+Feature lineage, broader derivatives datasets, and strategy-specific
+robustness adapters remain.
 
 ## Architecture at a glance
 
@@ -133,6 +138,19 @@ uv run quantos intelligence build \
 The example is labeled as sample data. A scheduled Agent or OpenClaw collector
 can later publish current inputs through the same contract without controlling
 the deterministic index methodology. See [`services/agent`](services/agent/README.md).
+
+Create a bounded strategy proposal without promoting or registering code:
+
+```bash
+uv run quantos candidate propose \
+  --input examples/candidates/sample-proposal.v1.json \
+  --output-root var/quantos/candidates
+```
+
+Implementation evidence, a strategy-matched passed robustness artifact, and an
+explicit human decision are separate later transitions. See
+[`services/agent`](services/agent/README.md) and
+[ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md).
 
 The first predeclared strategy study and its reproducible result artifact are
 available in

@@ -91,6 +91,13 @@ explicit promotion gates. Green/red status always includes PASS/FAIL text and a
 reason. Passing supports a later human promotion decision and never changes a
 strategy lifecycle state automatically.
 
+The Overview candidate card reads `GET /api/v1/candidates`. It replaces the
+previous hard-coded candidate count with validated lifecycle records and shows
+proposal, implementation, review-ready, approval, and rejection totals. The
+browser has no candidate mutation endpoints or decision controls; human
+decisions remain deliberate CLI operations until authenticated identities are
+available.
+
 ## Strategy manifests and intervals
 
 The versioned strategy catalog supplies category, lifecycle stage,

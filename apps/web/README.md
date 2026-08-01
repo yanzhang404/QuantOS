@@ -25,7 +25,9 @@ The Backtest Lab connects to the local Go API and supports:
 - selecting two to four Runs for normalized return, parameter, cost, and metric
   comparison;
 - reading the latest four-gate robustness review with explicit PASS/FAIL
-  reasons and no automatic promotion.
+  reasons and no automatic promotion;
+- reading the guarded candidate queue, its current stage, parameter count, and
+  evidence identity without exposing mutation controls in the browser.
 
 The workspace uses a result-first layout: global workflows are in the top
 navigation, reusable strategies are grouped in a folder-style library, and

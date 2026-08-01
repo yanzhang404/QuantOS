@@ -18,6 +18,7 @@ import {
 } from "./market-data-coverage";
 import { StrategyWorkbench } from "./strategy-workbench";
 import { RunLibrary } from "./run-library";
+import { CandidateQueue } from "./candidate-queue";
 
 type Locale = "en" | "zh";
 type WorkspaceView = "overview" | "strategies" | "runs" | "data";
@@ -420,12 +421,7 @@ export default function Home() {
                   {t.openStrategy} →
                 </a>
               </article>
-              <article className="panel overview-status-card">
-                <p className="eyebrow">{t.candidateQueue}</p>
-                <strong>01</strong>
-                <span>Donchian ATR · candidate</span>
-                <p>{t.candidateNote}</p>
-              </article>
+              <CandidateQueue locale={locale} />
               <article className="panel overview-status-card">
                 <p className="eyebrow">{t.datasetHealth}</p>
                 <strong>{marketDataCoverage.total_row_count.toLocaleString(localeTag)}</strong>

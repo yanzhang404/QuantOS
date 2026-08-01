@@ -15,6 +15,44 @@ experiments, and summarize evidence. It may not silently mark a candidate
 validated, promote it to a production signal, or bypass the shared risk and
 backtest boundaries.
 
+Candidate proposals use the bounded `candidate-proposal.v1` contract. Source
+code, commands, credentials, and trading instructions are not accepted fields.
+The durable lifecycle separates proposal, implementation evidence, a passed
+robustness artifact, and an explicit human decision. See
+[ADR-0018](../../docs/adr/0018-guarded-candidate-lifecycle.md).
+
+## Candidate lifecycle
+
+Start from a contract-shaped proposal:
+
+```bash
+uv run quantos candidate propose \
+  --input examples/candidates/sample-proposal.v1.json \
+  --output-root var/quantos/candidates
+```
+
+The returned 16-character proposal ID is used for later transitions. Attach a
+repository-owned Python symbol and deterministic test identifiers only after
+the implementation exists:
+
+```bash
+uv run quantos candidate implemented \
+  --id <proposal-id> \
+  --implementation quantos_strategy.example.ExampleStrategy \
+  --test-id tests.strategy.test_example_signals \
+  --actor implementation-agent
+```
+
+`candidate attach-review` accepts a real `robustness.json` only when it is
+complete, names the same strategy slug, and passes the exact walk-forward,
+neighboring-parameter, doubled-cost, and multiple-market gates. Finally,
+`candidate decide --decision approve|reject` records a human actor and a
+20–500-character rationale. Approval changes research state only; it never
+registers code, places orders, or enables live trading.
+
+`quantos candidate list` reads the atomic records. The Go API and workspace use
+the same versioned read model but expose no lifecycle mutation endpoint.
+
 ## Daily market intelligence
 
 The first implemented Agent boundary is a deterministic daily sentiment and

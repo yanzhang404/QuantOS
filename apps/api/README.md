@@ -28,6 +28,8 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `GET /api/v1/experiments/{run_id}`
 - `GET /api/v1/robustness`
 - `GET /api/v1/robustness/{review_id}`
+- `GET /api/v1/candidates`
+- `GET /api/v1/candidates/{proposal_id}`
 - `PUT /api/v1/experiment-archives/{run_id}`
 - `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
@@ -62,6 +64,7 @@ artifacts. Mount `/var/lib/quantos` on persistent storage and configure:
 - `QUANTOS_DATA_ROOT`, `QUANTOS_ARTIFACT_ROOT`, `QUANTOS_STATE_ROOT`, and
   `QUANTOS_INTELLIGENCE_ROOT`: persistent paths when the defaults are unsuitable;
 - `QUANTOS_ROBUSTNESS_ROOT`: content-addressed robustness review artifacts;
+- `QUANTOS_CANDIDATE_ROOT`: guarded candidate lifecycle records;
 - `PORT` or `QUANTOS_LISTEN`: host-assigned network binding;
 - `QUANTOS_QUEUE_SIZE`: bounded in-process task queue size.
 
@@ -83,3 +86,9 @@ Daily intelligence is read-only and loaded from
 `var/quantos/intelligence/latest.json` by default. Publish it through the
 validated Python workflow; the API rejects symlinks, oversized files, unknown
 fields, invalid sources, and scores that do not match the fixed methodology.
+
+Candidate records are also read-only. The API validates proposal identity,
+bounded fields, transition order, actor authority, and evidence identifiers
+before returning at most 100 newest records. Lifecycle mutations remain in the
+Python CLI so browser requests cannot propose, approve, reject, or promote a
+strategy.

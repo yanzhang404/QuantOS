@@ -53,7 +53,9 @@ flowchart LR
     B --> Q
     B --> X["Experiment Artifacts & Reports"]
     R --> I["Daily Intelligence & Sentiment"]
+    R --> C["Guarded Candidate Records"]
     I --> API
+    C --> API
     API --> M["Metadata Store (future)"]
     API -. "future, disabled" .-> K["Risk & Execution Boundary"]
 ```
@@ -125,6 +127,23 @@ sensitivity, doubled-cost retention, and aligned multi-market results. Each
 gate links ordinary immutable Run IDs; passing never changes lifecycle state by
 itself. See [ADR-0017](docs/adr/0017-deterministic-robustness-gates.md).
 
+Candidate state advances through a separate guarded flow:
+
+```mermaid
+flowchart LR
+    A["Agent proposal"] --> P["Proposed"]
+    P --> I["Implemented + deterministic tests"]
+    I --> G["Strategy-matched robustness review"]
+    G --> H{"Human decision"}
+    H -->|approve| A2["Approved research candidate"]
+    H -->|reject| R2["Rejected"]
+```
+
+Proposal identity is content-addressed. Only the Python lifecycle command may
+append transitions; the Go API and web workspace are read-only consumers.
+Approval does not register executable strategy code and cannot enable trading.
+See [ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md).
+
 V0.1 strategies observe a bar at its close and approved targets execute at the
 next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).
 
@@ -166,8 +185,8 @@ The first hosted compute boundary packages the Go control plane and canonical
 Python research environment into one stateful container. It remains a modular
 monolith and runs as a single replica while Tasks use the file-backed store.
 Persistent storage supplies immutable datasets, Task records, experiment
-artifacts, and daily-intelligence snapshots; none of those generated inputs are
-baked into the image.
+artifacts, daily-intelligence snapshots, and candidate records; none of those
+generated inputs are baked into the image.
 
 The service exposes separate liveness and data-aware readiness checks. Dataset
 synchronization is an explicit administrative command, not startup behavior.

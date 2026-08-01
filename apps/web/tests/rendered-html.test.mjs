@@ -177,6 +177,21 @@ test("shows deterministic robustness promotion gates without automatic promotion
   assert.match(component, /never promotes or trades automatically/);
 });
 
+test("connects the guarded candidate queue without adding browser mutation controls", async () => {
+  const [component, api, page] = await Promise.all([
+    readFile(new URL("../app/candidate-queue.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/candidate-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /<CandidateQueue locale=\{locale\}/);
+  assert.match(component, /listCandidates\(controller\.signal\)/);
+  assert.match(component, /review_ready/);
+  assert.match(component, /owner approval/);
+  assert.match(api, /\/api\/v1\/candidates/);
+  assert.doesNotMatch(component, /fetch\([^)]*method:\s*["'](?:POST|PUT|DELETE)/i);
+});
+
 test("renders verified BTC and ETH coverage from an immutable bundle", async () => {
   const [page, coverage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

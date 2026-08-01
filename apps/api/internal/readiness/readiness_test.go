@@ -11,7 +11,7 @@ import (
 
 func TestHandlerRequiresConfiguredBundleAndRoots(t *testing.T) {
 	root := t.TempDir()
-	for _, name := range []string{"artifacts", "state", "intelligence", "robustness"} {
+	for _, name := range []string{"artifacts", "state", "intelligence", "robustness", "candidates"} {
 		if err := os.Mkdir(filepath.Join(root, name), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -22,6 +22,7 @@ func TestHandlerRequiresConfiguredBundleAndRoots(t *testing.T) {
 		StateRoot:        filepath.Join(root, "state"),
 		IntelligenceRoot: filepath.Join(root, "intelligence"),
 		RobustnessRoot:   filepath.Join(root, "robustness"),
+		CandidateRoot:    filepath.Join(root, "candidates"),
 		UVBinary:         "go",
 		RequiredBundle:   "47a8b29be444e2ba",
 	}
@@ -72,6 +73,7 @@ func TestHandlerRejectsUnsafeBundleVersion(t *testing.T) {
 		StateRoot:        t.TempDir(),
 		IntelligenceRoot: t.TempDir(),
 		RobustnessRoot:   t.TempDir(),
+		CandidateRoot:    t.TempDir(),
 		UVBinary:         "go",
 		RequiredBundle:   "../../etc/passwd",
 	}

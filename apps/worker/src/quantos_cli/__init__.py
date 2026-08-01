@@ -7,6 +7,8 @@ import sys
 
 from quantos_backtest import cli as backtest_cli
 from quantos_backtest.errors import BacktestError
+from quantos_candidates import cli as candidate_cli
+from quantos_candidates.errors import CandidateError
 from quantos_intelligence import cli as intelligence_cli
 from quantos_intelligence.errors import IntelligenceError
 from quantos_market_data import cli as data_cli
@@ -22,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     backtest_cli.register_parser(commands)
     research_cli.register_parser(commands)
     intelligence_cli.register_parser(commands)
+    candidate_cli.register_parser(commands)
     return parser
 
 
@@ -37,7 +40,16 @@ def main(argv: list[str] | None = None) -> int:
             return research_cli.run(args)
         if args.module == "intelligence":
             return intelligence_cli.run(args)
-    except (MarketDataError, BacktestError, ResearchError, IntelligenceError, OSError) as exc:
+        if args.module == "candidate":
+            return candidate_cli.run(args)
+    except (
+        MarketDataError,
+        BacktestError,
+        ResearchError,
+        IntelligenceError,
+        CandidateError,
+        OSError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     parser.error("unsupported module")

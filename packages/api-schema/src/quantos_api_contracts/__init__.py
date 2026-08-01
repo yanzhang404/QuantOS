@@ -12,11 +12,15 @@ from .backtest_v1 import (
     TaskError,
     strategy_catalog,
 )
+from .candidate_v1 import CandidateParameter, CandidateProposal, CandidateSource
 
 __all__ = [
     "BacktestConfigContract",
     "BacktestSubmission",
     "BacktestTask",
+    "CandidateParameter",
+    "CandidateProposal",
+    "CandidateSource",
     "ContractValidationError",
     "DatasetRef",
     "ExperimentMetrics",

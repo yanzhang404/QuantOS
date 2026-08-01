@@ -72,6 +72,16 @@ The output is a content-addressed review. A failed gate means the evidence is
 insufficient for promotion; a passed review never promotes a strategy or
 authorizes trading automatically. See [ADR-0017](../adr/0017-deterministic-robustness-gates.md).
 
+## Candidate handoff
+
+An Agent hypothesis enters research through `candidate-proposal.v1`, not by
+editing the approved Strategy Library. The guarded lifecycle separately records
+implementation symbols and deterministic tests, then accepts a passed
+robustness artifact only when its strategy slug matches the proposal. Approval
+or rejection requires a named human and rationale. See the command workflow in
+[`services/agent`](../../services/agent/README.md) and
+[ADR-0018](../adr/0018-guarded-candidate-lifecycle.md).
+
 ## Formal strategy studies
 
 - [Donchian ATR strategy study](donchian-atr-study.md)

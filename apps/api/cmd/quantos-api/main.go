@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/yanzhang404/QuantOS/apps/api/internal/backtest"
+	"github.com/yanzhang404/QuantOS/apps/api/internal/candidates"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/intelligence"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/readiness"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/robustness"
@@ -37,6 +38,11 @@ func main() {
 			"robustness-root",
 			envOrDefault("QUANTOS_ROBUSTNESS_ROOT", "artifacts/robustness"),
 			"trusted robustness review root",
+		)
+		candidateRoot = flag.String(
+			"candidate-root",
+			envOrDefault("QUANTOS_CANDIDATE_ROOT", "var/quantos/candidates"),
+			"trusted strategy candidate record root",
 		)
 		allowedOrigin = flag.String(
 			"allowed-origin",
@@ -70,7 +76,9 @@ func main() {
 	orchestrator := backtest.NewOrchestrator(store, runner, *queueSize, nil)
 	defer orchestrator.Close()
 	experiments := backtest.NewExperimentStore(filepath.Clean(*artifactRoot))
-	for _, root := range []string{*artifactRoot, *intelligenceRoot, *robustnessRoot} {
+	for _, root := range []string{
+		*artifactRoot, *intelligenceRoot, *robustnessRoot, *candidateRoot,
+	} {
 		if err := os.MkdirAll(filepath.Clean(root), 0o755); err != nil {
 			log.Fatalf("create persistence root %s: %v", root, err)
 		}
@@ -82,10 +90,25 @@ func main() {
 		StateRoot:        filepath.Clean(*stateRoot),
 		IntelligenceRoot: filepath.Clean(*intelligenceRoot),
 		RobustnessRoot:   filepath.Clean(*robustnessRoot),
+		CandidateRoot:    filepath.Clean(*candidateRoot),
 		UVBinary:         *uvBinary,
 		RequiredBundle:   *requiredBundle,
 	}
 	rootHandler.HandleFunc("/readyz", ready.Handler)
+	rootHandler.Handle(
+		"/api/v1/candidates",
+		candidates.NewHTTPHandler(
+			candidates.NewStore(filepath.Clean(*candidateRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/api/v1/candidates/",
+		candidates.NewHTTPHandler(
+			candidates.NewStore(filepath.Clean(*candidateRoot)),
+			*allowedOrigin,
+		),
+	)
 	rootHandler.Handle(
 		"/api/v1/intelligence/",
 		intelligence.NewHTTPHandler(

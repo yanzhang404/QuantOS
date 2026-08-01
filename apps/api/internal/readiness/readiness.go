@@ -19,6 +19,7 @@ type Checker struct {
 	StateRoot        string
 	IntelligenceRoot string
 	RobustnessRoot   string
+	CandidateRoot    string
 	UVBinary         string
 	RequiredBundle   string
 }
@@ -53,6 +54,7 @@ func (checker Checker) Handler(response http.ResponseWriter, request *http.Reque
 func (checker Checker) Check() map[string]bool {
 	checks := map[string]bool{
 		"artifact_root":     directoryExists(checker.ArtifactRoot),
+		"candidate_root":    directoryExists(checker.CandidateRoot),
 		"data_root":         directoryExists(checker.DataRoot),
 		"intelligence_root": directoryExists(checker.IntelligenceRoot),
 		"robustness_root":   directoryExists(checker.RobustnessRoot),

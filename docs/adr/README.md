@@ -32,3 +32,4 @@ Accepted decisions:
 - [ADR-0015: Deploy the canonical research service without duplicating compute](0015-deploy-canonical-research-service.md)
 - [ADR-0016: Keep Run evidence immutable while managing a separate review catalog](0016-run-catalog-archives-and-comparison.md)
 - [ADR-0017: Treat robustness checks as deterministic promotion gates](0017-deterministic-robustness-gates.md)
+- [ADR-0018: Separate Agent proposals, evidence attachment, and human promotion](0018-guarded-candidate-lifecycle.md)

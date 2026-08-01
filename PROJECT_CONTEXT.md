@@ -14,9 +14,9 @@ backtest → metrics → versioned experiment artifacts → chronological parame
 selection → untouched holdout and cost-stress review. Buy and Hold plus the
 first formal Donchian ATR strategy study are now implemented. The next
 increment also includes a deterministic daily market-intelligence contract,
-read-only API, and bilingual homepage view. Current data collection still
-requires a bounded external Agent/OpenClaw adapter; strategy robustness,
-feature lineage, walk-forward validation, and broader market datasets remain.
+read-only API, and bilingual homepage view. Current intelligence collection
+still requires a bounded external Agent/OpenClaw adapter; feature lineage,
+derivatives datasets, and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
 and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync
@@ -29,12 +29,16 @@ outside Run artifacts, and compares up to four normalized portfolio curves
 with their exact inputs. Deterministic EMA robustness reviews now link
 walk-forward, neighboring-parameter, doubled-cost, and aligned BTC/ETH evidence
 through ordinary immutable Runs and expose promotion gates in the workspace.
-The next boundary is candidate lifecycle persistence and bounded Agent proposal
-contracts. The canonical Go/Python research service now has a production
-container, environment contract, and data-aware readiness check; provisioning a
-stateful container host and connecting its stable HTTPS URL remain before the
-workspace can drop its localhost dependency. Paper reproduction remains a later
-research workflow.
+Candidate discovery now uses bounded Agent proposals and an atomic lifecycle
+that separates implementation evidence, strategy-matched robustness reviews,
+and explicit human decisions. The Go API and Overview queue expose these
+records read-only. The next boundary is a rate-limited proposal scheduler that
+prepares at most one or two explainable candidates per week without merging or
+promoting them automatically. The canonical Go/Python research service now has
+a production container, environment contract, and data-aware readiness check;
+provisioning a stateful container host and connecting its stable HTTPS URL
+remain before the workspace can drop its localhost dependency. Paper
+reproduction remains a later research workflow.
 
 ## Product principles
 
