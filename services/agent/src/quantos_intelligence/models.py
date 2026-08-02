@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -173,6 +173,18 @@ class DailyIntelligenceInput:
         news = tuple(NewsItem.from_dict(item) for item in raw_news)
         if len({item.id for item in news}) != len(news):
             raise IntelligenceValidationError("news ids must be unique")
+        if any(
+            factor.observed_at > as_of + timedelta(minutes=5)
+            or factor.observed_at < as_of - timedelta(days=7)
+            for factor in factors
+        ):
+            raise IntelligenceValidationError("factor observations must be recent and not future")
+        if any(
+            item.published_at > as_of + timedelta(minutes=5)
+            or item.published_at < as_of - timedelta(days=7)
+            for item in news
+        ):
+            raise IntelligenceValidationError("news must be recent and not future")
         previous = record.get("previous_score")
         return cls(
             date=parsed_date,
@@ -237,7 +249,10 @@ def _bounded_number(value: Any, field: str, minimum: float, maximum: float) -> f
 def _bounded_string(value: Any, field: str, maximum: int) -> str:
     if not isinstance(value, str) or not value.strip() or len(value) > maximum:
         raise IntelligenceValidationError(f"{field} must be a non-empty string <= {maximum}")
-    return value.strip()
+    parsed = value.strip()
+    if any(character in parsed for character in ("\n", "\r", "`", "<", ">")):
+        raise IntelligenceValidationError(f"{field} must be bounded plain text")
+    return parsed
 
 
 def _optional_string(value: Any, field: str, maximum: int) -> str | None:
@@ -251,6 +266,8 @@ def _https_url(value: Any, field: str) -> str:
     parsed = urlsplit(parsed_value)
     if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
         raise IntelligenceValidationError(f"{field} must be an HTTPS URL")
+    if parsed.hostname in {"localhost", "127.0.0.1", "::1"}:
+        raise IntelligenceValidationError(f"{field} must not target localhost")
     return parsed_value
 
 

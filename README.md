@@ -38,6 +38,8 @@ Paper and live trading are not implemented.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.
+- Collect those inputs from allow-listed public Binance, Deribit, Cboe, and
+  CoinDesk endpoints without credentials or article-body storage.
 - Display the sentiment result, factor detail, daily brief, and citations on
   the bilingual workspace homepage.
 
@@ -137,9 +139,21 @@ uv run quantos intelligence build \
   --output-root var/quantos/intelligence
 ```
 
-The example is labeled as sample data. A scheduled Agent or OpenClaw collector
-can later publish current inputs through the same contract without controlling
-the deterministic index methodology. See [`services/agent`](services/agent/README.md).
+The example is labeled as sample data. To create a current, source-linked input
+and publish it through the same deterministic methodology:
+
+```bash
+uv run quantos intelligence collect \
+  --output var/quantos/intelligence-inputs/current.json \
+  --history-root var/quantos/intelligence-observations \
+  --previous-snapshot var/quantos/intelligence/latest.json
+uv run quantos intelligence build \
+  --input var/quantos/intelligence-inputs/current.json \
+  --output-root var/quantos/intelligence
+```
+
+The first 29 daily collections are visibly `partial` while empirical factor
+percentiles accumulate. See [`services/agent`](services/agent/README.md).
 
 Create a bounded strategy proposal without promoting or registering code:
 

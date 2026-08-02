@@ -12,10 +12,10 @@ Phase 0 architecture initialization is complete. The implemented loop now
 covers Binance Kline → validation → Parquet → DuckDB → event-driven EMA Cross
 backtest → metrics → versioned experiment artifacts → chronological parameter
 selection → untouched holdout and cost-stress review. Buy and Hold plus the
-first formal Donchian ATR strategy study are now implemented. The next
-increment also includes a deterministic daily market-intelligence contract,
-read-only API, and bilingual homepage view. Current intelligence collection
-still requires a bounded external Agent/OpenClaw adapter; feature lineage,
+first formal Donchian ATR strategy study are now implemented. The current
+increment includes a deterministic daily market-intelligence contract, bounded
+public read-only collectors, empirical calibration history, read-only API, and
+bilingual homepage view. Automated daily publication, feature lineage,
 derivatives datasets, and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
@@ -34,8 +34,11 @@ that separates implementation evidence, strategy-matched robustness reviews,
 and explicit human decisions. The Go API and Overview queue expose these
 records read-only. A UTC ISO-week scheduler now prepares at most two narrow,
 explainable candidate review packages, exposes their occupied slots read-only,
-and performs no remote GitHub mutation. The next boundary is replacing sample
-daily intelligence with bounded public, read-only collectors. The canonical
+and performs no remote GitHub mutation. Daily intelligence now collects seven
+source-linked factors and bounded headline metadata from explicitly allow-listed
+public endpoints, atomically pins the first UTC daily batch, and remains partial
+until 30 observations calibrate its percentiles. The next boundary is reliable
+scheduled publication with observable health. The canonical
 Go/Python research service now has
 a production container, environment contract, and data-aware readiness check;
 provisioning a stateful container host and connecting its stable HTTPS URL

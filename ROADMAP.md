@@ -53,7 +53,9 @@ The accepted delivery order for the remaining V0.3 work is:
 4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market gates; **Implemented for the EMA research workflow.**
 5. add candidate strategy lifecycle and bounded Agent proposal contracts; **Implemented with atomic records, guarded transitions, read-only API, and workspace queue.**
 6. schedule at most one or two explainable candidates per week through draft PRs; **Implemented as rate-limited review packages and a read-only queue; remote draft opening remains deliberately human-triggered.**
-7. replace the sample intelligence input with public, read-only daily collectors.
+7. replace the sample intelligence input with public, read-only daily collectors. **Implemented with allow-listed sources, atomic daily history, bounded headline metadata, and 30-observation empirical calibration.**
+8. schedule daily collection/publication with overlap protection and visible
+   last-success health. **Next.**
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

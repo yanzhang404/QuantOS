@@ -72,3 +72,30 @@ def test_rejects_unknown_agent_fields() -> None:
 
     with pytest.raises(IntelligenceValidationError, match="unknown fields"):
         DailyIntelligenceInput.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (
+            lambda payload: payload["news"][0].__setitem__("title", "<b>bullish</b>"),
+            "bounded plain text",
+        ),
+        (
+            lambda payload: payload["factors"][0].__setitem__("source", "https://localhost/factor"),
+            "localhost",
+        ),
+        (
+            lambda payload: payload["factors"][0].__setitem__(
+                "observed_at", "2026-08-01T00:06:00Z"
+            ),
+            "recent and not future",
+        ),
+    ],
+)
+def test_rejects_untrusted_text_local_urls_and_future_observations(mutate, message: str) -> None:
+    payload = sample_payload()
+    mutate(payload)
+
+    with pytest.raises(IntelligenceValidationError, match=message):
+        DailyIntelligenceInput.from_dict(payload)

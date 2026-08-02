@@ -79,8 +79,10 @@ version, row counts, checksums, and creation metadata.
 
 ```mermaid
 flowchart LR
-    S["Approved news and market sources"] --> C["Collectors / Agent"]
+    S["Allow-listed public endpoints"] --> C["Bounded collectors"]
+    C --> H["Atomic daily observation history"]
     C --> N["Validated intelligence.v1 input"]
+    H --> N
     N --> F["Versioned deterministic sentiment formula"]
     N --> B["Source-linked daily brief"]
     F --> J["Immutable daily snapshot"]
@@ -94,7 +96,8 @@ content. It cannot choose index weights, modify scores after calculation,
 execute host commands, access trading credentials, or trigger trading. Every
 snapshot records factor observations, methodology version, source links,
 timestamps, and input identity. See
-[ADR-0012](docs/adr/0012-deterministic-daily-market-intelligence.md).
+[ADR-0012](docs/adr/0012-deterministic-daily-market-intelligence.md) and
+[ADR-0020](docs/adr/0020-public-read-only-intelligence-collectors.md).
 
 ## Backtest event flow
 

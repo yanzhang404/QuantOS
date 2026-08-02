@@ -72,11 +72,24 @@ See [ADR-0019](../../docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
 
 ## Daily market intelligence
 
-The first implemented Agent boundary is a deterministic daily sentiment and
-brief publisher. An Agent or OpenClaw automation prepares a bounded
-`intelligence.v1` JSON input containing seven rolling-percentile market factors
-and source-linked news classifications. QuantOS validates that input, calculates
-the fixed score, and writes one immutable daily snapshot plus `latest.json`.
+The daily intelligence boundary separates public collection from deterministic
+scoring. The collector reads allow-listed Binance Spot/Futures, Deribit, Cboe,
+and CoinDesk RSS endpoints, then writes a bounded `intelligence.v1` input. It
+stores headline metadata only, never article bodies, credentials, account data,
+or caller-selected URLs.
+
+```bash
+uv run quantos intelligence collect \
+  --output var/quantos/intelligence-inputs/current.json \
+  --history-root var/quantos/intelligence-observations \
+  --previous-snapshot var/quantos/intelligence/latest.json
+```
+
+The first complete seven-factor batch for each UTC date is atomically pinned.
+After 30 daily observations, raw values become inclusive empirical
+percentiles; earlier inputs remain visibly `partial` with neutral percentiles.
+Collection never publishes implicitly. Validate, score, and publish in a
+separate step:
 
 ```bash
 uv run quantos intelligence build \
@@ -86,4 +99,5 @@ uv run quantos intelligence build \
 
 The input must use public HTTPS source URLs and contains no credentials,
 commands, article bodies, or trading actions. The sample is explicitly marked
-as sample data and is not a current market claim.
+as sample data and is not a current market claim. See
+[ADR-0020](../../docs/adr/0020-public-read-only-intelligence-collectors.md).

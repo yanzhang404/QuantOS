@@ -6,4 +6,5 @@ markets. Each input documents its version and interpretation limits.
 - `candidates/sample-proposal.v1.json` demonstrates an Agent-authored strategy
   hypothesis. It does not imply implementation, validation, or approval.
 - `intelligence/sample-input.v1.json` demonstrates the daily intelligence
-  boundary and is explicitly sample data.
+  boundary and is explicitly sample data. Current public inputs are generated
+  under `var/` and are deliberately not committed as fixtures.
