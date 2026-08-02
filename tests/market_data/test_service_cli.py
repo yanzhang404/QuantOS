@@ -287,6 +287,62 @@ def test_cli_derivatives_requires_series_specific_period(capsys) -> None:
     assert "--period is required" in capsys.readouterr().err
 
 
+def test_cli_align_derivatives_prints_coverage_counts(monkeypatch, capsys, tmp_path) -> None:
+    published = SimpleNamespace(
+        path=tmp_path / "version=aligned",
+        manifest=SimpleNamespace(
+            dataset_version="aligned",
+            series="funding-rate",
+            row_count=4,
+            matched_count=2,
+            stale_count=1,
+            no_prior_count=1,
+        ),
+    )
+    observed: dict[str, object] = {}
+
+    def publish(**kwargs):
+        observed.update(kwargs)
+        return published
+
+    monkeypatch.setattr(cli, "materialize_derivatives_alignment", publish)
+    result = cli.main(
+        [
+            "data",
+            "align-derivatives",
+            "--spot-dataset",
+            "spot/version=abc",
+            "--derivative-dataset",
+            "derivatives/version=def",
+            "--start",
+            "2026-08-01T00:00:00Z",
+            "--end",
+            "2026-08-01T04:00:00Z",
+            "--max-age",
+            "90m",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert payload["matched"] == 2
+    assert payload["stale"] == 1
+    assert observed["max_age_ms"] == 5_400_000
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("500ms", 500), ("30s", 30_000), ("15m", 900_000), ("2h", 7_200_000)]
+)
+def test_cli_parses_positive_durations(value: str, expected: int) -> None:
+    assert cli._duration_ms(value) == expected
+
+
+@pytest.mark.parametrize("value", ["0h", "-1m", "5", "hour"])
+def test_cli_rejects_invalid_durations(value: str) -> None:
+    with pytest.raises(argparse.ArgumentTypeError, match="duration"):
+        cli._duration_ms(value)
+
+
 def test_cli_sync_matrix_prints_exact_member_identities(monkeypatch, capsys, tmp_path) -> None:
     member = SimpleNamespace(symbol="BTCUSDT", interval="5m", dataset_version="abc", row_count=288)
     published = SimpleNamespace(

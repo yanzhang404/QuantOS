@@ -72,7 +72,7 @@ flowchart LR
     V --> P["Versioned Spot Parquet"]
     V2 --> P2["Separate Versioned Derivatives Parquet"]
     P --> Q["DuckDB Views"]
-    P2 --> A["Future Explicit Point-in-time Alignment"]
+    P2 --> A["Versioned Closed-bar As-of Alignment"]
     Q --> R["Research & Backtest"]
     A --> R
 ```
@@ -82,10 +82,11 @@ Dataset manifests will include source, symbols, intervals, time range, schema
 version, row counts, checksums, and creation metadata.
 
 Funding and open-interest observations are never implicitly joined to Spot
-Klines. Each has its own immutable dataset identity and source limitation. A
-future feature must bind exact dataset versions and prove that every selected
-derivatives observation was available at or before the closed decision bar. See
-[ADR-0023](docs/adr/0023-version-public-derivatives-market-data.md).
+Klines. Each has its own immutable dataset identity and source limitation. The
+materialized feature dataset binds exact input versions, uses the closed Kline
+as decision time, selects backward only, and exposes stale/missing states. See
+[ADR-0023](docs/adr/0023-version-public-derivatives-market-data.md) and
+[ADR-0024](docs/adr/0024-materialize-causal-derivatives-alignment.md).
 
 ## Daily intelligence flow
 

@@ -512,6 +512,22 @@ class DerivativeDatasetStore:
             raise DatasetError("derivatives dataset verification failed")
         return manifest
 
+    def load(
+        self, path: Path
+    ) -> tuple[
+        DerivativeDatasetManifest,
+        list[FundingRateObservation] | list[OpenInterestObservation],
+    ]:
+        """Verify and load normalized observations from one immutable version."""
+
+        manifest = self.verify(path)
+        try:
+            table = pq.read_table(path / PARQUET_FILE_NAME)
+            rows = _rows_from_table(manifest, table)
+        except (OSError, TypeError, pa.ArrowException, MarketDataError) as exc:
+            raise DatasetError("cannot load verified derivatives dataset") from exc
+        return manifest, rows
+
 
 def _validate_funding(item: FundingRateObservation) -> None:
     if (

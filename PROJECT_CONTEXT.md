@@ -20,7 +20,9 @@ definitions from a versioned feature registry into their content identity.
 The Go detail API validates those instances, and the Data/Strategies views make
 the registry and selected Run lineage visible. Public Binance funding rates and
 open-interest statistics now publish as separate immutable, content-verified
-datasets with explicit source retention limits. Point-in-time feature alignment
+datasets with explicit source retention limits. A versioned closed-bar as-of
+materializer binds exact Spot and derivatives inputs, preserves stale/missing
+states, and rejects future observations. Run-level binding, strategy evaluation,
 and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,

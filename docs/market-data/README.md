@@ -111,3 +111,31 @@ strategy feature must later bind exact versions and use only the latest
 derivatives observation whose timestamp is at or before the closed Kline.
 
 See [ADR-0023](../adr/0023-version-public-derivatives-market-data.md).
+
+Materialize one derivatives series against an exact Spot dataset version:
+
+```bash
+uv run quantos data align-derivatives \
+  --spot-dataset data/market/spot/exchange=binance/symbol=BTCUSDT/interval=4h/version=<spot-version> \
+  --derivative-dataset data/market/derivatives/exchange=binance/series=open-interest/symbol=BTCUSDT/period=4h/version=<oi-version> \
+  --start 2026-07-25T00:00:00Z \
+  --end 2026-08-01T00:00:00Z \
+  --max-age 8h
+```
+
+The output has exactly one row per selected Spot bar. At the bar close it uses
+only the latest derivatives timestamp at or before that decision time. A row is
+`matched`, `no-prior-observation`, or `stale-observation`; stale and missing rows
+never contain feature values. `--max-age` is a required, versioned assumption
+and accepts positive `ms`, `s`, `m`, `h`, or `d` units.
+
+Verify a materialized version independently:
+
+```bash
+uv run quantos data validate-alignment --dataset data/features/derivatives-aligned/...
+```
+
+The aligned manifest binds exact Spot and derivatives dataset versions and
+content hashes, the `asof-closed-bar.v1` policy, time range, age limit, and
+availability counts. See
+[ADR-0024](../adr/0024-materialize-causal-derivatives-alignment.md).

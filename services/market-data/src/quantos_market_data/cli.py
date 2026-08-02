@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .alignment import AlignedDerivativeStore, materialize_derivatives_alignment
 from .binance import DEFAULT_BASE_URL
 from .bundle import DatasetBundleStore, write_coverage_evidence
 from .derivatives import (
@@ -62,6 +63,30 @@ def register_parser(commands: Any) -> None:
         "validate-derivatives", help="verify an immutable derivatives dataset"
     )
     validate_derivatives.add_argument("--dataset", required=True, type=Path)
+
+    align_derivatives = data_commands.add_parser(
+        "align-derivatives", help="causally align derivatives data to closed Spot bars"
+    )
+    align_derivatives.add_argument("--spot-dataset", required=True, type=Path)
+    align_derivatives.add_argument("--derivative-dataset", required=True, type=Path)
+    align_derivatives.add_argument(
+        "--start", required=True, type=_datetime, help="inclusive Spot bar open time"
+    )
+    align_derivatives.add_argument(
+        "--end", required=True, type=_datetime, help="exclusive Spot bar open time"
+    )
+    align_derivatives.add_argument(
+        "--max-age",
+        required=True,
+        type=_duration_ms,
+        help="maximum observation age, for example 12h or 30m",
+    )
+    align_derivatives.add_argument("--output-root", type=Path, default=Path("data"))
+
+    validate_alignment = data_commands.add_parser(
+        "validate-alignment", help="verify a causal derivatives feature dataset"
+    )
+    validate_alignment.add_argument("--dataset", required=True, type=Path)
 
     sync_matrix = data_commands.add_parser(
         "sync-matrix", help="download and version the BTC/ETH five-interval matrix"
@@ -152,6 +177,32 @@ def run(args: argparse.Namespace) -> int:
         return 0
     if args.module == "data" and args.command == "validate-derivatives":
         manifest = DerivativeDatasetStore(args.dataset).verify(args.dataset)
+        _print_json({"is_valid": True, **manifest.to_dict()})
+        return 0
+    if args.module == "data" and args.command == "align-derivatives":
+        result = materialize_derivatives_alignment(
+            spot_dataset=args.spot_dataset,
+            derivative_dataset=args.derivative_dataset,
+            start=args.start,
+            end=args.end,
+            max_age_ms=args.max_age,
+            output_root=args.output_root,
+        )
+        _print_json(
+            {
+                "dataset": str(result.path),
+                "manifest": str(result.path / "manifest.json"),
+                "dataset_version": result.manifest.dataset_version,
+                "series": result.manifest.series,
+                "rows": result.manifest.row_count,
+                "matched": result.manifest.matched_count,
+                "stale": result.manifest.stale_count,
+                "no_prior": result.manifest.no_prior_count,
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "validate-alignment":
+        manifest = AlignedDerivativeStore(args.dataset).verify(args.dataset)
         _print_json({"is_valid": True, **manifest.to_dict()})
         return 0
     if args.module == "data" and args.command == "sync-matrix":
@@ -249,6 +300,20 @@ def _datetime(value: str) -> datetime:
     if parsed.tzinfo is None:
         raise argparse.ArgumentTypeError("timestamp must include a timezone")
     return parsed.astimezone(UTC)
+
+
+def _duration_ms(value: str) -> int:
+    units = (("ms", 1), ("s", 1_000), ("m", 60_000), ("h", 3_600_000), ("d", 86_400_000))
+    for suffix, multiplier in units:
+        if value.endswith(suffix):
+            try:
+                amount = int(value[: -len(suffix)])
+            except ValueError as exc:
+                raise argparse.ArgumentTypeError(f"invalid duration: {value}") from exc
+            if amount <= 0:
+                raise argparse.ArgumentTypeError("duration must be positive")
+            return amount * multiplier
+    raise argparse.ArgumentTypeError("duration must end in ms, s, m, h, or d")
 
 
 def _print_json(value: dict[str, Any]) -> None:

@@ -38,3 +38,4 @@ Accepted decisions:
 - [ADR-0021: Refresh daily intelligence as an observable single-writer job](0021-observable-daily-intelligence-refresh.md)
 - [ADR-0022: Version strategy features and resolve them into every new Run](0022-version-strategy-feature-lineage.md)
 - [ADR-0023: Store funding and open-interest histories as separate immutable datasets](0023-version-public-derivatives-market-data.md)
+- [ADR-0024: Materialize derivatives features at the closed-bar decision time](0024-materialize-causal-derivatives-alignment.md)

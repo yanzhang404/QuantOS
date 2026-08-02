@@ -46,10 +46,12 @@ Paper and live trading are not implemented.
   the bilingual workspace homepage.
 - Download and verify public Binance funding-rate and open-interest histories as
   separate, immutable, content-addressed Parquet datasets.
+- Materialize those histories at closed-bar decision times with explicit
+  maximum-age and missing-data evidence, without future-nearest matching.
 
 The research loop is implemented with Markdown reports and a product workspace.
-Point-in-time derivatives feature alignment and strategy-specific robustness
-adapters remain.
+Run-level binding and strategy evaluation for the aligned derivatives features,
+plus strategy-specific robustness adapters, remain.
 
 ## Architecture at a glance
 

@@ -28,7 +28,8 @@ from data download through report generation.
   resolved feature lineage implemented and exposed in API/Data/Strategies views.**
 - Parameter sweeps and train/validation/out-of-sample splits. **Implemented.**
 - Funding-rate and open-interest datasets. **Implemented as separate public,
-  immutable, content-verified datasets; point-in-time strategy features remain.**
+  immutable, content-verified datasets with causal closed-bar point-in-time
+  materialization and visible stale/missing states.**
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
 - Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 

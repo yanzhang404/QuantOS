@@ -11,6 +11,7 @@ version manifests, and read-only analytical queries.
 - `storage.py`: atomic, immutable Parquet publication and verification.
 - `bundle.py`: atomic identity and publication for a verified dataset matrix.
 - `derivatives.py`: public funding/open-interest adapters and separate immutable datasets.
+- `alignment.py`: closed-bar, backward-only derivatives feature materialization.
 - `query.py`: DuckDB queries scoped to one dataset version.
 - `service.py`: single-dataset, tail extension, and current-matrix orchestration.
 - `cli.py`: human and automation entry point.
@@ -22,6 +23,10 @@ Funding rates and open interest use only Binance USD-M Futures public market-dat
 endpoints. They remain separate from Spot Klines: no implicit join, forward fill,
 or strategy consumption occurs at ingestion time. Open-interest history is
 source-limited to the latest month.
+
+The alignment policy uses each Spot Kline close as its decision time, selects
+only the latest observation at or before that time, and exposes no-prior and
+stale states instead of fabricating feature values.
 
 The normalized interval vocabulary supports `5m`, `15m`, `1h`, `4h`, and `1d`.
 An interval becomes runnable only after the public-data pipeline publishes a
