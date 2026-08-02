@@ -2,7 +2,11 @@ import study from "../../../examples/backtest/donchian-atr-study/results.json";
 
 export type Asset = "btc" | "eth";
 export type Period = "development" | "evaluation";
-export type StrategyName = "buy-and-hold" | "ema-cross" | "donchian-atr";
+export type StrategyName =
+  | "buy-and-hold"
+  | "ema-cross"
+  | "donchian-atr"
+  | "funding-filtered-ema";
 
 export type Run = {
   dataset: string;
@@ -30,6 +34,7 @@ export const strategyNames: Record<StrategyName, string> = {
   "buy-and-hold": "Buy & Hold",
   "ema-cross": "EMA 20 / 50",
   "donchian-atr": "Donchian ATR",
+  "funding-filtered-ema": "Funding-filtered EMA",
 };
 
 export function getRuns(asset: Asset, period: Period): Run[] {

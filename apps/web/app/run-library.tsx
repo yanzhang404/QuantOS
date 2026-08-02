@@ -202,6 +202,7 @@ export function RunLibrary({ locale }: { locale: Locale }) {
           <option value="buy-and-hold">Buy &amp; Hold</option>
           <option value="ema-cross">EMA Cross</option>
           <option value="donchian-atr">Donchian ATR</option>
+          <option value="funding-filtered-ema">Funding-filtered EMA</option>
         </select>
         <select aria-label={t.archived} onChange={(event) => setArchiveMode(event.target.value as ArchiveMode)} value={archiveMode}>
           <option value="exclude">{t.active}</option>

@@ -17,7 +17,7 @@ _VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 _AGENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{1,79}$")
 _INTERVALS = frozenset({"5m", "15m", "1h", "4h", "1d"})
 _CATEGORIES = frozenset({"trend", "mean_reversion", "intraday"})
-_RESERVED = frozenset({"buy-and-hold", "ema-cross", "donchian-atr"})
+_RESERVED = frozenset({"buy-and-hold", "ema-cross", "donchian-atr", "funding-filtered-ema"})
 _COMMAND_MARKERS = ("\n", "`", "$(`", "&&", "||", ";", "<script", "../", "/etc/")
 
 

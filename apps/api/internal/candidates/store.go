@@ -187,7 +187,8 @@ func (r Record) validate(expectedID string) error {
 func (p Proposal) validate(expectedID string) error {
 	if p.SchemaVersion != "candidate-proposal.v1" || !slugPattern.MatchString(p.StrategySlug) ||
 		p.StrategySlug == "buy-and-hold" || p.StrategySlug == "ema-cross" ||
-		p.StrategySlug == "donchian-atr" || !textLength(p.Title, 4, 120) ||
+		p.StrategySlug == "donchian-atr" || p.StrategySlug == "funding-filtered-ema" ||
+		!textLength(p.Title, 4, 120) ||
 		!textLength(p.Hypothesis, 20, 500) || !textLength(p.Rationale, 20, 1000) {
 		return errors.New("invalid candidate proposal")
 	}

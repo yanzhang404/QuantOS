@@ -85,6 +85,9 @@ const copy = {
     drawdown: "Drawdown",
     finalCapital: "Final",
     bundle: "Bundle",
+    featureVersion: "Funding feature version",
+    featureVersionHint: "16-character immutable version already published on the research server.",
+    invalidFeatureVersion: "Enter a 16-character lowercase feature version.",
   },
   zh: {
     eyebrow: "回测实验室",
@@ -125,6 +128,9 @@ const copy = {
     drawdown: "回撤",
     finalCapital: "金额",
     bundle: "Bundle",
+    featureVersion: "资金费率特征版本",
+    featureVersionHint: "填写已发布到研究服务器的 16 位不可变版本号。",
+    invalidFeatureVersion: "请输入 16 位小写十六进制特征版本号。",
   },
 } as const;
 
@@ -142,6 +148,7 @@ export function BacktestLab({
   const [riskLimit, setRiskLimit] = useState("1");
   const [liquidateAtEnd, setLiquidateAtEnd] = useState(true);
   const [label, setLabel] = useState("");
+  const [featureDatasetVersion, setFeatureDatasetVersion] = useState("");
   const [tasks, setTasks] = useState<BacktestTask[]>([]);
   const [experiments, setExperiments] = useState<
     Record<string, ExperimentVisualization>
@@ -156,7 +163,9 @@ export function BacktestLab({
   const t = copy[locale];
   const localeTag = locale === "zh" ? "zh-CN" : "en-US";
   const activeValues = values[strategy];
-  const effectiveRiskLimit = strategy === "ema-cross" ? "1" : riskLimit;
+  const fixedExposureStrategy =
+    strategy === "ema-cross" || strategy === "funding-filtered-ema";
+  const effectiveRiskLimit = fixedExposureStrategy ? "1" : riskLimit;
   const visibleTasks = useMemo(() => tasks.slice(0, 10), [tasks]);
 
   const connect = async (signal?: AbortSignal) => {
@@ -311,6 +320,7 @@ export function BacktestLab({
     feeBPS,
     slippageBPS,
     effectiveRiskLimit,
+    featureDatasetVersion,
     t,
   );
 
@@ -339,6 +349,7 @@ export function BacktestLab({
       riskLimit: effectiveRiskLimit,
       liquidateAtEnd,
       label,
+      featureDatasetVersion,
     });
     try {
       const task = await submitBacktest(request);
@@ -387,12 +398,35 @@ export function BacktestLab({
                 maximum={Number(parameter.maximum)}
                 minimum={Number(parameter.minimum)}
                 onChange={(value) => updateParameter(parameter.key, value)}
-                step={parameter.kind === "integer" ? 1 : 0.01}
+                step={
+                  parameter.kind === "integer"
+                    ? 1
+                    : parameter.key === "max_funding_rate"
+                      ? 0.0001
+                      : 0.01
+                }
                 value={activeValues[parameter.key]}
               />
             ))}
           </div>
         </fieldset>
+
+        {definition.external_feature ? (
+          <label className="feature-version-field">
+            <span>{t.featureVersion}</span>
+            <input
+              autoComplete="off"
+              maxLength={16}
+              onChange={(event) => setFeatureDatasetVersion(event.target.value.trim())}
+              pattern="[0-9a-f]{16}"
+              placeholder="0123456789abcdef"
+              spellCheck={false}
+              type="text"
+              value={featureDatasetVersion}
+            />
+            <small>{t.featureVersionHint}</small>
+          </label>
+        ) : null}
 
         <div className="run-basics">
           <NumberField
@@ -440,13 +474,13 @@ export function BacktestLab({
                 value={slippageBPS}
               />
               <NumberField
-                disabled={strategy === "ema-cross"}
+                disabled={fixedExposureStrategy}
                 label={t.riskLimit}
                 maximum={1}
                 minimum={0.01}
                 onChange={setRiskLimit}
                 step={0.01}
-                value={strategy === "ema-cross" ? "1" : riskLimit}
+                value={fixedExposureStrategy ? "1" : riskLimit}
               />
             </div>
             <label className="checkbox-label">
@@ -648,6 +682,7 @@ function buildSubmission({
   riskLimit,
   liquidateAtEnd,
   label,
+  featureDatasetVersion,
 }: {
   dataset: BacktestSubmission["dataset"];
   definition: StrategyDefinition;
@@ -659,6 +694,7 @@ function buildSubmission({
   riskLimit: string;
   liquidateAtEnd: boolean;
   label: string;
+  featureDatasetVersion: string;
 }): BacktestSubmission {
   const strategyParameters = Object.fromEntries(
     definition.parameters.map((parameter) => [
@@ -672,6 +708,9 @@ function buildSubmission({
     schema_version: "1.0",
     idempotency_key: `web:${crypto.randomUUID()}`,
     ...(label.trim() ? { label: label.trim() } : {}),
+    ...(strategy === "funding-filtered-ema"
+      ? { feature_dataset_version: featureDatasetVersion }
+      : {}),
     dataset,
     strategy: {
       name: strategy,
@@ -682,7 +721,10 @@ function buildSubmission({
       initial_cash: initialCash,
       fee_bps: feeBPS,
       slippage_bps: slippageBPS,
-      max_target_exposure: strategy === "ema-cross" ? "1" : riskLimit,
+      max_target_exposure:
+        strategy === "ema-cross" || strategy === "funding-filtered-ema"
+          ? "1"
+          : riskLimit,
       liquidate_at_end: liquidateAtEnd,
     },
   };
@@ -696,8 +738,15 @@ function validateForm(
   feeBPS: string,
   slippageBPS: string,
   riskLimit: string,
+  featureDatasetVersion: string,
   t: (typeof copy)[Locale],
 ): string | undefined {
+  if (
+    strategy === "funding-filtered-ema" &&
+    !/^[0-9a-f]{16}$/.test(featureDatasetVersion)
+  ) {
+    return t.invalidFeatureVersion;
+  }
   const invalidParameter = definition.parameters.some((parameter) => {
     const value = Number(values[parameter.key]);
     return (
@@ -719,7 +768,7 @@ function validateForm(
     return t.invalidValue;
   }
   if (
-    strategy === "ema-cross" &&
+    (strategy === "ema-cross" || strategy === "funding-filtered-ema") &&
     Number(values.fast_period) >= Number(values.slow_period)
   ) {
     return t.invalidPeriods;

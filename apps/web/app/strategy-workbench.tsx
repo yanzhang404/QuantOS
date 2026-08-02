@@ -59,11 +59,13 @@ const copy = {
       "donchian-atr": "Donchian ATR",
       "ema-cross": "EMA 20 / 50",
       "buy-and-hold": "Buy & Hold",
+      "funding-filtered-ema": "Funding-filtered EMA",
     },
     descriptions: {
       "donchian-atr": "Breakout with volatility-sized exposure",
       "ema-cross": "Long-only trend confirmation baseline",
       "buy-and-hold": "Passive market exposure benchmark",
+      "funding-filtered-ema": "EMA trend filtered by causal funding observations",
     },
     bars: "bars",
     priceChart: "Kline + executed fills",
@@ -94,6 +96,7 @@ const copy = {
     manualResult: "Manual backtest result",
     parameters: "Parameters",
     features: "Resolved features",
+    featureDatasets: "External feature data",
     library: "Strategy library",
     categories: {
       trend: "Trend following",
@@ -128,11 +131,13 @@ const copy = {
       "donchian-atr": "唐奇安 ATR",
       "ema-cross": "EMA 20 / 50",
       "buy-and-hold": "买入并持有",
+      "funding-filtered-ema": "资金费率过滤 EMA",
     },
     descriptions: {
       "donchian-atr": "突破信号与波动率动态仓位",
       "ema-cross": "仅做多的趋势确认基线",
       "buy-and-hold": "被动市场敞口基准",
+      "funding-filtered-ema": "用因果资金费率观测过滤 EMA 趋势",
     },
     bars: "根 K 线",
     priceChart: "K 线与实际成交",
@@ -163,6 +168,7 @@ const copy = {
     manualResult: "手动回测结果",
     parameters: "参数",
     features: "已解析特征",
+    featureDatasets: "外部特征数据",
     library: "策略库",
     categories: {
       trend: "趋势策略",
@@ -225,9 +231,27 @@ export function StrategyWorkbench({
     selectedExperiment.dataset.symbol === executionDataset.symbol &&
     selectedExperiment.dataset.interval === executionDataset.interval &&
     selectedExperiment.strategy.name === strategy;
+  const historicalRun = dataset.runs[strategy];
+  const hasRunEvidence = selectedExperimentMatches || historicalRun !== undefined;
   const run: VisualizationRun = selectedExperimentMatches
     ? selectedExperiment
-    : dataset.runs[strategy];
+    : historicalRun ?? {
+        ...dataset.runs["ema-cross"]!,
+        run_id: "awaiting-backtest",
+        fills: [],
+        equity: [],
+        metrics: {
+          ...dataset.runs["ema-cross"]!.metrics,
+          initial_equity: 0,
+          final_equity: 0,
+          total_return: 0,
+          sharpe_ratio: null,
+          max_drawdown: 0,
+          trade_count: 0,
+          fill_count: 0,
+          fees_paid: 0,
+        },
+      };
   const chartBars = selectedExperimentMatches && selectedExperiment.bars.length
     ? selectedExperiment.bars
     : dataset.bars;
@@ -295,7 +319,7 @@ export function StrategyWorkbench({
           </div>
           <div className="result-run-ref">
             <span>
-              {t.run} {run.run_id}
+              {hasRunEvidence ? `${t.run} ${run.run_id}` : t.pendingRun}
             </span>
             <small>
               {t.source} ·{" "}
@@ -307,7 +331,7 @@ export function StrategyWorkbench({
           </div>
         </header>
 
-        <div className="result-metrics">
+        {hasRunEvidence ? <div className="result-metrics">
           <div className="primary-return">
             <span>{t.totalReturn}</span>
             <strong
@@ -347,7 +371,7 @@ export function StrategyWorkbench({
                 : run.metrics.sharpe_ratio.toFixed(2)}
             </small>
           </div>
-        </div>
+        </div> : null}
       </section>
 
       <aside className="strategy-library" aria-label={t.library}>
@@ -482,6 +506,17 @@ export function StrategyWorkbench({
                 .join(" · ")}
             </p>
           ) : null}
+          {selectedExperiment.feature_datasets?.length ? (
+            <p>
+              <strong>{t.featureDatasets}</strong>{" "}
+              {selectedExperiment.feature_datasets
+                .map(
+                  (feature) =>
+                    `${feature.series}=${feature.dataset_version} · matched ${feature.matched_count}/${feature.row_count}`,
+                )
+                .join(" · ")}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -525,11 +560,13 @@ export function StrategyWorkbench({
         />
       </div>
 
-      <div className="performance-grid">
-        <PerformanceChart locale={locale} run={run} labels={t} />
-      </div>
+      {hasRunEvidence ? (
+        <div className="performance-grid">
+          <PerformanceChart locale={locale} run={run} labels={t} />
+        </div>
+      ) : null}
 
-      <div className="fills-section">
+      {hasRunEvidence ? <div className="fills-section">
         <div className="fills-heading">
           <div>
             <strong>
@@ -586,7 +623,7 @@ export function StrategyWorkbench({
         ) : (
           <p className="empty-fills">{t.noFills}</p>
         )}
-      </div>
+      </div> : null}
     </section>
   );
 }

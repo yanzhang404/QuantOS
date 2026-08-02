@@ -18,6 +18,7 @@ var (
 	symbolPattern          = regexp.MustCompile(`^[A-Z0-9]{5,20}$`)
 	idempotencyPattern     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$`)
 	decimalPattern         = regexp.MustCompile(`^(0|[1-9][0-9]*)(\.[0-9]+)?$`)
+	signedDecimalPattern   = regexp.MustCompile(`^-?(0|[1-9][0-9]*)(\.[0-9]+)?$`)
 	semanticVersionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 )
 
@@ -46,13 +47,14 @@ type Config struct {
 }
 
 type Submission struct {
-	SchemaVersion  string      `json:"schema_version"`
-	IdempotencyKey string      `json:"idempotency_key"`
-	Label          *string     `json:"label,omitempty"`
-	Note           *string     `json:"note,omitempty"`
-	Dataset        DatasetRef  `json:"dataset"`
-	Strategy       StrategyRef `json:"strategy"`
-	Config         Config      `json:"config"`
+	SchemaVersion         string      `json:"schema_version"`
+	IdempotencyKey        string      `json:"idempotency_key"`
+	Label                 *string     `json:"label,omitempty"`
+	Note                  *string     `json:"note,omitempty"`
+	FeatureDatasetVersion *string     `json:"feature_dataset_version,omitempty"`
+	Dataset               DatasetRef  `json:"dataset"`
+	Strategy              StrategyRef `json:"strategy"`
+	Config                Config      `json:"config"`
 }
 
 type TaskError struct {
@@ -105,6 +107,13 @@ func (s Submission) Validate() error {
 	if err := s.Config.validate(); err != nil {
 		return err
 	}
+	if s.Strategy.Name == "funding-filtered-ema" {
+		if s.FeatureDatasetVersion == nil || !hex16Pattern.MatchString(*s.FeatureDatasetVersion) {
+			return errors.New("feature_dataset_version is required for funding-filtered-ema")
+		}
+	} else if s.FeatureDatasetVersion != nil {
+		return errors.New("feature_dataset_version is only valid for an external-feature strategy")
+	}
 	return s.validateExposureBoundary()
 }
 
@@ -116,6 +125,8 @@ func strategySupportsInterval(strategy, interval string) bool {
 		return interval != "5m" && supportedInterval(interval)
 	case "donchian-atr":
 		return interval == "1h" || interval == "4h" || interval == "1d"
+	case "funding-filtered-ema":
+		return interval == "1h" || interval == "4h" || interval == "1d"
 	default:
 		return false
 	}
@@ -123,7 +134,7 @@ func strategySupportsInterval(strategy, interval string) bool {
 
 func knownStrategy(value string) bool {
 	switch value {
-	case "buy-and-hold", "ema-cross", "donchian-atr":
+	case "buy-and-hold", "ema-cross", "donchian-atr", "funding-filtered-ema":
 		return true
 	default:
 		return false
@@ -198,8 +209,12 @@ func supportedInterval(value string) bool {
 }
 
 func (s StrategyRef) validate() error {
-	if s.Version != "1.0.0" {
-		return errors.New("strategy.version must be 1.0.0")
+	expectedVersion := "1.0.0"
+	if s.Name == "funding-filtered-ema" {
+		expectedVersion = "0.1.0"
+	}
+	if s.Version != expectedVersion {
+		return fmt.Errorf("strategy.version must be %s for %s", expectedVersion, s.Name)
 	}
 	switch s.Name {
 	case "buy-and-hold":
@@ -207,8 +222,12 @@ func (s StrategyRef) validate() error {
 			return err
 		}
 		return decimalRange(s.Parameters["target_exposure"], "target_exposure", 0, 1, false)
-	case "ema-cross":
-		if err := exactKeys(s.Parameters, "fast_period", "slow_period"); err != nil {
+	case "ema-cross", "funding-filtered-ema":
+		keys := []string{"fast_period", "slow_period"}
+		if s.Name == "funding-filtered-ema" {
+			keys = append(keys, "max_funding_rate")
+		}
+		if err := exactKeys(s.Parameters, keys...); err != nil {
 			return err
 		}
 		fast, err := integerRange(s.Parameters["fast_period"], "fast_period", 1, 1000)
@@ -221,6 +240,11 @@ func (s StrategyRef) validate() error {
 		}
 		if fast >= slow {
 			return errors.New("fast_period must be less than slow_period")
+		}
+		if s.Name == "funding-filtered-ema" {
+			return signedDecimalRange(
+				s.Parameters["max_funding_rate"], "max_funding_rate", -0.01, 0.01,
+			)
 		}
 		return nil
 	case "donchian-atr":
@@ -344,6 +368,18 @@ func decimalRange(
 		minimumValid = parsed >= minimum
 	}
 	if !minimumValid || parsed > maximum {
+		return fmt.Errorf("%s is outside the allowed range", name)
+	}
+	return nil
+}
+
+func signedDecimalRange(value any, name string, minimum, maximum float64) error {
+	text, ok := value.(string)
+	if !ok || !signedDecimalPattern.MatchString(text) {
+		return fmt.Errorf("%s must be a plain decimal string", name)
+	}
+	parsed, err := strconv.ParseFloat(text, 64)
+	if err != nil || parsed < minimum || parsed > maximum {
 		return fmt.Errorf("%s is outside the allowed range", name)
 	}
 	return nil

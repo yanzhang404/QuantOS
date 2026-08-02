@@ -144,6 +144,12 @@ the consumed feature manifest into the Run identity. Missing or stale funding
 in the initial filtered-EMA hypothesis fails flat. See
 [ADR-0025](docs/adr/0025-feed-versioned-features-through-market-events.md).
 
+Browser clients identify an external feature dataset only by immutable version.
+The Go boundary resolves that version under the trusted data root, verifies its
+causal manifest against the exact Spot input, and only then invokes Python.
+Client-supplied feature paths are not part of the API. See
+[ADR-0026](docs/adr/0026-resolve-external-feature-versions-at-api-boundary.md).
+
 Each strategy owns separate implementation code and a versioned manifest
 describing its category, lifecycle stage, supported intervals, and editable
 parameters. The implementations share the same event clock, risk, execution,

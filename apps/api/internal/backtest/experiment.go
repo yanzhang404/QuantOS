@@ -63,19 +63,46 @@ type ExperimentBar struct {
 }
 
 type ExperimentVisualization struct {
-	SchemaVersion  string                  `json:"schema_version"`
-	RunID          string                  `json:"run_id"`
-	CreatedAt      time.Time               `json:"created_at"`
-	Dataset        DatasetRef              `json:"dataset"`
-	Strategy       StrategyRef             `json:"strategy"`
-	Features       []FeatureLineage        `json:"features"`
-	Config         Config                  `json:"config"`
-	EngineVersion  string                  `json:"engine_version"`
-	MetricsVersion string                  `json:"metrics_version"`
-	Metrics        ExperimentMetrics       `json:"metrics"`
-	Bars           []ExperimentBar         `json:"bars"`
-	Equity         []ExperimentEquityPoint `json:"equity"`
-	Fills          []ExperimentFill        `json:"fills"`
+	SchemaVersion   string                  `json:"schema_version"`
+	RunID           string                  `json:"run_id"`
+	CreatedAt       time.Time               `json:"created_at"`
+	Dataset         DatasetRef              `json:"dataset"`
+	Strategy        StrategyRef             `json:"strategy"`
+	Features        []FeatureLineage        `json:"features"`
+	FeatureDatasets []FeatureDatasetLineage `json:"feature_datasets"`
+	Config          Config                  `json:"config"`
+	EngineVersion   string                  `json:"engine_version"`
+	MetricsVersion  string                  `json:"metrics_version"`
+	Metrics         ExperimentMetrics       `json:"metrics"`
+	Bars            []ExperimentBar         `json:"bars"`
+	Equity          []ExperimentEquityPoint `json:"equity"`
+	Fills           []ExperimentFill        `json:"fills"`
+}
+
+type FeatureDatasetLineage struct {
+	DatasetVersion           string  `json:"dataset_version"`
+	SchemaVersion            string  `json:"schema_version"`
+	AlignmentPolicyVersion   string  `json:"alignment_policy_version"`
+	Series                   string  `json:"series"`
+	Exchange                 string  `json:"exchange"`
+	Symbol                   string  `json:"symbol"`
+	SpotInterval             string  `json:"spot_interval"`
+	DerivativePeriod         *string `json:"derivative_period"`
+	SpotDatasetVersion       string  `json:"spot_dataset_version"`
+	SpotContentSHA256        string  `json:"spot_content_sha256"`
+	DerivativeDatasetVersion string  `json:"derivative_dataset_version"`
+	DerivativeContentSHA256  string  `json:"derivative_content_sha256"`
+	RequestedStart           string  `json:"requested_start"`
+	RequestedEnd             string  `json:"requested_end"`
+	MaxAgeMS                 int64   `json:"max_age_ms"`
+	RowCount                 int     `json:"row_count"`
+	MatchedCount             int     `json:"matched_count"`
+	StaleCount               int     `json:"stale_count"`
+	NoPriorCount             int     `json:"no_prior_count"`
+	ContentSHA256            string  `json:"content_sha256"`
+	CreatedAt                string  `json:"created_at"`
+	Producer                 string  `json:"producer"`
+	FileSHA256               string  `json:"file_sha256"`
 }
 
 type FeatureLineage struct {
@@ -113,17 +140,18 @@ type ExperimentFilters struct {
 }
 
 type experimentArtifact struct {
-	ArtifactSchemaVersion string            `json:"artifact_schema_version"`
-	RunID                 string            `json:"run_id"`
-	Status                string            `json:"status"`
-	CreatedAt             time.Time         `json:"created_at"`
-	Dataset               DatasetRef        `json:"dataset"`
-	Strategy              StrategyRef       `json:"strategy"`
-	Features              []FeatureLineage  `json:"features"`
-	Config                Config            `json:"config"`
-	EngineVersion         string            `json:"engine_version"`
-	MetricsVersion        string            `json:"metrics_version"`
-	Metrics               ExperimentMetrics `json:"metrics"`
+	ArtifactSchemaVersion string                  `json:"artifact_schema_version"`
+	RunID                 string                  `json:"run_id"`
+	Status                string                  `json:"status"`
+	CreatedAt             time.Time               `json:"created_at"`
+	Dataset               DatasetRef              `json:"dataset"`
+	Strategy              StrategyRef             `json:"strategy"`
+	Features              []FeatureLineage        `json:"features"`
+	FeatureDatasets       []FeatureDatasetLineage `json:"feature_datasets"`
+	Config                Config                  `json:"config"`
+	EngineVersion         string                  `json:"engine_version"`
+	MetricsVersion        string                  `json:"metrics_version"`
+	Metrics               ExperimentMetrics       `json:"metrics"`
 }
 
 type ExperimentStore struct {
@@ -142,6 +170,10 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 	features := artifact.Features
 	if features == nil {
 		features = []FeatureLineage{}
+	}
+	featureDatasets := artifact.FeatureDatasets
+	if featureDatasets == nil {
+		featureDatasets = []FeatureDatasetLineage{}
 	}
 	runPath := filepath.Join(s.root, runID, "run.json")
 	directory := filepath.Dir(runPath)
@@ -165,19 +197,20 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 		return ExperimentVisualization{}, err
 	}
 	return ExperimentVisualization{
-		SchemaVersion:  SchemaVersion,
-		RunID:          artifact.RunID,
-		CreatedAt:      artifact.CreatedAt,
-		Dataset:        artifact.Dataset,
-		Strategy:       artifact.Strategy,
-		Features:       features,
-		Config:         artifact.Config,
-		EngineVersion:  artifact.EngineVersion,
-		MetricsVersion: artifact.MetricsVersion,
-		Metrics:        artifact.Metrics,
-		Bars:           bars,
-		Equity:         equity,
-		Fills:          fills,
+		SchemaVersion:   SchemaVersion,
+		RunID:           artifact.RunID,
+		CreatedAt:       artifact.CreatedAt,
+		Dataset:         artifact.Dataset,
+		Strategy:        artifact.Strategy,
+		Features:        features,
+		FeatureDatasets: featureDatasets,
+		Config:          artifact.Config,
+		EngineVersion:   artifact.EngineVersion,
+		MetricsVersion:  artifact.MetricsVersion,
+		Metrics:         artifact.Metrics,
+		Bars:            bars,
+		Equity:          equity,
+		Fills:           fills,
 	}, nil
 }
 
@@ -252,11 +285,15 @@ func (s *ExperimentStore) readArtifact(runID string) (experimentArtifact, error)
 		return experimentArtifact{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
 	}
 	if artifact.RunID != runID ||
+		(artifact.ArtifactSchemaVersion != "experiment-artifacts.v2" &&
+			artifact.ArtifactSchemaVersion != "experiment-artifacts.v3" &&
+			artifact.ArtifactSchemaVersion != "experiment-artifacts.v4") ||
 		artifact.Status != "completed" ||
 		artifact.CreatedAt.IsZero() ||
 		artifact.Dataset.validate() != nil ||
 		artifact.Strategy.validate() != nil ||
 		validateFeatureLineage(artifact.Features) != nil ||
+		validateFeatureDatasets(artifact) != nil ||
 		artifact.Config.validate() != nil ||
 		!semanticVersionPattern.MatchString(artifact.EngineVersion) ||
 		!semanticVersionPattern.MatchString(artifact.MetricsVersion) ||
@@ -264,6 +301,53 @@ func (s *ExperimentStore) readArtifact(runID string) (experimentArtifact, error)
 		return experimentArtifact{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
 	}
 	return artifact, nil
+}
+
+func validateFeatureDatasets(artifact experimentArtifact) error {
+	items := artifact.FeatureDatasets
+	if artifact.ArtifactSchemaVersion != "experiment-artifacts.v4" && len(items) > 0 {
+		return errors.New("external feature datasets require artifact schema v4")
+	}
+	if len(items) > 4 {
+		return errors.New("too many feature datasets")
+	}
+	if artifact.Strategy.Name == "funding-filtered-ema" {
+		if len(items) != 1 || items[0].Series != "funding-rate" {
+			return errors.New("funding-filtered-ema requires one funding dataset")
+		}
+	} else if len(items) != 0 {
+		return errors.New("strategy does not consume external feature datasets")
+	}
+	seen := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		start, startErr := time.Parse(time.RFC3339, item.RequestedStart)
+		end, endErr := time.Parse(time.RFC3339, item.RequestedEnd)
+		_, createdErr := time.Parse(time.RFC3339, item.CreatedAt)
+		if !hex16Pattern.MatchString(item.DatasetVersion) ||
+			item.SchemaVersion != "aligned-derivatives.v1" ||
+			item.AlignmentPolicyVersion != "asof-closed-bar.v1" ||
+			(item.Series != "funding-rate" && item.Series != "open-interest") ||
+			item.Exchange != "binance" || item.Symbol != artifact.Dataset.Symbol ||
+			item.SpotInterval != artifact.Dataset.Interval ||
+			item.SpotDatasetVersion != artifact.Dataset.Version ||
+			item.SpotContentSHA256 != artifact.Dataset.ContentSHA256 ||
+			!hex16Pattern.MatchString(item.DerivativeDatasetVersion) ||
+			!hex64Pattern.MatchString(item.DerivativeContentSHA256) ||
+			!hex64Pattern.MatchString(item.ContentSHA256) ||
+			!hex64Pattern.MatchString(item.FileSHA256) ||
+			startErr != nil || endErr != nil || createdErr != nil || !start.Before(end) ||
+			item.MaxAgeMS < 1 || item.RowCount < 1 ||
+			item.MatchedCount < 0 || item.StaleCount < 0 || item.NoPriorCount < 0 ||
+			item.MatchedCount+item.StaleCount+item.NoPriorCount != item.RowCount ||
+			item.Producer == "" {
+			return errors.New("invalid feature dataset lineage")
+		}
+		if _, duplicate := seen[item.DatasetVersion]; duplicate {
+			return errors.New("duplicate feature dataset lineage")
+		}
+		seen[item.DatasetVersion] = struct{}{}
+	}
+	return nil
 }
 
 func validateFeatureLineage(features []FeatureLineage) error {

@@ -141,11 +141,34 @@
         }
       }
     },
+    "funding_filtered_ema_strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "parameters"],
+      "properties": {
+        "name": { "const": "funding-filtered-ema" },
+        "version": { "const": "0.1.0" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fast_period", "slow_period", "max_funding_rate"],
+          "properties": {
+            "fast_period": { "type": "integer", "minimum": 1, "maximum": 1000 },
+            "slow_period": { "type": "integer", "minimum": 2, "maximum": 2000 },
+            "max_funding_rate": {
+              "type": "string",
+              "pattern": "^-?0(?:\\.0(?:0[0-9]*|10*)?)?$"
+            }
+          }
+        }
+      }
+    },
     "strategy_ref": {
       "oneOf": [
         { "$ref": "#/$defs/buy_and_hold_strategy" },
         { "$ref": "#/$defs/ema_cross_strategy" },
-        { "$ref": "#/$defs/donchian_atr_strategy" }
+        { "$ref": "#/$defs/donchian_atr_strategy" },
+        { "$ref": "#/$defs/funding_filtered_ema_strategy" }
       ]
     },
     "backtest_config": {
@@ -183,6 +206,20 @@
     "backtest_submission": {
       "type": "object",
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "strategy": {
+                "properties": { "name": { "const": "funding-filtered-ema" } },
+                "required": ["name"]
+              }
+            }
+          },
+          "then": { "required": ["feature_dataset_version"] },
+          "else": { "not": { "required": ["feature_dataset_version"] } }
+        }
+      ],
       "required": [
         "schema_version",
         "idempotency_key",
@@ -205,6 +242,10 @@
           "type": ["string", "null"],
           "minLength": 1,
           "maxLength": 500
+        },
+        "feature_dataset_version": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
         },
         "dataset": { "$ref": "#/$defs/dataset_ref" },
         "strategy": { "$ref": "#/$defs/strategy_ref" },
@@ -379,6 +420,53 @@
         "volume": { "type": "number", "minimum": 0 }
       }
     },
+    "feature_lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature_id", "instance", "version", "definition_sha256", "implementation", "inputs", "parameters", "strategy_parameter", "warmup_bars", "uses_current_closed_bar"],
+      "properties": {
+        "feature_id": { "type": "string", "minLength": 1 },
+        "instance": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "definition_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "implementation": { "type": "string", "minLength": 1 },
+        "inputs": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "enum": ["open", "high", "low", "close", "volume"] } },
+        "parameters": { "type": "object", "additionalProperties": { "type": "integer" } },
+        "strategy_parameter": { "type": "string", "minLength": 1 },
+        "warmup_bars": { "type": "integer", "minimum": 1 },
+        "uses_current_closed_bar": { "type": "boolean" }
+      }
+    },
+    "feature_dataset_lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_version", "schema_version", "alignment_policy_version", "series", "exchange", "symbol", "spot_interval", "derivative_period", "spot_dataset_version", "spot_content_sha256", "derivative_dataset_version", "derivative_content_sha256", "requested_start", "requested_end", "max_age_ms", "row_count", "matched_count", "stale_count", "no_prior_count", "content_sha256", "created_at", "producer", "file_sha256"],
+      "properties": {
+        "dataset_version": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "schema_version": { "const": "aligned-derivatives.v1" },
+        "alignment_policy_version": { "const": "asof-closed-bar.v1" },
+        "series": { "enum": ["funding-rate", "open-interest"] },
+        "exchange": { "const": "binance" },
+        "symbol": { "type": "string", "pattern": "^[A-Z0-9]{5,20}$" },
+        "spot_interval": { "enum": ["5m", "15m", "1h", "4h", "1d"] },
+        "derivative_period": { "type": ["string", "null"] },
+        "spot_dataset_version": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "spot_content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "derivative_dataset_version": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "derivative_content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "requested_start": { "type": "string", "format": "date-time" },
+        "requested_end": { "type": "string", "format": "date-time" },
+        "max_age_ms": { "type": "integer", "minimum": 1 },
+        "row_count": { "type": "integer", "minimum": 1 },
+        "matched_count": { "type": "integer", "minimum": 0 },
+        "stale_count": { "type": "integer", "minimum": 0 },
+        "no_prior_count": { "type": "integer", "minimum": 0 },
+        "content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "producer": { "type": "string", "minLength": 1 },
+        "file_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
     "experiment_visualization": {
       "type": "object",
       "additionalProperties": false,
@@ -388,6 +476,8 @@
         "created_at",
         "dataset",
         "strategy",
+        "features",
+        "feature_datasets",
         "config",
         "engine_version",
         "metrics_version",
@@ -405,6 +495,16 @@
         "created_at": { "type": "string", "format": "date-time" },
         "dataset": { "$ref": "#/$defs/dataset_ref" },
         "strategy": { "$ref": "#/$defs/strategy_ref" },
+        "features": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/feature_lineage" }
+        },
+        "feature_datasets": {
+          "type": "array",
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/feature_dataset_lineage" }
+        },
         "config": { "$ref": "#/$defs/backtest_config" },
         "engine_version": {
           "type": "string",
@@ -463,9 +563,9 @@
       ],
       "properties": {
         "name": {
-          "enum": ["buy-and-hold", "ema-cross", "donchian-atr"]
+          "enum": ["buy-and-hold", "ema-cross", "donchian-atr", "funding-filtered-ema"]
         },
-        "version": { "const": "1.0.0" },
+        "version": { "enum": ["1.0.0", "0.1.0"] },
         "label": { "type": "string", "minLength": 1, "maxLength": 80 },
         "description": {
           "type": "string",
@@ -490,6 +590,16 @@
             "enum": ["5m", "15m", "1h", "4h", "1d"]
           }
         },
+        "external_feature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["series", "schema_version", "alignment_policy_version"],
+          "properties": {
+            "series": { "const": "funding-rate" },
+            "schema_version": { "const": "aligned-derivatives.v1" },
+            "alignment_policy_version": { "const": "asof-closed-bar.v1" }
+          }
+        },
         "parameters": {
           "type": "array",
           "minItems": 1,
@@ -505,7 +615,7 @@
         "schema_version": { "const": "1.0" },
         "strategies": {
           "type": "array",
-          "minItems": 3,
+          "minItems": 4,
           "items": { "$ref": "#/$defs/strategy_definition" }
         }
       }

@@ -25,8 +25,11 @@ materializer binds exact Spot and derivatives inputs, preserves stale/missing
 states, and rejects future observations. The engine now feeds those immutable
 observations through `MarketEvent`; v4 Runs bind every consumed feature dataset,
 and an initial funding-filtered EMA research strategy fails flat on stale or
-missing inputs. Chronological strategy evaluation, workspace controls, and
-strategy-specific robustness adapters remain.
+missing inputs. The versioned API and workspace now expose that candidate's
+specific parameters, accept only an immutable feature version rather than a
+client path, verify its manifest against the selected Spot input, and show the
+consumed v4 feature lineage in Run detail. Chronological strategy evaluation
+and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
 and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync

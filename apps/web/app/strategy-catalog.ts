@@ -19,7 +19,7 @@ export type StrategyParameter = {
 
 export type StrategyDefinition = {
   name: StrategyName;
-  version: "1.0.0";
+  version: "1.0.0" | "0.1.0";
   label: string;
   description: string;
   category: StrategyCategory;
@@ -27,9 +27,34 @@ export type StrategyDefinition = {
   implementation: string;
   supported_intervals: StrategyInterval[];
   parameters: StrategyParameter[];
+  external_feature?: {
+    series: "funding-rate";
+    schema_version: "aligned-derivatives.v1";
+    alignment_policy_version: "asof-closed-bar.v1";
+  };
 };
 
 export const fallbackStrategyCatalog: StrategyDefinition[] = [
+  {
+    name: "funding-filtered-ema",
+    version: "0.1.0",
+    label: "Funding-filtered EMA",
+    description: "EMA trend candidate that fails flat on crowded or unavailable funding.",
+    category: "trend",
+    stage: "candidate",
+    implementation: "quantos_backtest.strategies.FundingFilteredEmaStrategy",
+    supported_intervals: ["1h", "4h", "1d"],
+    external_feature: {
+      series: "funding-rate",
+      schema_version: "aligned-derivatives.v1",
+      alignment_policy_version: "asof-closed-bar.v1",
+    },
+    parameters: [
+      parameter("fast_period", "integer", "Fast period", 20, 1, 1000),
+      parameter("slow_period", "integer", "Slow period", 50, 2, 2000),
+      parameter("max_funding_rate", "decimal", "Maximum funding rate", "0.0001", "-0.01", "0.01"),
+    ],
+  },
   {
     name: "donchian-atr",
     version: "1.0.0",
@@ -108,6 +133,7 @@ export const parameterLabelsZh: Record<string, string> = {
   target_annual_volatility: "目标年化波动率",
   max_exposure: "策略最大仓位",
   rebalance_threshold: "再平衡阈值",
+  max_funding_rate: "最高资金费率",
 };
 
 export function mergeStrategyCatalog(remote: unknown): StrategyDefinition[] {
@@ -149,6 +175,7 @@ export function mergeStrategyCatalog(remote: unknown): StrategyDefinition[] {
         Array.isArray(candidate.parameters) && candidate.parameters.length > 0
           ? candidate.parameters
           : fallback.parameters,
+      external_feature: fallback.external_feature,
     };
   });
 }

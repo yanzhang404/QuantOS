@@ -333,6 +333,25 @@ func strategyCatalog() map[string]any {
 					),
 				},
 			},
+			map[string]any{
+				"name":                "funding-filtered-ema",
+				"version":             "0.1.0",
+				"label":               "Funding-filtered EMA",
+				"description":         "EMA trend candidate that fails flat on crowded or unavailable funding.",
+				"category":            "trend",
+				"stage":               "candidate",
+				"implementation":      "quantos_backtest.strategies.FundingFilteredEmaStrategy",
+				"supported_intervals": []string{"1h", "4h", "1d"},
+				"external_feature": map[string]any{
+					"series": "funding-rate", "schema_version": "aligned-derivatives.v1",
+					"alignment_policy_version": "asof-closed-bar.v1",
+				},
+				"parameters": []any{
+					parameter("fast_period", "integer", "Fast period", 20, 1, 1000),
+					parameter("slow_period", "integer", "Slow period", 50, 2, 2000),
+					parameter("max_funding_rate", "decimal", "Maximum funding rate", "0.0001", "-0.01", "0.01"),
+				},
+			},
 		},
 	}
 }

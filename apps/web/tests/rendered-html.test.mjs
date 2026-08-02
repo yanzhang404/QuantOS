@@ -148,14 +148,23 @@ test("connects the parameter lab to durable backtest tasks", async () => {
 });
 
 test("shows resolved feature lineage for a loaded Run", async () => {
-  const [api, workbench] = await Promise.all([
+  const [api, workbench, lab, catalog] = await Promise.all([
     readFile(new URL("../app/backtest-api.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/strategy-workbench.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/backtest-lab.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/strategy-catalog.ts", import.meta.url), "utf8"),
   ]);
   assert.match(api, /definition_sha256/);
   assert.match(api, /uses_current_closed_bar/);
   assert.match(workbench, /selectedExperiment\.features/);
   assert.match(workbench, /已解析特征/);
+  assert.match(api, /feature_datasets/);
+  assert.match(workbench, /selectedExperiment\.feature_datasets/);
+  assert.match(workbench, /外部特征数据/);
+  assert.match(catalog, /funding-filtered-ema/);
+  assert.match(catalog, /asof-closed-bar\.v1/);
+  assert.match(lab, /feature_dataset_version/);
+  assert.match(lab, /\^\[0-9a-f\]\{16\}\$/);
 });
 
 test("manages immutable Runs with filters, archives, and four-way comparison", async () => {

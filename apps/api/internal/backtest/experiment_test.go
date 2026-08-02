@@ -2,6 +2,7 @@ package backtest
 
 import (
 	"encoding/json"
+	"errors"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -212,6 +213,68 @@ func TestExperimentCatalogRejectsInvalidFiltersAndArchiveTargets(t *testing.T) {
 	))
 	if missing.Code != http.StatusNotFound {
 		t.Fatalf("missing archive status = %d", missing.Code)
+	}
+}
+
+func TestExperimentDetailExposesValidatedV4FeatureDatasetLineage(t *testing.T) {
+	root := t.TempDir()
+	runID := "336fe16f3f221153"
+	writeExperimentFixture(t, root, runID)
+	path := filepath.Join(root, runID, "run.json")
+	payload, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var run map[string]any
+	if err := json.Unmarshal(payload, &run); err != nil {
+		t.Fatal(err)
+	}
+	run["artifact_schema_version"] = "experiment-artifacts.v4"
+	run["strategy"] = map[string]any{
+		"name": "funding-filtered-ema", "version": "0.1.0",
+		"parameters": map[string]any{
+			"fast_period": 20, "slow_period": 50, "max_funding_rate": "0.0001",
+		},
+	}
+	hash := strings.Repeat("a", 64)
+	run["feature_datasets"] = []map[string]any{{
+		"dataset_version": "1111222233334444", "schema_version": "aligned-derivatives.v1",
+		"alignment_policy_version": "asof-closed-bar.v1", "series": "funding-rate",
+		"exchange": "binance", "symbol": "BTCUSDT", "spot_interval": "4h",
+		"derivative_period": nil, "spot_dataset_version": "024f23d9a629502e",
+		"spot_content_sha256":        "024f23d9a629502eabf7c8186735938cb585ab76286b072e20ded76c1b4bc7b3",
+		"derivative_dataset_version": "aaaabbbbccccdddd",
+		"derivative_content_sha256":  hash,
+		"requested_start":            "2026-01-01T00:00:00Z", "requested_end": "2026-02-01T00:00:00Z",
+		"max_age_ms": 28800000, "row_count": 3, "matched_count": 2,
+		"stale_count": 1, "no_prior_count": 0, "content_sha256": hash,
+		"created_at": "2026-02-01T01:00:00Z", "producer": "quantos-market-data/0.1.0",
+		"file_sha256": hash,
+	}}
+	payload, err = json.Marshal(run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	experiment, err := NewExperimentStore(root).Get(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(experiment.FeatureDatasets) != 1 ||
+		experiment.FeatureDatasets[0].DatasetVersion != "1111222233334444" {
+		t.Fatalf("unexpected feature lineage: %#v", experiment.FeatureDatasets)
+	}
+
+	run["feature_datasets"] = []any{}
+	payload, _ = json.Marshal(run)
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewExperimentStore(root).Get(runID); !errors.Is(err, ErrExperimentInvalid) {
+		t.Fatalf("expected invalid missing funding lineage, got %v", err)
 	}
 }
 

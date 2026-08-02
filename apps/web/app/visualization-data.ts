@@ -49,7 +49,7 @@ export type VisualizationDataset = {
   dataset_version: string;
   content_sha256: string;
   bars: Bar[];
-  runs: Record<StrategyName, VisualizationRun>;
+  runs: Partial<Record<StrategyName, VisualizationRun>>;
 };
 
 type Artifact = {

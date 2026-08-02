@@ -47,3 +47,28 @@ func TestSubmissionRejectsStrategyOnUnsupportedInterval(t *testing.T) {
 		t.Fatal("expected strategy interval validation error")
 	}
 }
+
+func TestFundingStrategyRequiresOnlyAnImmutableFeatureVersion(t *testing.T) {
+	request := validSubmission()
+	request.Strategy = StrategyRef{
+		Name: "funding-filtered-ema", Version: "0.1.0",
+		Parameters: map[string]any{
+			"fast_period": json.Number("20"), "slow_period": json.Number("50"),
+			"max_funding_rate": "-0.0001",
+		},
+	}
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected missing feature version")
+	}
+	version := "1111222233334444"
+	request.FeatureDatasetVersion = &version
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+
+	request = validSubmission()
+	request.FeatureDatasetVersion = &version
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected ordinary strategy to reject external feature version")
+	}
+}

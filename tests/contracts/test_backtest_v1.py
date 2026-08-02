@@ -120,6 +120,29 @@ def test_strategy_parameters_are_strict_and_cross_validated() -> None:
             parameters={"fast_period": 50, "slow_period": 20},
         )
 
+
+def test_funding_strategy_requires_versioned_external_feature() -> None:
+    payload = submission_payload()
+    payload["strategy"] = {
+        "name": "funding-filtered-ema",
+        "version": "0.1.0",
+        "parameters": {
+            "fast_period": 20,
+            "slow_period": 50,
+            "max_funding_rate": "-0.0001",
+        },
+    }
+    with pytest.raises(ContractValidationError, match="feature_dataset_version is required"):
+        BacktestSubmission.from_dict(payload)
+
+    payload["feature_dataset_version"] = "1111222233334444"
+    assert BacktestSubmission.from_dict(payload).to_dict() == payload
+
+    ordinary = submission_payload()
+    ordinary["feature_dataset_version"] = "1111222233334444"
+    with pytest.raises(ContractValidationError, match="only valid"):
+        BacktestSubmission.from_dict(ordinary)
+
     with pytest.raises(ContractValidationError, match="exit_period must not exceed"):
         StrategyRef(
             name="donchian-atr",
@@ -268,6 +291,7 @@ def test_language_neutral_schema_and_catalog_cover_python_contract() -> None:
         "buy-and-hold",
         "ema-cross",
         "donchian-atr",
+        "funding-filtered-ema",
     ]
     assert {
         parameter["key"]

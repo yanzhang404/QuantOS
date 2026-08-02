@@ -13,7 +13,8 @@ from typing import Any, Literal
 
 SCHEMA_VERSION = "1.0"
 STRATEGY_VERSION = "1.0.0"
-StrategyName = Literal["buy-and-hold", "ema-cross", "donchian-atr"]
+FUNDING_FILTERED_EMA_VERSION = "0.1.0"
+StrategyName = Literal["buy-and-hold", "ema-cross", "donchian-atr", "funding-filtered-ema"]
 TaskStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 ParameterValue = int | str
 
@@ -104,11 +105,21 @@ class StrategyRef:
     parameters: Mapping[str, ParameterValue]
 
     def __post_init__(self) -> None:
-        if self.name not in {"buy-and-hold", "ema-cross", "donchian-atr"}:
+        if self.name not in {
+            "buy-and-hold",
+            "ema-cross",
+            "donchian-atr",
+            "funding-filtered-ema",
+        }:
             raise ContractValidationError(f"unsupported strategy: {self.name}")
-        if self.version != STRATEGY_VERSION:
+        expected_version = (
+            FUNDING_FILTERED_EMA_VERSION
+            if self.name == "funding-filtered-ema"
+            else STRATEGY_VERSION
+        )
+        if self.version != expected_version:
             raise ContractValidationError(
-                f"strategy version must be {STRATEGY_VERSION} for contract v1"
+                f"strategy version must be {expected_version} for {self.name}"
             )
         parameters = dict(self.parameters)
         _validate_strategy_parameters(self.name, parameters)
@@ -202,6 +213,7 @@ class BacktestSubmission:
     config: BacktestConfigContract
     label: str | None = None
     note: str | None = None
+    feature_dataset_version: str | None = None
     schema_version: str = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -215,6 +227,7 @@ class BacktestSubmission:
             "buy-and-hold": {"5m", "15m", "1h", "4h", "1d"},
             "ema-cross": {"15m", "1h", "4h", "1d"},
             "donchian-atr": {"1h", "4h", "1d"},
+            "funding-filtered-ema": {"1h", "4h", "1d"},
         }[self.strategy.name]
         if self.dataset.interval not in supported:
             raise ContractValidationError("strategy does not support dataset.interval")
@@ -228,13 +241,24 @@ class BacktestSubmission:
             raise ContractValidationError(
                 "strategy exposure cannot exceed config.max_target_exposure"
             )
+        if self.strategy.name == "funding-filtered-ema":
+            if self.feature_dataset_version is None or not _HEX_16.fullmatch(
+                self.feature_dataset_version
+            ):
+                raise ContractValidationError(
+                    "feature_dataset_version is required for funding-filtered-ema"
+                )
+        elif self.feature_dataset_version is not None:
+            raise ContractValidationError(
+                "feature_dataset_version is only valid for an external-feature strategy"
+            )
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> BacktestSubmission:
         data = _object(
             value,
             required={"schema_version", "idempotency_key", "dataset", "strategy", "config"},
-            optional={"label", "note"},
+            optional={"label", "note", "feature_dataset_version"},
             name="backtest submission",
         )
         return cls(
@@ -242,6 +266,9 @@ class BacktestSubmission:
             idempotency_key=_string(data["idempotency_key"], "idempotency_key"),
             label=_optional_string(data.get("label"), "label"),
             note=_optional_string(data.get("note"), "note"),
+            feature_dataset_version=_optional_string(
+                data.get("feature_dataset_version"), "feature_dataset_version"
+            ),
             dataset=DatasetRef.from_dict(_mapping(data["dataset"], "dataset")),
             strategy=StrategyRef.from_dict(_mapping(data["strategy"], "strategy")),
             config=BacktestConfigContract.from_dict(_mapping(data["config"], "config")),
@@ -259,6 +286,8 @@ class BacktestSubmission:
             result["label"] = self.label
         if self.note is not None:
             result["note"] = self.note
+        if self.feature_dataset_version is not None:
+            result["feature_dataset_version"] = self.feature_dataset_version
         return result
 
 
@@ -475,7 +504,7 @@ class ExperimentRecord:
 
 
 def strategy_catalog() -> dict[str, Any]:
-    """Return editable parameter metadata for the three contract-v1 strategies."""
+    """Return editable parameter metadata for contract-v1 strategies."""
     return {
         "schema_version": SCHEMA_VERSION,
         "strategies": [
@@ -538,6 +567,35 @@ def strategy_catalog() -> dict[str, Any]:
                     ),
                 ],
             },
+            {
+                "name": "funding-filtered-ema",
+                "version": FUNDING_FILTERED_EMA_VERSION,
+                "label": "Funding-filtered EMA",
+                "description": (
+                    "EMA trend candidate that fails flat on crowded or unavailable funding."
+                ),
+                "category": "trend",
+                "stage": "candidate",
+                "implementation": "quantos_backtest.strategies.FundingFilteredEmaStrategy",
+                "supported_intervals": ["1h", "4h", "1d"],
+                "external_feature": {
+                    "series": "funding-rate",
+                    "schema_version": "aligned-derivatives.v1",
+                    "alignment_policy_version": "asof-closed-bar.v1",
+                },
+                "parameters": [
+                    _parameter("fast_period", "integer", "Fast period", 20, 1, 1000),
+                    _parameter("slow_period", "integer", "Slow period", 50, 2, 2000),
+                    _parameter(
+                        "max_funding_rate",
+                        "decimal",
+                        "Maximum funding rate",
+                        "0.0001",
+                        "-0.01",
+                        "0.01",
+                    ),
+                ],
+            },
         ],
     }
 
@@ -550,12 +608,22 @@ def _validate_strategy_parameters(
         _exact_keys(parameters, {"target_exposure"}, "buy-and-hold parameters")
         _bounded_decimal(parameters["target_exposure"], "target_exposure", lower=0, upper=1)
         return
-    if name == "ema-cross":
-        _exact_keys(parameters, {"fast_period", "slow_period"}, "ema-cross parameters")
+    if name in {"ema-cross", "funding-filtered-ema"}:
+        expected = {"fast_period", "slow_period"}
+        if name == "funding-filtered-ema":
+            expected.add("max_funding_rate")
+        _exact_keys(parameters, expected, f"{name} parameters")
         fast = _integer(parameters["fast_period"], "fast_period", minimum=1, maximum=1000)
         slow = _integer(parameters["slow_period"], "slow_period", minimum=2, maximum=2000)
         if fast >= slow:
             raise ContractValidationError("fast_period must be less than slow_period")
+        if name == "funding-filtered-ema":
+            _signed_bounded_decimal(
+                parameters["max_funding_rate"],
+                "max_funding_rate",
+                lower=Decimal("-0.01"),
+                upper=Decimal("0.01"),
+            )
         return
 
     expected = {
@@ -682,6 +750,15 @@ def _bounded_decimal(
     if not lower_valid or parsed > upper:
         bracket = "[" if lower_inclusive else "("
         raise ContractValidationError(f"{name} must be in {bracket}{lower}, {upper}]")
+    return parsed
+
+
+def _signed_bounded_decimal(value: Any, name: str, *, lower: Decimal, upper: Decimal) -> Decimal:
+    if not isinstance(value, str) or not re.fullmatch(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value):
+        raise ContractValidationError(f"{name} must be a finite plain decimal string")
+    parsed = Decimal(value)
+    if not parsed.is_finite() or parsed < lower or parsed > upper:
+        raise ContractValidationError(f"{name} must be in [{lower}, {upper}]")
     return parsed
 
 

@@ -13,6 +13,7 @@ export type BacktestSubmission = {
   idempotency_key: string;
   label?: string;
   note?: string;
+  feature_dataset_version?: string;
   dataset: {
     bundle_version?: string;
     version: string;
@@ -24,7 +25,7 @@ export type BacktestSubmission = {
   };
   strategy: {
     name: StrategyName;
-    version: "1.0.0";
+    version: "1.0.0" | "0.1.0";
     parameters: Record<string, number | string>;
   };
   config: {
@@ -71,6 +72,31 @@ export type ExperimentVisualization = {
     warmup_bars: number;
     uses_current_closed_bar: boolean;
   }>;
+  feature_datasets?: Array<{
+    dataset_version: string;
+    schema_version: "aligned-derivatives.v1";
+    alignment_policy_version: "asof-closed-bar.v1";
+    series: "funding-rate" | "open-interest";
+    exchange: string;
+    symbol: string;
+    spot_interval: string;
+    derivative_period: string | null;
+    spot_dataset_version: string;
+    spot_content_sha256: string;
+    derivative_dataset_version: string;
+    derivative_content_sha256: string;
+    requested_start: string;
+    requested_end: string;
+    max_age_ms: number;
+    row_count: number;
+    matched_count: number;
+    stale_count: number;
+    no_prior_count: number;
+    content_sha256: string;
+    created_at: string;
+    producer: string;
+    file_sha256: string;
+  }>;
   config: BacktestSubmission["config"];
   engine_version: string;
   metrics_version: string;
@@ -110,7 +136,7 @@ export type ExperimentVisualization = {
 
 export type ExperimentSummary = Omit<
   ExperimentVisualization,
-  "bars" | "equity" | "fills" | "features"
+  "bars" | "equity" | "fills" | "features" | "feature_datasets"
 > & {
   archived_at: string | null;
 };
