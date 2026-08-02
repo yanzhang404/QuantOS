@@ -13,6 +13,7 @@ from typing import Any
 from .collector import ObservationHistory, PublicIntelligenceCollector, build_public_client
 from .errors import IntelligenceValidationError
 from .models import DailyIntelligenceInput
+from .refresh import IntelligenceRefresher
 from .scoring import build_snapshot
 from .store import publish_snapshot
 
@@ -35,6 +36,14 @@ def register_parser(commands: Any) -> None:
     )
     collect.add_argument("--as-of", type=_datetime, default=None)
     collect.add_argument("--previous-snapshot", type=Path)
+
+    refresh = subcommands.add_parser("refresh", help="collect and publish one observable daily job")
+    refresh.add_argument("--input-root", type=Path, default=Path("var/quantos/intelligence-inputs"))
+    refresh.add_argument(
+        "--history-root", type=Path, default=Path("var/quantos/intelligence-observations")
+    )
+    refresh.add_argument("--output-root", type=Path, default=Path("var/quantos/intelligence"))
+    refresh.add_argument("--as-of", type=_datetime, default=None)
 
 
 def run(args: argparse.Namespace) -> int:
@@ -60,6 +69,14 @@ def run(args: argparse.Namespace) -> int:
                 sort_keys=True,
             )
         )
+        return 0
+    if args.command == "refresh":
+        result = IntelligenceRefresher(
+            input_root=args.input_root,
+            history_root=args.history_root,
+            output_root=args.output_root,
+        ).run(as_of=args.as_of)
+        print(json.dumps(result, sort_keys=True))
         return 0
     if args.command != "build":
         raise IntelligenceValidationError("unsupported intelligence command")

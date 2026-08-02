@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantos.local/schemas/intelligence-refresh-health.v1.schema.json",
+  "title": "QuantOS Intelligence Refresh Health v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "state",
+    "last_attempt_at",
+    "last_success_at",
+    "last_success_date",
+    "consecutive_failures",
+    "last_error_code"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "state": { "enum": ["running", "succeeded", "failed"] },
+    "last_attempt_at": { "type": "string", "format": "date-time" },
+    "last_success_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_success_date": { "type": ["string", "null"], "format": "date" },
+    "consecutive_failures": { "type": "integer", "minimum": 0, "maximum": 365 },
+    "last_error_code": {
+      "type": ["string", "null"],
+      "enum": [null, "collection_failed", "publication_failed"]
+    }
+  }
+}

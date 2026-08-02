@@ -10,6 +10,7 @@ services:
 
   research-api:
     profiles: ["research"]
+    image: quantos-research-api:local
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -37,3 +38,24 @@ services:
       retries: 3
       start_period: 10s
     restart: unless-stopped
+
+  intelligence-refresh:
+    profiles: ["research-admin"]
+    image: quantos-research-api:local
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    entrypoint: ["/app/.venv/bin/quantos"]
+    command:
+      - intelligence
+      - refresh
+      - --input-root
+      - /var/lib/quantos/intelligence-inputs
+      - --history-root
+      - /var/lib/quantos/intelligence-observations
+      - --output-root
+      - /var/lib/quantos/intelligence
+    volumes:
+      - ./var/quantos/intelligence:/var/lib/quantos/intelligence
+      - ./var/quantos/intelligence-inputs:/var/lib/quantos/intelligence-inputs
+      - ./var/quantos/intelligence-observations:/var/lib/quantos/intelligence-observations

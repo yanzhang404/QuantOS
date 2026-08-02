@@ -54,8 +54,9 @@ committed fixture that is visibly labeled as non-current sample data.
 Current snapshots are produced by the separate allow-listed collector and
 deterministic publisher commands. Until the local empirical history reaches 30
 daily observations, the API and page preserve the `partial` status instead of
-presenting neutral calibration as mature evidence. Scheduling and last-success
-health are the next delivery boundary.
+presenting neutral calibration as mature evidence. The same card reads the
+separate refresh-health endpoint and states whether the daily job is running,
+healthy, failed while retaining the prior snapshot, or stale after 36 hours.
 
 The sentiment level uses a labeled red-to-amber-to-green scale: fear is red,
 neutral is amber, and greed is green. The separate change value remains green

@@ -55,7 +55,9 @@ The accepted delivery order for the remaining V0.3 work is:
 6. schedule at most one or two explainable candidates per week through draft PRs; **Implemented as rate-limited review packages and a read-only queue; remote draft opening remains deliberately human-triggered.**
 7. replace the sample intelligence input with public, read-only daily collectors. **Implemented with allow-listed sources, atomic daily history, bounded headline metadata, and 30-observation empirical calibration.**
 8. schedule daily collection/publication with overlap protection and visible
-   last-success health. **Next.**
+   last-success health. **Implemented with a single-writer refresh command,
+   one-shot Compose job, persistent systemd timer, read-only health endpoint,
+   and bilingual freshness state.**
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

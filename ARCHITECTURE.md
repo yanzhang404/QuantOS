@@ -87,7 +87,11 @@ flowchart LR
     N --> B["Source-linked daily brief"]
     F --> J["Immutable daily snapshot"]
     B --> J
+    T["External daily timer"] --> L["Single-writer refresh lock"]
+    L --> C
     J --> API["Go read-only API"]
+    L --> O["Atomic refresh health"]
+    O --> API
     API --> W["Homepage sentiment and daily report"]
 ```
 
@@ -97,7 +101,10 @@ execute host commands, access trading credentials, or trigger trading. Every
 snapshot records factor observations, methodology version, source links,
 timestamps, and input identity. See
 [ADR-0012](docs/adr/0012-deterministic-daily-market-intelligence.md) and
-[ADR-0020](docs/adr/0020-public-read-only-intelligence-collectors.md).
+[ADR-0020](docs/adr/0020-public-read-only-intelligence-collectors.md). Daily
+operation is an explicit locked job; failures preserve the last valid snapshot
+and expose bounded health without hidden API-startup collection. See
+[ADR-0021](docs/adr/0021-observable-daily-intelligence-refresh.md).
 
 ## Backtest event flow
 

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import sampleSnapshot from "../../../examples/intelligence/sample-snapshot.v1.json";
 import {
+  getIntelligenceHealth,
   getLatestIntelligence,
+  type IntelligenceRefreshHealth,
   type IntelligenceSnapshot,
 } from "./intelligence-api";
 
@@ -27,6 +29,11 @@ const text = {
     sources: "Source-linked news",
     methodology: "Deterministic methodology",
     details: "View factor detail and daily brief",
+    refreshUnknown: "Refresh status unavailable",
+    refreshRunning: "Daily refresh running",
+    refreshFailed: "Refresh failed · prior snapshot retained",
+    refreshStale: "Data stale · last success",
+    refreshHealthy: "Refresh healthy · last success",
     labels: {
       extreme_fear: "Extreme fear",
       fear: "Fear",
@@ -59,6 +66,11 @@ const text = {
     sources: "带来源的新闻",
     methodology: "确定性计算方法",
     details: "查看因子明细和每日报告",
+    refreshUnknown: "日更状态暂不可用",
+    refreshRunning: "每日数据正在刷新",
+    refreshFailed: "刷新失败 · 已保留上一份快照",
+    refreshStale: "数据已过期 · 上次成功",
+    refreshHealthy: "日更正常 · 上次成功",
     labels: {
       extreme_fear: "极度恐惧",
       fear: "恐惧",
@@ -80,6 +92,7 @@ const text = {
 
 export function DailyIntelligence({ locale }: { locale: Locale }) {
   const [snapshot, setSnapshot] = useState<IntelligenceSnapshot>(fallback);
+  const [health, setHealth] = useState<IntelligenceRefreshHealth | null>(null);
   const t = text[locale];
 
   useEffect(() => {
@@ -87,6 +100,9 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
     getLatestIntelligence(controller.signal)
       .then(setSnapshot)
       .catch(() => setSnapshot(fallback));
+    getIntelligenceHealth(controller.signal)
+      .then(setHealth)
+      .catch(() => setHealth(null));
     return () => controller.abort();
   }, []);
 
@@ -101,6 +117,27 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
     timeStyle: "short",
     timeZone: "UTC",
   }).format(new Date(snapshot.as_of));
+  const successDate = health?.last_success_at
+    ? new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC",
+      }).format(new Date(health.last_success_at))
+    : null;
+  const healthText = !health
+    ? t.refreshUnknown
+    : health.state === "running"
+      ? t.refreshRunning
+      : health.state === "failed"
+        ? t.refreshFailed
+        : health.stale
+          ? `${t.refreshStale} ${successDate ?? "—"}`
+          : `${t.refreshHealthy} ${successDate ?? "—"}`;
+  const healthTone = !health
+    ? "unknown"
+    : health.state === "failed" || health.stale
+      ? "warning"
+      : health.state;
   const summary = locale === "zh" ? snapshot.brief.summary_zh : snapshot.brief.summary;
   const highlights =
     locale === "zh" ? snapshot.brief.highlights_zh : snapshot.brief.highlights;
@@ -118,7 +155,10 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
           <p className="eyebrow">{t.eyebrow}</p>
           <h2>{t.title}</h2>
         </div>
-        <div className={`intelligence-status ${snapshot.status}`}>{statusText}</div>
+        <div className="intelligence-state">
+          <div className={`intelligence-status ${snapshot.status}`}>{statusText}</div>
+          <small className={`intelligence-health ${healthTone}`}>{healthText}</small>
+        </div>
       </div>
 
       <div className="intelligence-overview">

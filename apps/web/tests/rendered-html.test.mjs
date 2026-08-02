@@ -70,12 +70,16 @@ test("connects daily intelligence to the validated API snapshot", async () => {
   ]);
 
   assert.match(component, /getLatestIntelligence\(controller\.signal\)/);
+  assert.match(component, /getIntelligenceHealth\(controller\.signal\)/);
+  assert.match(component, /刷新失败 · 已保留上一份快照/);
+  assert.match(component, /health\.stale/);
   assert.match(component, /sampleSnapshot/);
   assert.match(component, /非当前市场数据/);
   assert.match(component, /factor\.source/);
   assert.match(component, /sentiment-\$\{tone\}/);
   assert.match(component, /className="sentiment-meter"/);
   assert.match(api, /\/api\/v1\/intelligence\/latest/);
+  assert.match(api, /\/api\/v1\/intelligence\/health/);
 });
 
 test("ships an accessible Chinese and English language switch", async () => {

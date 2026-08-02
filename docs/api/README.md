@@ -21,6 +21,7 @@ The normative language-neutral schema is
 | `GET` | `/api/v1/robustness` | List validated robustness review summaries |
 | `GET` | `/api/v1/robustness/{review_id}` | Read one complete robustness review |
 | `GET` | `/api/v1/intelligence/latest` | Read the latest validated daily brief and sentiment snapshot |
+| `GET` | `/api/v1/intelligence/health` | Read refresh success, failure, and derived staleness state |
 
 Submitting the same HTTP request twice with one idempotency key returns the same
 Task. Submitting identical deterministic inputs with a new idempotency key

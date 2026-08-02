@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import fcntl
 import json
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -13,7 +15,8 @@ from quantos_intelligence.collector import (
     PublicIntelligenceCollector,
     RawFactor,
 )
-from quantos_intelligence.errors import IntelligenceValidationError
+from quantos_intelligence.errors import IntelligenceError, IntelligenceValidationError
+from quantos_intelligence.refresh import IntelligenceRefresher, RefreshHealth
 
 AS_OF = datetime(2026, 8, 1, 12, tzinfo=UTC)
 TIMESTAMP_MS = int(AS_OF.timestamp() * 1000)
@@ -252,3 +255,86 @@ def test_cli_collects_then_builds_current_snapshot(
     built = json.loads(capsys.readouterr().out)
     assert built["date"] == "2026-08-01"
     assert Path(built["latest"]).read_bytes() == Path(built["snapshot"]).read_bytes()
+
+
+def test_refresh_is_idempotent_and_records_success(tmp_path: Path) -> None:
+    refresher = IntelligenceRefresher(
+        input_root=tmp_path / "inputs",
+        history_root=tmp_path / "history",
+        output_root=tmp_path / "published",
+        client_factory=client,
+        now=lambda: AS_OF,
+    )
+
+    first = refresher.run(as_of=AS_OF)
+    first_input = Path(first["input"]).read_bytes()
+
+    def forbidden_client() -> httpx.Client:
+        raise AssertionError("same-day retry must reuse the pinned input")
+
+    refresher.client_factory = forbidden_client
+    second = refresher.run(as_of=AS_OF + timedelta(hours=1))
+    health = RefreshHealth.from_dict(json.loads(Path(second["health"]).read_text(encoding="utf-8")))
+
+    assert second["score"] == first["score"]
+    assert Path(second["input"]).read_bytes() == first_input
+    assert health.state == "succeeded"
+    assert health.last_success_date == AS_OF.date()
+    assert health.consecutive_failures == 0
+
+
+def test_refresh_failure_preserves_previous_publication_and_reports_health(tmp_path: Path) -> None:
+    output_root = tmp_path / "published"
+    initial = IntelligenceRefresher(
+        input_root=tmp_path / "inputs",
+        history_root=tmp_path / "history",
+        output_root=output_root,
+        client_factory=client,
+        now=lambda: AS_OF,
+    )
+    initial.run(as_of=AS_OF)
+    previous = (output_root / "latest.json").read_bytes()
+
+    def failed_client() -> httpx.Client:
+        def unavailable(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(503, request=request)
+
+        return httpx.Client(transport=httpx.MockTransport(unavailable))
+
+    refresher = IntelligenceRefresher(
+        input_root=tmp_path / "inputs",
+        history_root=tmp_path / "history",
+        output_root=output_root,
+        client_factory=failed_client,
+        now=lambda: AS_OF + timedelta(days=1),
+    )
+
+    with pytest.raises(IntelligenceError, match="request failed"):
+        refresher.run(as_of=AS_OF + timedelta(days=1))
+
+    health = RefreshHealth.from_dict(
+        json.loads((output_root / "refresh-health.json").read_text(encoding="utf-8"))
+    )
+    assert health.state == "failed"
+    assert health.consecutive_failures == 1
+    assert health.last_error_code == "collection_failed"
+    assert health.last_success_date == AS_OF.date()
+    assert (output_root / "latest.json").read_bytes() == previous
+
+
+def test_refresh_rejects_an_overlapping_writer(tmp_path: Path) -> None:
+    output_root = tmp_path / "published"
+    output_root.mkdir()
+    descriptor = os.open(output_root / "refresh.lock", os.O_CREAT | os.O_RDWR, 0o600)
+    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        with pytest.raises(IntelligenceError, match="already running"):
+            IntelligenceRefresher(
+                input_root=tmp_path / "inputs",
+                history_root=tmp_path / "history",
+                output_root=output_root,
+                client_factory=client,
+                now=lambda: AS_OF,
+            ).run(as_of=AS_OF)
+    finally:
+        os.close(descriptor)

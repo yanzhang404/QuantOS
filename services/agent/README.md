@@ -101,3 +101,15 @@ The input must use public HTTPS source URLs and contains no credentials,
 commands, article bodies, or trading actions. The sample is explicitly marked
 as sample data and is not a current market claim. See
 [ADR-0020](../../docs/adr/0020-public-read-only-intelligence-collectors.md).
+
+For scheduled operation, use the single-writer workflow:
+
+```bash
+uv run quantos intelligence refresh
+```
+
+It reuses a validated input on same-day retries, rejects overlapping writers,
+preserves the prior `latest.json` on failure, and atomically publishes
+`refresh-health.json`. The deployment timer invokes this command explicitly;
+API startup never triggers collection. See
+[ADR-0021](../../docs/adr/0021-observable-daily-intelligence-refresh.md).

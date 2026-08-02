@@ -58,6 +58,17 @@ export type IntelligenceSnapshot = {
   };
 };
 
+export type IntelligenceRefreshHealth = {
+  schema_version: "1.0";
+  state: "running" | "succeeded" | "failed";
+  last_attempt_at: string;
+  last_success_at: string | null;
+  last_success_date: string | null;
+  consecutive_failures: number;
+  last_error_code: "collection_failed" | "publication_failed" | null;
+  stale: boolean;
+};
+
 const apiBase =
   process.env.NEXT_PUBLIC_QUANTOS_API_URL ?? "http://localhost:8080";
 
@@ -71,4 +82,16 @@ export async function getLatestIntelligence(
     throw new Error(`Intelligence request failed with status ${response.status}.`);
   }
   return (await response.json()) as IntelligenceSnapshot;
+}
+
+export async function getIntelligenceHealth(
+  signal?: AbortSignal,
+): Promise<IntelligenceRefreshHealth> {
+  const response = await fetch(`${apiBase}/api/v1/intelligence/health`, {
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Intelligence health request failed with status ${response.status}.`);
+  }
+  return (await response.json()) as IntelligenceRefreshHealth;
 }

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run QuantOS intelligence refresh after the UTC daily close
+
+[Timer]
+OnCalendar=*-*-* 00:20:00 UTC
+RandomizedDelaySec=10m
+Persistent=true
+Unit=quantos-intelligence-refresh.service
+
+[Install]
+WantedBy=timers.target

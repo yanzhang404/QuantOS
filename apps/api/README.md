@@ -35,6 +35,7 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `PUT /api/v1/experiment-archives/{run_id}`
 - `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
+- `GET /api/v1/intelligence/health`
 
 Task metadata is stored as atomic JSON files. The API first verifies that a
 submitted dataset identity belongs to its immutable Bundle, then resolves the
@@ -89,6 +90,9 @@ Daily intelligence is read-only and loaded from
 `var/quantos/intelligence/latest.json` by default. Publish it through the
 validated Python workflow; the API rejects symlinks, oversized files, unknown
 fields, invalid sources, and scores that do not match the fixed methodology.
+Refresh health is loaded from the adjacent `refresh-health.json`; the API
+validates its bounded state and derives `stale=true` after 36 hours without a
+successful publication.
 
 Candidate records are also read-only. The API validates proposal identity,
 bounded fields, transition order, actor authority, and evidence identifiers

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestStoreReadsAndValidatesLatestSnapshot(t *testing.T) {
@@ -80,6 +81,42 @@ func TestHTTPHandlerReportsAvailabilityAndServesSnapshot(t *testing.T) {
 	}
 }
 
+func TestStoreReadsRefreshHealthAndDerivesStaleness(t *testing.T) {
+	root := t.TempDir()
+	success := "2026-08-02T00:20:00Z"
+	date := "2026-08-02"
+	writeHealth(t, root, refreshHealthRecord{
+		SchemaVersion: SchemaVersion, State: "succeeded",
+		LastAttemptAt: success, LastSuccessAt: &success, LastSuccessDate: &date,
+	})
+	store := NewStore(root)
+	store.now = func() time.Time { return time.Date(2026, 8, 3, 13, 0, 0, 0, time.UTC) }
+
+	health, err := store.Health()
+	if err != nil {
+		t.Fatalf("Health() error = %v", err)
+	}
+	if !health.Stale || health.State != "succeeded" {
+		t.Fatalf("Health() = %#v", health)
+	}
+}
+
+func TestHTTPHandlerServesRefreshHealth(t *testing.T) {
+	root := t.TempDir()
+	success := "2026-08-02T00:20:00Z"
+	date := "2026-08-02"
+	writeHealth(t, root, refreshHealthRecord{
+		SchemaVersion: SchemaVersion, State: "succeeded",
+		LastAttemptAt: success, LastSuccessAt: &success, LastSuccessDate: &date,
+	})
+	handler := NewHTTPHandler(NewStore(root), "")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/intelligence/health", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("health status = %d, body = %s", response.Code, response.Body.String())
+	}
+}
+
 func writeSnapshot(t *testing.T, root string, snapshot Snapshot) {
 	t.Helper()
 	payload, err := json.Marshal(snapshot)
@@ -87,6 +124,17 @@ func writeSnapshot(t *testing.T, root string, snapshot Snapshot) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "latest.json"), payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func writeHealth(t *testing.T, root string, health refreshHealthRecord) {
+	t.Helper()
+	payload, err := json.Marshal(health)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "refresh-health.json"), payload, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -25,7 +25,15 @@ func (h *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Requ
 		response.WriteHeader(http.StatusNoContent)
 		return
 	}
-	if request.Method != http.MethodGet || request.URL.Path != "/api/v1/intelligence/latest" {
+	if request.Method != http.MethodGet {
+		writeError(response, http.StatusNotFound, "not_found", "Resource not found.")
+		return
+	}
+	if request.URL.Path == "/api/v1/intelligence/health" {
+		h.serveHealth(response)
+		return
+	}
+	if request.URL.Path != "/api/v1/intelligence/latest" {
 		writeError(response, http.StatusNotFound, "not_found", "Resource not found.")
 		return
 	}
@@ -58,6 +66,23 @@ func (h *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Requ
 		return
 	}
 	writeJSON(response, http.StatusOK, snapshot)
+}
+
+func (h *HTTPHandler) serveHealth(response http.ResponseWriter) {
+	health, err := h.store.Health()
+	if errors.Is(err, ErrHealthUnavailable) {
+		writeError(response, http.StatusServiceUnavailable, "intelligence_health_unavailable", "Daily refresh has not run yet.")
+		return
+	}
+	if errors.Is(err, ErrHealthInvalid) {
+		writeError(response, http.StatusUnprocessableEntity, "intelligence_health_invalid", "Daily refresh health is invalid.")
+		return
+	}
+	if err != nil {
+		writeError(response, http.StatusInternalServerError, "intelligence_health_read_failed", "Daily refresh health could not be read.")
+		return
+	}
+	writeJSON(response, http.StatusOK, health)
 }
 
 func writeJSON(response http.ResponseWriter, status int, value any) {

@@ -35,3 +35,4 @@ Accepted decisions:
 - [ADR-0018: Separate Agent proposals, evidence attachment, and human promotion](0018-guarded-candidate-lifecycle.md)
 - [ADR-0019: Rate-limit candidate discovery and prepare review-only draft packages](0019-rate-limited-candidate-draft-scheduling.md)
 - [ADR-0020: Build daily intelligence inputs from allow-listed public endpoints](0020-public-read-only-intelligence-collectors.md)
+- [ADR-0021: Refresh daily intelligence as an observable single-writer job](0021-observable-daily-intelligence-refresh.md)

@@ -44,6 +44,8 @@ RUN useradd --create-home --uid 10001 quantos \
         /var/lib/quantos/candidate-drafts \
         /var/lib/quantos/tasks \
         /var/lib/quantos/intelligence \
+        /var/lib/quantos/intelligence-inputs \
+        /var/lib/quantos/intelligence-observations \
     && chown -R quantos:quantos /var/lib/quantos
 
 USER quantos

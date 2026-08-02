@@ -296,6 +296,28 @@ h1 {
   color: var(--amber);
 }
 
+.intelligence-state {
+  align-items: flex-end;
+  display: grid;
+  flex: 0 0 auto;
+  gap: 5px;
+  justify-items: end;
+}
+
+.intelligence-health {
+  color: var(--subtle);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.intelligence-health.succeeded {
+  color: var(--mint);
+}
+
+.intelligence-health.warning {
+  color: var(--red);
+}
+
 .intelligence-overview {
   border-bottom: 1px solid var(--line);
   border-top: 1px solid var(--line);

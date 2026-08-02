@@ -23,10 +23,34 @@ const (
 var (
 	ErrSnapshotUnavailable = errors.New("daily intelligence snapshot is unavailable")
 	ErrSnapshotInvalid     = errors.New("daily intelligence snapshot is invalid")
+	ErrHealthUnavailable   = errors.New("daily intelligence refresh health is unavailable")
+	ErrHealthInvalid       = errors.New("daily intelligence refresh health is invalid")
 )
 
 type Store struct {
 	root string
+	now  func() time.Time
+}
+
+type RefreshHealth struct {
+	SchemaVersion       string  `json:"schema_version"`
+	State               string  `json:"state"`
+	LastAttemptAt       string  `json:"last_attempt_at"`
+	LastSuccessAt       *string `json:"last_success_at"`
+	LastSuccessDate     *string `json:"last_success_date"`
+	ConsecutiveFailures int     `json:"consecutive_failures"`
+	LastErrorCode       *string `json:"last_error_code"`
+	Stale               bool    `json:"stale"`
+}
+
+type refreshHealthRecord struct {
+	SchemaVersion       string  `json:"schema_version"`
+	State               string  `json:"state"`
+	LastAttemptAt       string  `json:"last_attempt_at"`
+	LastSuccessAt       *string `json:"last_success_at"`
+	LastSuccessDate     *string `json:"last_success_date"`
+	ConsecutiveFailures int     `json:"consecutive_failures"`
+	LastErrorCode       *string `json:"last_error_code"`
 }
 
 type Snapshot struct {
@@ -107,7 +131,80 @@ var factorMethods = map[string]factorMethod{
 }
 
 func NewStore(root string) *Store {
-	return &Store{root: filepath.Clean(root)}
+	return &Store{root: filepath.Clean(root), now: time.Now}
+}
+
+func (s *Store) Health() (RefreshHealth, error) {
+	path := filepath.Join(s.root, "refresh-health.json")
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return RefreshHealth{}, ErrHealthUnavailable
+	}
+	if err != nil {
+		return RefreshHealth{}, fmt.Errorf("inspect intelligence refresh health: %w", err)
+	}
+	if !info.Mode().IsRegular() || info.Size() <= 0 || info.Size() > 16<<10 {
+		return RefreshHealth{}, ErrHealthInvalid
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return RefreshHealth{}, fmt.Errorf("open intelligence refresh health: %w", err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(io.LimitReader(file, 16<<10+1))
+	decoder.DisallowUnknownFields()
+	var record refreshHealthRecord
+	if err := decoder.Decode(&record); err != nil {
+		return RefreshHealth{}, ErrHealthInvalid
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		return RefreshHealth{}, ErrHealthInvalid
+	}
+	success, err := record.validate()
+	if err != nil {
+		return RefreshHealth{}, errors.Join(ErrHealthInvalid, err)
+	}
+	return RefreshHealth{
+		SchemaVersion: record.SchemaVersion, State: record.State,
+		LastAttemptAt: record.LastAttemptAt, LastSuccessAt: record.LastSuccessAt,
+		LastSuccessDate: record.LastSuccessDate, ConsecutiveFailures: record.ConsecutiveFailures,
+		LastErrorCode: record.LastErrorCode,
+		Stale:         success.IsZero() || s.now().UTC().After(success.Add(36*time.Hour)),
+	}, nil
+}
+
+func (r refreshHealthRecord) validate() (time.Time, error) {
+	if r.SchemaVersion != SchemaVersion ||
+		(r.State != "running" && r.State != "succeeded" && r.State != "failed") {
+		return time.Time{}, errors.New("unsupported refresh health state")
+	}
+	if _, err := time.Parse(time.RFC3339Nano, r.LastAttemptAt); err != nil {
+		return time.Time{}, errors.New("invalid refresh attempt time")
+	}
+	if r.ConsecutiveFailures < 0 || r.ConsecutiveFailures > 365 ||
+		(r.LastSuccessAt == nil) != (r.LastSuccessDate == nil) {
+		return time.Time{}, errors.New("invalid refresh health counters")
+	}
+	var success time.Time
+	if r.LastSuccessAt != nil {
+		parsed, err := time.Parse(time.RFC3339Nano, *r.LastSuccessAt)
+		if err != nil {
+			return time.Time{}, errors.New("invalid refresh success time")
+		}
+		if _, err := time.Parse("2006-01-02", *r.LastSuccessDate); err != nil {
+			return time.Time{}, errors.New("invalid refresh success date")
+		}
+		success = parsed.UTC()
+	}
+	validError := r.LastErrorCode == nil || *r.LastErrorCode == "collection_failed" ||
+		*r.LastErrorCode == "publication_failed"
+	if !validError || r.State == "succeeded" && (success.IsZero() || r.ConsecutiveFailures != 0 || r.LastErrorCode != nil) ||
+		r.State == "failed" && (r.ConsecutiveFailures < 1 || r.LastErrorCode == nil) ||
+		r.State == "running" && r.LastErrorCode != nil {
+		return time.Time{}, errors.New("inconsistent refresh health")
+	}
+	return success, nil
 }
 
 func (s *Store) Latest() (Snapshot, error) {

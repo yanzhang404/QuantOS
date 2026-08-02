@@ -37,8 +37,9 @@ explainable candidate review packages, exposes their occupied slots read-only,
 and performs no remote GitHub mutation. Daily intelligence now collects seven
 source-linked factors and bounded headline metadata from explicitly allow-listed
 public endpoints, atomically pins the first UTC daily batch, and remains partial
-until 30 observations calibrate its percentiles. The next boundary is reliable
-scheduled publication with observable health. The canonical
+until 30 observations calibrate its percentiles. A single-writer refresh job,
+persistent daily timer, and read-only last-success/staleness health now make the
+publication boundary observable without adding startup network calls. The canonical
 Go/Python research service now has
 a production container, environment contract, and data-aware readiness check;
 provisioning a stateful container host and connecting its stable HTTPS URL
