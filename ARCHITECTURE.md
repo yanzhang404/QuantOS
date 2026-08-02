@@ -123,6 +123,7 @@ and expose bounded health without hidden API-startup collection. See
 
 ```mermaid
 flowchart LR
+    FD["Verified FeatureDatasetInput"] --> ME
     ME["MarketEvent"] --> S["Strategy"]
     S --> SE["SignalEvent"]
     SE --> RE["RiskEvent"]
@@ -136,6 +137,12 @@ flowchart LR
 The event clock is controlled by the engine. Strategy code may only observe the
 current and past state. Fills apply configured fees, slippage, and later funding
 rules before portfolio updates.
+
+External feature values enter only through immutable observations on the current
+`MarketEvent`. The engine requires exact bar/decision-time coverage and binds
+the consumed feature manifest into the Run identity. Missing or stale funding
+in the initial filtered-EMA hypothesis fails flat. See
+[ADR-0025](docs/adr/0025-feed-versioned-features-through-market-events.md).
 
 Each strategy owns separate implementation code and a versioned manifest
 describing its category, lifecycle stage, supported intervals, and editable

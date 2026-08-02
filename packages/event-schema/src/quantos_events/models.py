@@ -8,6 +8,16 @@ from decimal import Decimal
 
 
 @dataclass(frozen=True, slots=True)
+class FeatureObservation:
+    feature_id: str
+    dataset_version: str
+    availability: str
+    observation_time: datetime | None
+    age_ms: int | None
+    values: tuple[tuple[str, Decimal], ...]
+
+
+@dataclass(frozen=True, slots=True)
 class MarketEvent:
     timestamp: datetime
     exchange: str
@@ -20,6 +30,7 @@ class MarketEvent:
     low: Decimal
     close: Decimal
     volume: Decimal
+    features: tuple[FeatureObservation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

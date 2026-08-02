@@ -30,6 +30,9 @@ from data download through report generation.
 - Funding-rate and open-interest datasets. **Implemented as separate public,
   immutable, content-verified datasets with causal closed-bar point-in-time
   materialization and visible stale/missing states.**
+- Versioned external features in backtests. **Implemented with immutable event
+  delivery, v4 Run binding, and the first fail-closed funding-filtered EMA
+  research strategy; API/workspace controls and robustness evidence remain.**
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
 - Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 

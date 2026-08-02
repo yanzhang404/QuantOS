@@ -16,7 +16,7 @@ class FeatureDefinition:
     version: str
     implementation: str
     inputs: tuple[str, ...]
-    warmup_parameter: str
+    warmup_parameter: str | None
     uses_current_closed_bar: bool
     description: str
 
@@ -79,6 +79,15 @@ DEFINITIONS = {
         True,
         "Simple moving average of true range through the current closed bar.",
     ),
+    "aligned-funding-rate": FeatureDefinition(
+        "aligned-funding-rate",
+        "1.0.0",
+        "quantos_backtest.engine._validate_feature_inputs",
+        ("funding_rate", "observation_time", "age_ms", "availability"),
+        None,
+        True,
+        "Latest non-stale funding observation available at the current closed-bar decision time.",
+    ),
 }
 
 _BINDINGS = {
@@ -91,6 +100,21 @@ _BINDINGS = {
         ("prior-low-channel", "exit_channel", "exit_period"),
         ("atr", "atr", "atr_period"),
     ),
+    "funding-filtered-ema": (
+        ("ema", "fast_ema", "fast_period"),
+        ("ema", "slow_ema", "slow_period"),
+    ),
+}
+
+_EXTERNAL_REQUIREMENTS = {
+    "funding-filtered-ema": (
+        {
+            "feature_id": "aligned-funding-rate",
+            "series": "funding-rate",
+            "required": True,
+            "missing_policy": "flat",
+        },
+    )
 }
 
 
@@ -108,6 +132,10 @@ def feature_registry() -> dict[str, Any]:
                 for feature_id, instance, parameter in bindings
             ]
             for strategy, bindings in sorted(_BINDINGS.items())
+        },
+        "strategy_external_requirements": {
+            strategy: list(requirements)
+            for strategy, requirements in sorted(_EXTERNAL_REQUIREMENTS.items())
         },
     }
 

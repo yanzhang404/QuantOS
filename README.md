@@ -48,10 +48,12 @@ Paper and live trading are not implemented.
   separate, immutable, content-addressed Parquet datasets.
 - Materialize those histories at closed-bar decision times with explicit
   maximum-age and missing-data evidence, without future-nearest matching.
+- Feed exact materialized feature versions through the deterministic event clock
+  and run an initial fail-closed funding-filtered EMA research strategy.
 
 The research loop is implemented with Markdown reports and a product workspace.
-Run-level binding and strategy evaluation for the aligned derivatives features,
-plus strategy-specific robustness adapters, remain.
+Chronological funding-strategy evaluation, workspace controls, and
+strategy-specific robustness adapters remain.
 
 ## Architecture at a glance
 

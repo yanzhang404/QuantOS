@@ -21,7 +21,7 @@ from .engine import BacktestResult
 from .errors import BacktestError
 from .features import resolve_feature_lineage
 
-ARTIFACT_SCHEMA_VERSION = "experiment-artifacts.v3"
+ARTIFACT_SCHEMA_VERSION = "experiment-artifacts.v4"
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +92,7 @@ class ExperimentStore:
                     "parameters": result.strategy_parameters,
                 },
                 "features": list(features),
+                "feature_datasets": [item.to_dict() for item in result.feature_datasets],
                 "engine_version": result.engine_version,
                 "metrics_version": result.metrics_version,
                 "config": result.config.to_dict(),
@@ -133,6 +134,7 @@ def _run_id(result: BacktestResult, dataset: DatasetManifest) -> str:
         "strategy_version": result.strategy_version,
         "strategy_parameters": result.strategy_parameters,
         "features": list(features),
+        "feature_datasets": [item.to_dict() for item in result.feature_datasets],
         "engine_version": result.engine_version,
         "metrics_version": result.metrics_version,
         "config": result.config.to_dict(),
@@ -213,6 +215,15 @@ def _markdown_report(
         )
         or "- No registered derived features."
     )
+    feature_dataset_lines = (
+        "\n".join(
+            f"- `{item.series}` dataset `{item.dataset_version}` with policy "
+            f"`{item.alignment_policy_version}`, max age `{item.max_age_ms}` ms, "
+            f"matched `{item.matched_count}/{item.row_count}` rows"
+            for item in result.feature_datasets
+        )
+        or "- No external feature datasets."
+    )
     return f"""# QuantOS Backtest Report
 
 ## Run
@@ -236,6 +247,10 @@ def _markdown_report(
 ## Feature lineage
 
 {feature_lines}
+
+## External feature datasets
+
+{feature_dataset_lines}
 
 ## Assumptions
 

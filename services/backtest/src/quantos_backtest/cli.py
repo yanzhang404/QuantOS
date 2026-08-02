@@ -9,14 +9,21 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-from quantos_market_data.storage import DatasetStore
+from quantos_market_data.alignment import AlignedDerivativeStore
+from quantos_market_data.models import Kline
+from quantos_market_data.storage import DatasetManifest, DatasetStore
 
 from .artifacts import ExperimentStore
 from .config import BacktestConfig
-from .engine import BacktestEngine
+from .engine import BacktestEngine, FeatureDatasetInput
 from .errors import BacktestConfigurationError
 from .features import feature_registry
-from .strategies import BuyAndHoldStrategy, DonchianAtrStrategy, EmaCrossStrategy
+from .strategies import (
+    BuyAndHoldStrategy,
+    DonchianAtrStrategy,
+    EmaCrossStrategy,
+    FundingFilteredEmaStrategy,
+)
 
 
 def register_parser(commands: Any) -> None:
@@ -26,11 +33,13 @@ def register_parser(commands: Any) -> None:
     run.add_argument("--dataset", required=True, type=Path)
     run.add_argument(
         "--strategy",
-        choices=["buy-and-hold", "ema-cross", "donchian-atr"],
+        choices=["buy-and-hold", "ema-cross", "donchian-atr", "funding-filtered-ema"],
         default="ema-cross",
     )
     run.add_argument("--fast", type=int, default=20)
     run.add_argument("--slow", type=int, default=50)
+    run.add_argument("--max-funding-rate", type=_decimal, default=Decimal("0.0001"))
+    run.add_argument("--feature-dataset", action="append", type=Path, default=[])
     run.add_argument("--target-exposure", type=_decimal)
     run.add_argument("--entry-period", type=int, default=20)
     run.add_argument("--exit-period", type=int, default=10)
@@ -70,6 +79,7 @@ def run(args: argparse.Namespace) -> int:
         if not klines:
             raise BacktestConfigurationError("selected evaluation range contains no Klines")
     strategy = _strategy(args)
+    feature_datasets = _feature_inputs(args, manifest, klines)
     config = BacktestConfig(
         initial_cash=args.initial_cash,
         fee_bps=args.fee_bps,
@@ -82,6 +92,8 @@ def run(args: argparse.Namespace) -> int:
         strategy=strategy,
         strategy_parameters=strategy.parameters,
         config=config,
+        feature_datasets=feature_datasets,
+        dataset_manifest=manifest,
     )
     artifacts = ExperimentStore(args.output_root).publish(result, dataset=manifest)
     print(
@@ -118,7 +130,47 @@ def _strategy(args: argparse.Namespace):
             max_exposure=maximum,
             rebalance_threshold=args.rebalance_threshold,
         )
+    if args.strategy == "funding-filtered-ema":
+        return FundingFilteredEmaStrategy(
+            fast_period=args.fast,
+            slow_period=args.slow,
+            max_funding_rate=args.max_funding_rate,
+        )
     return EmaCrossStrategy(fast_period=args.fast, slow_period=args.slow)
+
+
+def _feature_inputs(
+    args: argparse.Namespace,
+    spot_manifest: DatasetManifest,
+    klines: list[Kline],
+) -> tuple[FeatureDatasetInput, ...]:
+    paths = tuple(args.feature_dataset)
+    if args.strategy != "funding-filtered-ema":
+        if paths:
+            raise BacktestConfigurationError(
+                "external feature datasets are not consumed by the selected strategy"
+            )
+        return ()
+    if len(paths) != 1:
+        raise BacktestConfigurationError(
+            "funding-filtered-ema requires exactly one aligned funding feature dataset"
+        )
+    feature_manifest, rows = AlignedDerivativeStore(paths[0]).load(paths[0])
+    if (
+        feature_manifest.series != "funding-rate"
+        or feature_manifest.spot_dataset_version != spot_manifest.dataset_version
+        or feature_manifest.spot_content_sha256 != spot_manifest.content_sha256
+    ):
+        raise BacktestConfigurationError(
+            "aligned funding input must bind the selected Spot dataset version"
+        )
+    selected_times = {item.open_time for item in klines}
+    selected_rows = tuple(item for item in rows if item.bar_open_time in selected_times)
+    if len(selected_rows) != len(klines):
+        raise BacktestConfigurationError(
+            "aligned funding input does not cover every selected Kline"
+        )
+    return (FeatureDatasetInput(feature_manifest, selected_rows),)
 
 
 def _decimal(value: str) -> Decimal:

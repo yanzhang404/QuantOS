@@ -8,6 +8,8 @@ import pytest
 from quantos_backtest import BacktestConfig, BacktestEngine
 from quantos_backtest.artifacts import ExperimentStore
 from quantos_cli import main
+from quantos_market_data.alignment import materialize_derivatives_alignment
+from quantos_market_data.derivatives import DerivativeDatasetStore, FundingRateObservation
 from quantos_market_data.storage import DatasetStore
 
 from .test_engine_metrics import ScriptedStrategy
@@ -56,8 +58,9 @@ def test_experiment_store_is_content_addressed_and_reusable(
     }
     run = json.loads((first.path / "run.json").read_text())
     assert run["dataset"]["version"] == dataset.manifest.dataset_version
-    assert run["artifact_schema_version"] == "experiment-artifacts.v3"
+    assert run["artifact_schema_version"] == "experiment-artifacts.v4"
     assert run["features"] == []
+    assert run["feature_datasets"] == []
     assert run["dataset"]["data_start"] == "2024-01-01T00:00:00Z"
     assert run["status"] == "completed"
     assert len((first.path / "bars.csv").read_text().splitlines()) == 5
@@ -114,11 +117,16 @@ def test_root_cli_lists_versioned_feature_registry(capsys) -> None:
     registry = json.loads(capsys.readouterr().out)
     assert registry["schema_version"] == "feature-registry.v1"
     assert {item["feature_id"] for item in registry["features"]} == {
+        "aligned-funding-rate",
         "ema",
         "atr",
         "prior-high-channel",
         "prior-low-channel",
     }
+    assert (
+        registry["strategy_external_requirements"]["funding-filtered-ema"][0]["missing_policy"]
+        == "flat"
+    )
 
 
 def test_root_cli_preserves_data_commands(capsys, tmp_path, price_klines) -> None:
@@ -231,3 +239,73 @@ def test_root_cli_runs_formal_strategies(
     payload = json.loads(capsys.readouterr().out)
     run = json.loads((output_root / payload["run_id"] / "run.json").read_text())
     assert run["strategy"]["name"] == strategy
+
+
+def test_root_cli_runs_funding_filtered_strategy_with_bound_feature_dataset(
+    capsys,
+    tmp_path,
+    price_klines,
+) -> None:
+    end = price_klines[-1].open_time + (price_klines[1].open_time - price_klines[0].open_time)
+    spot = DatasetStore(tmp_path / "data").publish(
+        price_klines,
+        requested_start=price_klines[0].open_time,
+        requested_end=end,
+        source="fixture",
+    )
+    derivative_path, _ = DerivativeDatasetStore(tmp_path / "data").publish_funding(
+        [
+            FundingRateObservation(
+                "BTCUSDT",
+                item.close_time,
+                Decimal("0"),
+                item.close,
+                "Regular",
+            )
+            for item in price_klines
+        ],
+        requested_start=price_klines[0].open_time,
+        requested_end=end,
+    )
+    aligned = materialize_derivatives_alignment(
+        spot_dataset=spot.path,
+        derivative_dataset=derivative_path,
+        start=price_klines[0].open_time,
+        end=end,
+        max_age_ms=60 * 60 * 1000,
+        output_root=tmp_path / "data",
+        now=end,
+    )
+
+    assert (
+        main(
+            [
+                "backtest",
+                "run",
+                "--dataset",
+                str(spot.path),
+                "--strategy",
+                "funding-filtered-ema",
+                "--fast",
+                "1",
+                "--slow",
+                "2",
+                "--max-funding-rate",
+                "0.0001",
+                "--feature-dataset",
+                str(aligned.path),
+                "--output-root",
+                str(tmp_path / "runs"),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    run = json.loads((tmp_path / "runs" / payload["run_id"] / "run.json").read_text())
+    assert run["strategy"]["name"] == "funding-filtered-ema"
+    assert run["feature_datasets"][0]["dataset_version"] == aligned.manifest.dataset_version
+    assert run["feature_datasets"][0]["spot_dataset_version"] == spot.manifest.dataset_version
+    assert (
+        "External feature datasets"
+        in (tmp_path / "runs" / payload["run_id"] / "report.md").read_text()
+    )

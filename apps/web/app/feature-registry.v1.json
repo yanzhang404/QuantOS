@@ -1,6 +1,16 @@
 {
   "features": [
     {
+      "definition_sha256": "2158f07dcc300c6ac01d6773aae6f1b3e1c8d288ebcfcc3c1ba93ef15a426a4c",
+      "description": "Latest non-stale funding observation available at the current closed-bar decision time.",
+      "feature_id": "aligned-funding-rate",
+      "implementation": "quantos_backtest.engine._validate_feature_inputs",
+      "inputs": ["funding_rate", "observation_time", "age_ms", "availability"],
+      "uses_current_closed_bar": true,
+      "version": "1.0.0",
+      "warmup_parameter": null
+    },
+    {
       "definition_sha256": "38762155c9783bd2b1d752d7533a25942c7b88fc1fb34991cc85b33cc34757f8",
       "description": "Simple moving average of true range through the current closed bar.",
       "feature_id": "atr",
@@ -51,6 +61,20 @@
     "ema-cross": [
       {"feature_id": "ema", "instance": "fast_ema", "strategy_parameter": "fast_period"},
       {"feature_id": "ema", "instance": "slow_ema", "strategy_parameter": "slow_period"}
+    ],
+    "funding-filtered-ema": [
+      {"feature_id": "ema", "instance": "fast_ema", "strategy_parameter": "fast_period"},
+      {"feature_id": "ema", "instance": "slow_ema", "strategy_parameter": "slow_period"}
+    ]
+  },
+  "strategy_external_requirements": {
+    "funding-filtered-ema": [
+      {
+        "feature_id": "aligned-funding-rate",
+        "missing_policy": "flat",
+        "required": true,
+        "series": "funding-rate"
+      }
     ]
   }
 }

@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from quantos_events import (
+    FeatureObservation,
     FillEvent,
     MarketEvent,
     MetricEvent,
@@ -15,13 +16,16 @@ from quantos_events import (
     RiskEvent,
     SignalEvent,
 )
+from quantos_market_data.alignment import AlignedDerivativeManifest, AlignedDerivativeRow
 from quantos_market_data.models import Kline
+from quantos_market_data.storage import DatasetManifest
 from quantos_market_data.validation import validate_klines
 from quantos_metrics import PerformanceMetrics, calculate_metrics
 from quantos_metrics import __version__ as metrics_version
 from quantos_strategy import Strategy, StrategyContext
 
 from .config import BacktestConfig
+from .errors import BacktestConfigurationError
 from .execution import ExecutionModel, TargetOrderManager
 from .portfolio import Portfolio
 from .risk import LongOnlyRiskEngine
@@ -30,6 +34,12 @@ from .version import __version__
 BacktestEvent = (
     MarketEvent | SignalEvent | RiskEvent | OrderEvent | FillEvent | PortfolioEvent | MetricEvent
 )
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureDatasetInput:
+    manifest: AlignedDerivativeManifest
+    rows: tuple[AlignedDerivativeRow, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +59,7 @@ class BacktestResult:
     fills: tuple[FillEvent, ...]
     equity_curve: tuple[PortfolioEvent, ...]
     events: tuple[BacktestEvent, ...]
+    feature_datasets: tuple[AlignedDerivativeManifest, ...]
 
 
 class BacktestEngine:
@@ -63,10 +74,15 @@ class BacktestEngine:
         strategy: Strategy,
         strategy_parameters: dict[str, Any],
         config: BacktestConfig,
+        feature_datasets: tuple[FeatureDatasetInput, ...] = (),
+        dataset_manifest: DatasetManifest | None = None,
     ) -> BacktestResult:
         report = validate_klines(klines)
         report.raise_if_invalid()
         first = klines[0]
+        feature_events = _validate_feature_inputs(
+            klines, feature_datasets, dataset_manifest=dataset_manifest
+        )
         context = StrategyContext(symbol=first.symbol, interval=first.interval.value)
         strategy.initialize(context)
 
@@ -102,7 +118,7 @@ class BacktestEngine:
                     portfolio.apply_fill(fill)
                     strategy.on_fill(context, fill)
 
-            market_event = _market_event(kline)
+            market_event = _market_event(kline, feature_events.get(kline.open_time, ()))
             events.append(market_event)
             portfolio_event = portfolio.snapshot(
                 timestamp=kline.close_time,
@@ -167,10 +183,11 @@ class BacktestEngine:
             fills=tuple(fills),
             equity_curve=tuple(equity_curve),
             events=tuple(events),
+            feature_datasets=tuple(item.manifest for item in feature_datasets),
         )
 
 
-def _market_event(kline: Kline) -> MarketEvent:
+def _market_event(kline: Kline, features: tuple[FeatureObservation, ...] = ()) -> MarketEvent:
     return MarketEvent(
         timestamp=kline.close_time,
         exchange=kline.exchange,
@@ -183,4 +200,61 @@ def _market_event(kline: Kline) -> MarketEvent:
         low=kline.low,
         close=kline.close,
         volume=kline.volume,
+        features=features,
     )
+
+
+def _validate_feature_inputs(
+    klines: list[Kline],
+    feature_datasets: tuple[FeatureDatasetInput, ...],
+    *,
+    dataset_manifest: DatasetManifest | None,
+) -> dict[datetime, tuple[FeatureObservation, ...]]:
+    if feature_datasets and dataset_manifest is None:
+        raise BacktestConfigurationError("feature datasets require the exact Spot dataset manifest")
+    if len({item.manifest.series for item in feature_datasets}) != len(feature_datasets):
+        raise BacktestConfigurationError("feature dataset series must be unique")
+    by_bar: dict[datetime, list[FeatureObservation]] = {item.open_time: [] for item in klines}
+    for dataset in feature_datasets:
+        manifest = dataset.manifest
+        if (
+            manifest.symbol != klines[0].symbol
+            or manifest.spot_interval != klines[0].interval.value
+            or len(dataset.rows) != len(klines)
+            or dataset_manifest is None
+            or manifest.spot_dataset_version != dataset_manifest.dataset_version
+            or manifest.spot_content_sha256 != dataset_manifest.content_sha256
+        ):
+            raise BacktestConfigurationError(
+                "feature dataset identity or coverage does not match Klines"
+            )
+        for kline, row in zip(klines, dataset.rows, strict=True):
+            if (
+                row.series != manifest.series
+                or row.symbol != kline.symbol
+                or row.spot_interval != kline.interval
+                or row.bar_open_time != kline.open_time
+                or row.decision_time != kline.close_time
+            ):
+                raise BacktestConfigurationError("feature row does not match its decision Kline")
+            values = tuple(
+                (name, value)
+                for name, value in (
+                    ("funding_rate", row.funding_rate),
+                    ("mark_price", row.mark_price),
+                    ("open_interest", row.open_interest),
+                    ("open_interest_value", row.open_interest_value),
+                )
+                if value is not None
+            )
+            by_bar[kline.open_time].append(
+                FeatureObservation(
+                    feature_id=f"aligned-{row.series}",
+                    dataset_version=manifest.dataset_version,
+                    availability=row.availability,
+                    observation_time=row.observation_time,
+                    age_ms=row.age_ms,
+                    values=values,
+                )
+            )
+    return {key: tuple(value) for key, value in by_bar.items()}

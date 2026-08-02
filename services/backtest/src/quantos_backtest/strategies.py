@@ -275,3 +275,75 @@ class EmaCrossStrategy:
     @staticmethod
     def _update(current: Decimal | None, value: Decimal, alpha: Decimal) -> Decimal:
         return value if current is None else alpha * value + (Decimal("1") - alpha) * current
+
+
+class FundingFilteredEmaStrategy(EmaCrossStrategy):
+    """EMA trend strategy that fails flat when causal funding is high or unavailable."""
+
+    name = "funding-filtered-ema"
+    version = "0.1.0"
+
+    def __init__(
+        self,
+        *,
+        fast_period: int,
+        slow_period: int,
+        max_funding_rate: Decimal = Decimal("0.0001"),
+    ) -> None:
+        super().__init__(fast_period=fast_period, slow_period=slow_period)
+        if not max_funding_rate.is_finite() or abs(max_funding_rate) > Decimal("0.01"):
+            raise BacktestConfigurationError(
+                "max_funding_rate must be finite and within [-0.01, 0.01]"
+            )
+        self.max_funding_rate = max_funding_rate
+
+    @property
+    def parameters(self) -> dict[str, int | str]:
+        return {
+            "fast_period": self.fast_period,
+            "slow_period": self.slow_period,
+            "max_funding_rate": str(self.max_funding_rate),
+        }
+
+    def on_bar(
+        self,
+        context: StrategyContext,
+        event: MarketEvent,
+    ) -> SignalEvent | None:
+        self._observations += 1
+        self._fast_ema = self._update(self._fast_ema, event.close, self._fast_alpha)
+        self._slow_ema = self._update(self._slow_ema, event.close, self._slow_alpha)
+        if self._observations < self.slow_period:
+            return None
+
+        funding = next(
+            (item for item in event.features if item.feature_id == "aligned-funding-rate"),
+            None,
+        )
+        funding_rate = None
+        if funding is not None and funding.availability == "matched":
+            funding_rate = dict(funding.values).get("funding_rate")
+        trend_is_long = self._fast_ema > self._slow_ema
+        funding_permits_long = funding_rate is not None and funding_rate <= self.max_funding_rate
+        target = Decimal("1") if trend_is_long and funding_permits_long else Decimal("0")
+        if target == self._target:
+            return None
+        self._target = target
+        if target:
+            reason = (
+                f"EMA({self.fast_period}) above EMA({self.slow_period}); "
+                f"funding {funding_rate} <= {self.max_funding_rate}"
+            )
+        elif funding_rate is None:
+            reason = "funding unavailable or stale; fail flat"
+        elif funding_rate > self.max_funding_rate:
+            reason = f"funding {funding_rate} above {self.max_funding_rate}; exit crowded long"
+        else:
+            reason = f"EMA({self.fast_period}) not above EMA({self.slow_period})"
+        return SignalEvent(
+            timestamp=event.close_time,
+            symbol=context.symbol,
+            target_exposure=target,
+            strategy=self.name,
+            reason=reason,
+        )

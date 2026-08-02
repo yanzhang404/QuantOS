@@ -15,7 +15,7 @@ def test_registry_hashes_are_deterministic_and_bounded() -> None:
 
     assert first == second
     assert first["schema_version"] == "feature-registry.v1"
-    assert len(first["features"]) == 4
+    assert len(first["features"]) == 5
     assert all(len(item["definition_sha256"]) == 64 for item in first["features"])
 
 
