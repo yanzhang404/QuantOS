@@ -65,16 +65,27 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    E["Exchange Adapter"] --> N["Normalize Schema"]
+    E["Public Spot Adapter"] --> N["Normalize Kline Schema"]
     N --> V["Validate / Deduplicate"]
-    V --> P["Versioned Parquet"]
-    P --> D["DuckDB Views"]
-    D --> R["Research & Backtest"]
+    F["Public Futures Adapter"] --> DS["Funding / OI Typed Schemas"]
+    DS --> V2["Validate / Deduplicate"]
+    V --> P["Versioned Spot Parquet"]
+    V2 --> P2["Separate Versioned Derivatives Parquet"]
+    P --> Q["DuckDB Views"]
+    P2 --> A["Future Explicit Point-in-time Alignment"]
+    Q --> R["Research & Backtest"]
+    A --> R
 ```
 
 Adapters cannot leak exchange-specific response models past normalization.
 Dataset manifests will include source, symbols, intervals, time range, schema
 version, row counts, checksums, and creation metadata.
+
+Funding and open-interest observations are never implicitly joined to Spot
+Klines. Each has its own immutable dataset identity and source limitation. A
+future feature must bind exact dataset versions and prove that every selected
+derivatives observation was available at or before the closed decision bar. See
+[ADR-0023](docs/adr/0023-version-public-derivatives-market-data.md).
 
 ## Daily intelligence flow
 

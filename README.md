@@ -44,10 +44,12 @@ Paper and live trading are not implemented.
   CoinDesk endpoints without credentials or article-body storage.
 - Display the sentiment result, factor detail, daily brief, and citations on
   the bilingual workspace homepage.
+- Download and verify public Binance funding-rate and open-interest histories as
+  separate, immutable, content-addressed Parquet datasets.
 
 The research loop is implemented with Markdown reports and a product workspace.
-Feature lineage, broader derivatives datasets, and strategy-specific
-robustness adapters remain.
+Point-in-time derivatives feature alignment and strategy-specific robustness
+adapters remain.
 
 ## Architecture at a glance
 

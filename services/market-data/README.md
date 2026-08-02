@@ -10,12 +10,18 @@ version manifests, and read-only analytical queries.
 - `validation.py`: deterministic quality rules.
 - `storage.py`: atomic, immutable Parquet publication and verification.
 - `bundle.py`: atomic identity and publication for a verified dataset matrix.
+- `derivatives.py`: public funding/open-interest adapters and separate immutable datasets.
 - `query.py`: DuckDB queries scoped to one dataset version.
 - `service.py`: single-dataset, tail extension, and current-matrix orchestration.
 - `cli.py`: human and automation entry point.
 
 The adapter has no authenticated endpoint, API-key parameter, account model, or
 order capability.
+
+Funding rates and open interest use only Binance USD-M Futures public market-data
+endpoints. They remain separate from Spot Klines: no implicit join, forward fill,
+or strategy consumption occurs at ingestion time. Open-interest history is
+source-limited to the latest month.
 
 The normalized interval vocabulary supports `5m`, `15m`, `1h`, `4h`, and `1d`.
 An interval becomes runnable only after the public-data pipeline publishes a

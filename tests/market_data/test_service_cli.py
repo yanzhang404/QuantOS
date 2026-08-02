@@ -218,6 +218,75 @@ def test_cli_download_prints_machine_readable_result(monkeypatch, capsys, tmp_pa
     assert payload["rows"] == 24
 
 
+@pytest.mark.parametrize(
+    ("series", "period", "function_name"),
+    [
+        ("funding-rate", [], "download_funding_dataset"),
+        ("open-interest", ["--period", "4h"], "download_open_interest_dataset"),
+    ],
+)
+def test_cli_derivatives_prints_versioned_result(
+    monkeypatch, capsys, tmp_path, series, period, function_name
+) -> None:
+    published = SimpleNamespace(
+        path=tmp_path / "version=abc",
+        manifest=SimpleNamespace(
+            dataset_version="abc",
+            series=series,
+            row_count=3,
+            source_limit="latest 1 month" if series == "open-interest" else None,
+        ),
+    )
+    observed: dict[str, object] = {}
+
+    def publish(**kwargs):
+        observed.update(kwargs)
+        return published
+
+    monkeypatch.setattr(cli, function_name, publish)
+    result = cli.main(
+        [
+            "data",
+            "derivatives",
+            "--series",
+            series,
+            "--symbol",
+            "BTCUSDT",
+            *period,
+            "--start",
+            "2026-07-30T00:00:00Z",
+            "--end",
+            "2026-08-01T00:00:00Z",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert payload["dataset_version"] == "abc"
+    assert payload["series"] == series
+    assert observed["symbol"] == "BTCUSDT"
+
+
+def test_cli_derivatives_requires_series_specific_period(capsys) -> None:
+    result = cli.main(
+        [
+            "data",
+            "derivatives",
+            "--series",
+            "open-interest",
+            "--symbol",
+            "BTCUSDT",
+            "--start",
+            "2026-07-30T00:00:00Z",
+            "--end",
+            "2026-08-01T00:00:00Z",
+        ]
+    )
+
+    assert result == 2
+    assert "--period is required" in capsys.readouterr().err
+
+
 def test_cli_sync_matrix_prints_exact_member_identities(monkeypatch, capsys, tmp_path) -> None:
     member = SimpleNamespace(symbol="BTCUSDT", interval="5m", dataset_version="abc", row_count=288)
     published = SimpleNamespace(

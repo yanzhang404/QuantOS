@@ -11,6 +11,11 @@ from typing import Any
 
 from .binance import DEFAULT_BASE_URL
 from .bundle import DatasetBundleStore, write_coverage_evidence
+from .derivatives import (
+    DerivativeDatasetStore,
+    download_funding_dataset,
+    download_open_interest_dataset,
+)
 from .errors import MarketDataError
 from .models import Interval
 from .query import json_value, query_klines
@@ -36,6 +41,27 @@ def register_parser(commands: Any) -> None:
     download.add_argument("--end", required=True, type=_datetime, help="exclusive UTC ISO-8601")
     download.add_argument("--data-root", type=Path, default=Path("data"))
     download.add_argument("--base-url", default=DEFAULT_BASE_URL, help=argparse.SUPPRESS)
+
+    derivatives = data_commands.add_parser(
+        "derivatives", help="download immutable public funding or open-interest data"
+    )
+    derivatives.add_argument("--series", required=True, choices=("funding-rate", "open-interest"))
+    derivatives.add_argument("--symbol", required=True, help="BTCUSDT or ETHUSDT")
+    derivatives.add_argument(
+        "--period",
+        choices=[item.value for item in Interval],
+        help="required for open-interest; omitted for funding-rate",
+    )
+    derivatives.add_argument(
+        "--start", required=True, type=_datetime, help="inclusive UTC ISO-8601"
+    )
+    derivatives.add_argument("--end", required=True, type=_datetime, help="exclusive UTC ISO-8601")
+    derivatives.add_argument("--data-root", type=Path, default=Path("data"))
+
+    validate_derivatives = data_commands.add_parser(
+        "validate-derivatives", help="verify an immutable derivatives dataset"
+    )
+    validate_derivatives.add_argument("--dataset", required=True, type=Path)
 
     sync_matrix = data_commands.add_parser(
         "sync-matrix", help="download and version the BTC/ETH five-interval matrix"
@@ -92,6 +118,41 @@ def run(args: argparse.Namespace) -> int:
                 "rows": result.manifest.row_count,
             }
         )
+        return 0
+    if args.module == "data" and args.command == "derivatives":
+        if args.series == "funding-rate":
+            if args.period is not None:
+                raise MarketDataError("--period must be omitted for funding-rate")
+            result = download_funding_dataset(
+                symbol=args.symbol,
+                start=args.start,
+                end=args.end,
+                data_root=args.data_root,
+            )
+        else:
+            if args.period is None:
+                raise MarketDataError("--period is required for open-interest")
+            result = download_open_interest_dataset(
+                symbol=args.symbol,
+                period=Interval.parse(args.period),
+                start=args.start,
+                end=args.end,
+                data_root=args.data_root,
+            )
+        _print_json(
+            {
+                "dataset": str(result.path),
+                "manifest": str(result.path / "manifest.json"),
+                "dataset_version": result.manifest.dataset_version,
+                "series": result.manifest.series,
+                "rows": result.manifest.row_count,
+                "source_limit": result.manifest.source_limit,
+            }
+        )
+        return 0
+    if args.module == "data" and args.command == "validate-derivatives":
+        manifest = DerivativeDatasetStore(args.dataset).verify(args.dataset)
+        _print_json({"is_valid": True, **manifest.to_dict()})
         return 0
     if args.module == "data" and args.command == "sync-matrix":
         result = sync_product_matrix(

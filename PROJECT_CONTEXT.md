@@ -18,8 +18,10 @@ public read-only collectors, empirical calibration history, read-only API, and
 bilingual homepage view. New Runs now resolve built-in EMA, Donchian, and ATR
 definitions from a versioned feature registry into their content identity.
 The Go detail API validates those instances, and the Data/Strategies views make
-the registry and selected Run lineage visible. Derivatives datasets and
-strategy-specific robustness adapters remain.
+the registry and selected Run lineage visible. Public Binance funding rates and
+open-interest statistics now publish as separate immutable, content-verified
+datasets with explicit source retention limits. Point-in-time feature alignment
+and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
 and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync

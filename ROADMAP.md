@@ -27,7 +27,8 @@ from data download through report generation.
 - Feature registry and dataset lineage. **Initial built-in registry and Run-level
   resolved feature lineage implemented and exposed in API/Data/Strategies views.**
 - Parameter sweeps and train/validation/out-of-sample splits. **Implemented.**
-- Funding-rate and open-interest datasets.
+- Funding-rate and open-interest datasets. **Implemented as separate public,
+  immutable, content-verified datasets; point-in-time strategy features remain.**
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
 - Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 

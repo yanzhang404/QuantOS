@@ -37,3 +37,4 @@ Accepted decisions:
 - [ADR-0020: Build daily intelligence inputs from allow-listed public endpoints](0020-public-read-only-intelligence-collectors.md)
 - [ADR-0021: Refresh daily intelligence as an observable single-writer job](0021-observable-daily-intelligence-refresh.md)
 - [ADR-0022: Version strategy features and resolve them into every new Run](0022-version-strategy-feature-lineage.md)
+- [ADR-0023: Store funding and open-interest histories as separate immutable datasets](0023-version-public-derivatives-market-data.md)
