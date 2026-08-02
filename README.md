@@ -36,6 +36,8 @@ Paper and live trading are not implemented.
 - Prepare at most two narrow candidate review packages per UTC ISO week without
   automatically opening, merging, approving, or trading from a pull request.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
+- Inspect a versioned feature registry and persist resolved EMA, Donchian, and
+  ATR lineage in every new content-addressed Run.
 - Publish a deterministic daily market-sentiment snapshot from seven market
   factors and source-linked news classifications.
 - Collect those inputs from allow-listed public Binance, Deribit, Cboe, and

@@ -46,3 +46,10 @@ uv run quantos backtest run \
   --fee-bps 10 \
   --slippage-bps 5
 ```
+
+## Feature identity
+
+EMA, prior-high/low Donchian channels, and ATR are registered independently of
+the strategy catalog. A new Run records the exact feature instances resolved
+from its strategy parameters, including whether the current closed bar is used.
+Inspect the contract with `uv run quantos backtest features`.

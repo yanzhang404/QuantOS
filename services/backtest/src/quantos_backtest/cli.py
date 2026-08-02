@@ -15,6 +15,7 @@ from .artifacts import ExperimentStore
 from .config import BacktestConfig
 from .engine import BacktestEngine
 from .errors import BacktestConfigurationError
+from .features import feature_registry
 from .strategies import BuyAndHoldStrategy, DonchianAtrStrategy, EmaCrossStrategy
 
 
@@ -49,9 +50,13 @@ def register_parser(commands: Any) -> None:
     run.add_argument("--start", type=_timestamp)
     run.add_argument("--end", type=_timestamp)
     run.add_argument("--output-root", type=Path, default=Path("artifacts/experiments"))
+    backtest_commands.add_parser("features", help="print the versioned built-in feature registry")
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "features":
+        print(json.dumps(feature_registry(), indent=2, sort_keys=True))
+        return 0
     store = DatasetStore(args.dataset)
     store.verify(args.dataset)
     manifest = store.load_manifest(args.dataset)

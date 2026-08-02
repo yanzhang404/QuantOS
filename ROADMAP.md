@@ -24,7 +24,8 @@ from data download through report generation.
 
 ## V0.2 — Research quality and review
 
-- Feature registry and dataset lineage.
+- Feature registry and dataset lineage. **Initial built-in registry and Run-level
+  resolved feature lineage implemented.**
 - Parameter sweeps and train/validation/out-of-sample splits. **Implemented.**
 - Funding-rate and open-interest datasets.
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**

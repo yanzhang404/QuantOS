@@ -19,8 +19,9 @@ from quantos_market_data.storage import DatasetManifest
 
 from .engine import BacktestResult
 from .errors import BacktestError
+from .features import resolve_feature_lineage
 
-ARTIFACT_SCHEMA_VERSION = "experiment-artifacts.v2"
+ARTIFACT_SCHEMA_VERSION = "experiment-artifacts.v3"
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +66,7 @@ class ExperimentStore:
         temporary_path = Path(tempfile.mkdtemp(prefix=".publishing-", dir=self.root))
         try:
             metrics = result.metrics.to_dict()
+            features = resolve_feature_lineage(result.strategy_name, result.strategy_parameters)
             run = {
                 "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
                 "run_id": run_id,
@@ -89,6 +91,7 @@ class ExperimentStore:
                     "version": result.strategy_version,
                     "parameters": result.strategy_parameters,
                 },
+                "features": list(features),
                 "engine_version": result.engine_version,
                 "metrics_version": result.metrics_version,
                 "config": result.config.to_dict(),
@@ -118,6 +121,7 @@ class ExperimentStore:
 
 
 def _run_id(result: BacktestResult, dataset: DatasetManifest) -> str:
+    features = resolve_feature_lineage(result.strategy_name, result.strategy_parameters)
     identity = {
         "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
         "dataset_version": dataset.dataset_version,
@@ -128,6 +132,7 @@ def _run_id(result: BacktestResult, dataset: DatasetManifest) -> str:
         "strategy_name": result.strategy_name,
         "strategy_version": result.strategy_version,
         "strategy_parameters": result.strategy_parameters,
+        "features": list(features),
         "engine_version": result.engine_version,
         "metrics_version": result.metrics_version,
         "config": result.config.to_dict(),
@@ -199,6 +204,15 @@ def _markdown_report(
 ) -> str:
     metrics = result.metrics
     sharpe = "N/A" if metrics.sharpe_ratio is None else f"{metrics.sharpe_ratio:.6f}"
+    features = resolve_feature_lineage(result.strategy_name, result.strategy_parameters)
+    feature_lines = (
+        "\n".join(
+            f"- `{item['instance']}` → `{item['feature_id']}` `{item['version']}` "
+            f"with `{json.dumps(item['parameters'], sort_keys=True)}`"
+            for item in features
+        )
+        or "- No registered derived features."
+    )
     return f"""# QuantOS Backtest Report
 
 ## Run
@@ -218,6 +232,10 @@ def _markdown_report(
 ```json
 {json.dumps(result.strategy_parameters, indent=2, sort_keys=True)}
 ```
+
+## Feature lineage
+
+{feature_lines}
 
 ## Assumptions
 

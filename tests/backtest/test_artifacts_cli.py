@@ -56,7 +56,8 @@ def test_experiment_store_is_content_addressed_and_reusable(
     }
     run = json.loads((first.path / "run.json").read_text())
     assert run["dataset"]["version"] == dataset.manifest.dataset_version
-    assert run["artifact_schema_version"] == "experiment-artifacts.v2"
+    assert run["artifact_schema_version"] == "experiment-artifacts.v3"
+    assert run["features"] == []
     assert run["dataset"]["data_start"] == "2024-01-01T00:00:00Z"
     assert run["status"] == "completed"
     assert len((first.path / "bars.csv").read_text().splitlines()) == 5
@@ -102,6 +103,22 @@ def test_root_cli_runs_backtest_and_writes_artifacts(
     assert exit_code == 0
     assert payload["run_id"]
     assert (output_root / payload["run_id"] / "report.md").is_file()
+    run = json.loads((output_root / payload["run_id"] / "run.json").read_text())
+    assert [item["instance"] for item in run["features"]] == ["fast_ema", "slow_ema"]
+    assert all(len(item["definition_sha256"]) == 64 for item in run["features"])
+    assert "Feature lineage" in (output_root / payload["run_id"] / "report.md").read_text()
+
+
+def test_root_cli_lists_versioned_feature_registry(capsys) -> None:
+    assert main(["backtest", "features"]) == 0
+    registry = json.loads(capsys.readouterr().out)
+    assert registry["schema_version"] == "feature-registry.v1"
+    assert {item["feature_id"] for item in registry["features"]} == {
+        "ema",
+        "atr",
+        "prior-high-channel",
+        "prior-low-channel",
+    }
 
 
 def test_root_cli_preserves_data_commands(capsys, tmp_path, price_klines) -> None:

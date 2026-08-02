@@ -15,8 +15,9 @@ selection → untouched holdout and cost-stress review. Buy and Hold plus the
 first formal Donchian ATR strategy study are now implemented. The current
 increment includes a deterministic daily market-intelligence contract, bounded
 public read-only collectors, empirical calibration history, read-only API, and
-bilingual homepage view. Automated daily publication, feature lineage,
-derivatives datasets, and strategy-specific robustness adapters remain.
+bilingual homepage view. New Runs now resolve built-in EMA, Donchian, and ATR
+definitions from a versioned feature registry into their content identity.
+Derivatives datasets and strategy-specific robustness adapters remain.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
 and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync

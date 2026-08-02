@@ -52,6 +52,7 @@ flowchart LR
     R --> Q["DuckDB Query Layer"]
     B --> Q
     B --> X["Experiment Artifacts & Reports"]
+    F["Versioned Feature Registry"] --> B
     R --> I["Daily Intelligence & Sentiment"]
     R --> C["Guarded Candidate Records"]
     I --> API
@@ -136,6 +137,12 @@ promotion proposal: walk-forward consistency, neighboring-parameter
 sensitivity, doubled-cost retention, and aligned multi-market results. Each
 gate links ordinary immutable Run IDs; passing never changes lifecycle state by
 itself. See [ADR-0017](docs/adr/0017-deterministic-robustness-gates.md).
+
+Before artifact publication, built-in strategy parameters resolve through the
+feature registry into concrete EMA, prior-bar channel, and ATR instances. Their
+definition hashes, exact inputs, causality policy, warmup, and parameter
+bindings participate in new Run identities. See
+[ADR-0022](docs/adr/0022-version-strategy-feature-lineage.md).
 
 Candidate state advances through a separate guarded flow:
 
