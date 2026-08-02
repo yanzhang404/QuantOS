@@ -147,6 +147,17 @@ test("connects the parameter lab to durable backtest tasks", async () => {
   assert.doesNotMatch(lab, /const parameters: Record/);
 });
 
+test("shows resolved feature lineage for a loaded Run", async () => {
+  const [api, workbench] = await Promise.all([
+    readFile(new URL("../app/backtest-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/strategy-workbench.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(api, /definition_sha256/);
+  assert.match(api, /uses_current_closed_bar/);
+  assert.match(workbench, /selectedExperiment\.features/);
+  assert.match(workbench, /已解析特征/);
+});
+
 test("manages immutable Runs with filters, archives, and four-way comparison", async () => {
   const [library, api, page] = await Promise.all([
     readFile(new URL("../app/run-library.tsx", import.meta.url), "utf8"),
@@ -227,6 +238,17 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
   assert.match(page, /marketDataCoverage\.missing_interval_count/);
   assert.match(page, /getCoverageMember\("BTCUSDT", interval\)/);
   assert.doesNotMatch(page, /interval === "4h" \? t\.verified : "Pending"/);
+});
+
+test("shows the versioned feature registry in the Data view", async () => {
+  const [page, registry] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/feature-registry.v1.json", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /featureRegistry\.features\.map/);
+  assert.match(page, /派生特征也有独立版本/);
+  assert.match(registry, /prior-high-channel/);
+  assert.match(registry, /uses_current_closed_bar/);
 });
 
 test("uses a compact light workspace without the known heading overlap", async () => {

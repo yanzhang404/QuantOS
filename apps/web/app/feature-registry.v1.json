@@ -1,0 +1,56 @@
+{
+  "features": [
+    {
+      "definition_sha256": "38762155c9783bd2b1d752d7533a25942c7b88fc1fb34991cc85b33cc34757f8",
+      "description": "Simple moving average of true range through the current closed bar.",
+      "feature_id": "atr",
+      "implementation": "quantos_backtest.strategies.DonchianAtrStrategy._true_range",
+      "inputs": ["high", "low", "close"],
+      "uses_current_closed_bar": true,
+      "version": "1.0.0",
+      "warmup_parameter": "period"
+    },
+    {
+      "definition_sha256": "99d2b6d69a0ccfc4cc608b62788eeb315734b4fd2107b4879f713be2eb679f83",
+      "description": "Exponentially weighted mean of current and prior closed-bar prices.",
+      "feature_id": "ema",
+      "implementation": "quantos_backtest.strategies.EmaCrossStrategy._update",
+      "inputs": ["close"],
+      "uses_current_closed_bar": true,
+      "version": "1.0.0",
+      "warmup_parameter": "period"
+    },
+    {
+      "definition_sha256": "30afd962bddb743bfb093ec206ec9081c5d0d2d37a42fb7f8b7aff9c2f23eca3",
+      "description": "Maximum high over prior closed bars, excluding the current bar.",
+      "feature_id": "prior-high-channel",
+      "implementation": "quantos_backtest.strategies.DonchianAtrStrategy.on_bar",
+      "inputs": ["high"],
+      "uses_current_closed_bar": false,
+      "version": "1.0.0",
+      "warmup_parameter": "period"
+    },
+    {
+      "definition_sha256": "6e834bf51243c04fe2e6d17651ee96da5e8fa851386eab985d4212e4e24bf26b",
+      "description": "Minimum low over prior closed bars, excluding the current bar.",
+      "feature_id": "prior-low-channel",
+      "implementation": "quantos_backtest.strategies.DonchianAtrStrategy.on_bar",
+      "inputs": ["low"],
+      "uses_current_closed_bar": false,
+      "version": "1.0.0",
+      "warmup_parameter": "period"
+    }
+  ],
+  "schema_version": "feature-registry.v1",
+  "strategy_bindings": {
+    "donchian-atr": [
+      {"feature_id": "prior-high-channel", "instance": "entry_channel", "strategy_parameter": "entry_period"},
+      {"feature_id": "prior-low-channel", "instance": "exit_channel", "strategy_parameter": "exit_period"},
+      {"feature_id": "atr", "instance": "atr", "strategy_parameter": "atr_period"}
+    ],
+    "ema-cross": [
+      {"feature_id": "ema", "instance": "fast_ema", "strategy_parameter": "fast_period"},
+      {"feature_id": "ema", "instance": "slow_ema", "strategy_parameter": "slow_period"}
+    ]
+  }
+}

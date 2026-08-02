@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -27,6 +28,9 @@ func TestExperimentStoreDerivesNormalizedVisualization(t *testing.T) {
 	}
 	if len(experiment.Bars) != 3 || experiment.Bars[2].Close != 95 {
 		t.Fatalf("bars = %#v", experiment.Bars)
+	}
+	if len(experiment.Features) != 1 || experiment.Features[0].Instance != "entry_channel" {
+		t.Fatalf("features = %#v", experiment.Features)
 	}
 	if difference := math.Abs(experiment.Equity[1].Drawdown - (-0.1)); difference > 1e-12 {
 		t.Fatalf("drawdown = %f", experiment.Equity[1].Drawdown)
@@ -218,9 +222,10 @@ func writeExperimentFixture(t *testing.T, root, runID string) {
 		t.Fatal(err)
 	}
 	run := map[string]any{
-		"run_id":     runID,
-		"status":     "completed",
-		"created_at": time.Date(2026, 7, 30, 1, 2, 3, 0, time.UTC),
+		"artifact_schema_version": "experiment-artifacts.v3",
+		"run_id":                  runID,
+		"status":                  "completed",
+		"created_at":              time.Date(2026, 7, 30, 1, 2, 3, 0, time.UTC),
 		"dataset": map[string]any{
 			"version":        "024f23d9a629502e",
 			"content_sha256": "024f23d9a629502eabf7c8186735938cb585ab76286b072e20ded76c1b4bc7b3",
@@ -237,6 +242,16 @@ func writeExperimentFixture(t *testing.T, root, runID string) {
 				"target_annual_volatility": "0.20",
 				"max_exposure":             "1",
 				"rebalance_threshold":      "0.05",
+			},
+		},
+		"features": []map[string]any{
+			{
+				"feature_id": "prior-high-channel", "instance": "entry_channel",
+				"version": "1.0.0", "definition_sha256": strings.Repeat("a", 64),
+				"implementation": "quantos_backtest.strategies.DonchianAtrStrategy.on_bar",
+				"inputs":         []string{"high"}, "parameters": map[string]int{"period": 55},
+				"strategy_parameter": "entry_period", "warmup_bars": 55,
+				"uses_current_closed_bar": false,
 			},
 		},
 		"config": map[string]any{

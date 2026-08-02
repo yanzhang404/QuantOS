@@ -66,6 +66,14 @@ default to keep the first viewport focused.
 The UI never calculates the index itself. The deterministic methodology and
 input provenance remain owned by the versioned Agent contract.
 
+## Feature lineage
+
+The Data view shows the versioned EMA, ATR, and prior-bar channel definitions,
+including input columns, current-bar policy, semantic version, and shortened
+definition identity. A test pins this read model to the Python registry. When a
+new v3 Run is loaded from the API, the Strategies view also shows its concrete
+feature instances and warmup bars beside the exact parameters.
+
 ## Backtest Lab
 
 The workspace now consumes the versioned local Task API for manual historical

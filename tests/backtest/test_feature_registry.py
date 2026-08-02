@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from quantos_backtest.features import feature_registry, resolve_feature_lineage
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_registry_hashes_are_deterministic_and_bounded() -> None:
@@ -32,3 +37,8 @@ def test_unknown_strategy_has_no_claimed_lineage_and_invalid_binding_fails() -> 
     assert resolve_feature_lineage("scripted-test-strategy", {}) == ()
     with pytest.raises(ValueError, match="fast_period"):
         resolve_feature_lineage("ema-cross", {"fast_period": 0, "slow_period": 50})
+
+
+def test_web_feature_registry_read_model_matches_authoritative_contract() -> None:
+    path = ROOT / "apps" / "web" / "app" / "feature-registry.v1.json"
+    assert json.loads(path.read_text(encoding="utf-8")) == feature_registry()

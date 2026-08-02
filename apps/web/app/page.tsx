@@ -19,6 +19,7 @@ import {
 import { StrategyWorkbench } from "./strategy-workbench";
 import { RunLibrary } from "./run-library";
 import { CandidateQueue } from "./candidate-queue";
+import featureRegistry from "./feature-registry.v1.json";
 
 type Locale = "en" | "zh";
 type WorkspaceView = "overview" | "strategies" | "runs" | "data";
@@ -61,6 +62,11 @@ const copy = {
     committedReview: "Open the original committed research review",
     dataIntro:
       "Inspect exactly which immutable market data supports the displayed evidence.",
+    featureRegistry: "Feature registry",
+    featureRegistryTitle: "Derived inputs are versioned, too.",
+    includesCurrent: "current closed bar included",
+    priorOnly: "prior closed bars only",
+    inputColumns: "inputs",
     researchMode: "Research mode",
     liveDisabled: "Live trading disabled",
     strategyReview: "Strategy review / 001",
@@ -185,6 +191,11 @@ const copy = {
     runsIntro: "每个结果都关联到确切的数据集、参数、成本和 Run ID。",
     committedReview: "展开原始研究评审",
     dataIntro: "查看当前证据究竟使用了哪些不可变市场数据。",
+    featureRegistry: "特征注册表",
+    featureRegistryTitle: "派生特征也有独立版本。",
+    includesCurrent: "包含当前已收盘 K 线",
+    priorOnly: "仅使用此前已收盘 K 线",
+    inputColumns: "输入列",
     researchMode: "研究模式",
     liveDisabled: "实盘交易已禁用",
     strategyReview: "策略评审 / 001",
@@ -684,6 +695,33 @@ export default function Home() {
                   </div>
                 </dl>
                 <p>{t.datasetNote}</p>
+              </article>
+              <article className="panel feature-registry">
+                <div className="panel-heading">
+                  <div>
+                    <p className="eyebrow">{t.featureRegistry}</p>
+                    <h3>{t.featureRegistryTitle}</h3>
+                  </div>
+                  <span className="verified">{featureRegistry.schema_version}</span>
+                </div>
+                <div className="feature-grid">
+                  {featureRegistry.features.map((feature) => (
+                    <div key={feature.feature_id}>
+                      <header>
+                        <strong>{feature.feature_id}</strong>
+                        <code>v{feature.version}</code>
+                      </header>
+                      <p>{feature.description}</p>
+                      <span>
+                        {t.inputColumns}: {feature.inputs.join(" · ")}
+                      </span>
+                      <small>
+                        {feature.uses_current_closed_bar ? t.includesCurrent : t.priorOnly}
+                      </small>
+                      <code>{feature.definition_sha256.slice(0, 12)}…</code>
+                    </div>
+                  ))}
+                </div>
               </article>
             </section>
           </>

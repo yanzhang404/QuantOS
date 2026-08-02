@@ -93,6 +93,7 @@ const copy = {
     source: "Immutable source",
     manualResult: "Manual backtest result",
     parameters: "Parameters",
+    features: "Resolved features",
     library: "Strategy library",
     categories: {
       trend: "Trend following",
@@ -161,6 +162,7 @@ const copy = {
     source: "不可变数据源",
     manualResult: "手动回测结果",
     parameters: "参数",
+    features: "已解析特征",
     library: "策略库",
     categories: {
       trend: "趋势策略",
@@ -472,6 +474,14 @@ export function StrategyWorkbench({
               .map(([key, value]) => `${key}=${value}`)
               .join(" · ")}
           </p>
+          {selectedExperiment.features.length > 0 ? (
+            <p>
+              <strong>{t.features}</strong>{" "}
+              {selectedExperiment.features
+                .map((feature) => `${feature.instance}=${feature.warmup_bars}`)
+                .join(" · ")}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

@@ -59,6 +59,18 @@ export type ExperimentVisualization = {
   created_at: string;
   dataset: BacktestSubmission["dataset"];
   strategy: BacktestSubmission["strategy"];
+  features: Array<{
+    feature_id: string;
+    instance: string;
+    version: string;
+    definition_sha256: string;
+    implementation: string;
+    inputs: string[];
+    parameters: Record<string, number>;
+    strategy_parameter: string;
+    warmup_bars: number;
+    uses_current_closed_bar: boolean;
+  }>;
   config: BacktestSubmission["config"];
   engine_version: string;
   metrics_version: string;
@@ -98,7 +110,7 @@ export type ExperimentVisualization = {
 
 export type ExperimentSummary = Omit<
   ExperimentVisualization,
-  "bars" | "equity" | "fills"
+  "bars" | "equity" | "fills" | "features"
 > & {
   archived_at: string | null;
 };

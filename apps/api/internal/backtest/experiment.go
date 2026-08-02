@@ -68,6 +68,7 @@ type ExperimentVisualization struct {
 	CreatedAt      time.Time               `json:"created_at"`
 	Dataset        DatasetRef              `json:"dataset"`
 	Strategy       StrategyRef             `json:"strategy"`
+	Features       []FeatureLineage        `json:"features"`
 	Config         Config                  `json:"config"`
 	EngineVersion  string                  `json:"engine_version"`
 	MetricsVersion string                  `json:"metrics_version"`
@@ -75,6 +76,19 @@ type ExperimentVisualization struct {
 	Bars           []ExperimentBar         `json:"bars"`
 	Equity         []ExperimentEquityPoint `json:"equity"`
 	Fills          []ExperimentFill        `json:"fills"`
+}
+
+type FeatureLineage struct {
+	FeatureID            string         `json:"feature_id"`
+	Instance             string         `json:"instance"`
+	Version              string         `json:"version"`
+	DefinitionSHA256     string         `json:"definition_sha256"`
+	Implementation       string         `json:"implementation"`
+	Inputs               []string       `json:"inputs"`
+	Parameters           map[string]int `json:"parameters"`
+	StrategyParameter    string         `json:"strategy_parameter"`
+	WarmupBars           int            `json:"warmup_bars"`
+	UsesCurrentClosedBar bool           `json:"uses_current_closed_bar"`
 }
 
 type ExperimentSummary struct {
@@ -99,15 +113,17 @@ type ExperimentFilters struct {
 }
 
 type experimentArtifact struct {
-	RunID          string            `json:"run_id"`
-	Status         string            `json:"status"`
-	CreatedAt      time.Time         `json:"created_at"`
-	Dataset        DatasetRef        `json:"dataset"`
-	Strategy       StrategyRef       `json:"strategy"`
-	Config         Config            `json:"config"`
-	EngineVersion  string            `json:"engine_version"`
-	MetricsVersion string            `json:"metrics_version"`
-	Metrics        ExperimentMetrics `json:"metrics"`
+	ArtifactSchemaVersion string            `json:"artifact_schema_version"`
+	RunID                 string            `json:"run_id"`
+	Status                string            `json:"status"`
+	CreatedAt             time.Time         `json:"created_at"`
+	Dataset               DatasetRef        `json:"dataset"`
+	Strategy              StrategyRef       `json:"strategy"`
+	Features              []FeatureLineage  `json:"features"`
+	Config                Config            `json:"config"`
+	EngineVersion         string            `json:"engine_version"`
+	MetricsVersion        string            `json:"metrics_version"`
+	Metrics               ExperimentMetrics `json:"metrics"`
 }
 
 type ExperimentStore struct {
@@ -122,6 +138,10 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 	artifact, err := s.readArtifact(runID)
 	if err != nil {
 		return ExperimentVisualization{}, err
+	}
+	features := artifact.Features
+	if features == nil {
+		features = []FeatureLineage{}
 	}
 	runPath := filepath.Join(s.root, runID, "run.json")
 	directory := filepath.Dir(runPath)
@@ -150,6 +170,7 @@ func (s *ExperimentStore) Get(runID string) (ExperimentVisualization, error) {
 		CreatedAt:      artifact.CreatedAt,
 		Dataset:        artifact.Dataset,
 		Strategy:       artifact.Strategy,
+		Features:       features,
 		Config:         artifact.Config,
 		EngineVersion:  artifact.EngineVersion,
 		MetricsVersion: artifact.MetricsVersion,
@@ -235,6 +256,7 @@ func (s *ExperimentStore) readArtifact(runID string) (experimentArtifact, error)
 		artifact.CreatedAt.IsZero() ||
 		artifact.Dataset.validate() != nil ||
 		artifact.Strategy.validate() != nil ||
+		validateFeatureLineage(artifact.Features) != nil ||
 		artifact.Config.validate() != nil ||
 		!semanticVersionPattern.MatchString(artifact.EngineVersion) ||
 		!semanticVersionPattern.MatchString(artifact.MetricsVersion) ||
@@ -242,6 +264,37 @@ func (s *ExperimentStore) readArtifact(runID string) (experimentArtifact, error)
 		return experimentArtifact{}, fmt.Errorf("%w: run metadata", ErrExperimentInvalid)
 	}
 	return artifact, nil
+}
+
+func validateFeatureLineage(features []FeatureLineage) error {
+	if len(features) > 8 {
+		return errors.New("too many feature lineage records")
+	}
+	seen := make(map[string]struct{}, len(features))
+	allowedInputs := map[string]bool{"open": true, "high": true, "low": true, "close": true, "volume": true}
+	for _, feature := range features {
+		if feature.FeatureID == "" || feature.Instance == "" || feature.Implementation == "" ||
+			feature.StrategyParameter == "" || !semanticVersionPattern.MatchString(feature.Version) ||
+			len(feature.DefinitionSHA256) != 64 || len(feature.Inputs) < 1 || len(feature.Inputs) > 8 ||
+			feature.WarmupBars < 1 || feature.Parameters["period"] != feature.WarmupBars {
+			return errors.New("invalid feature lineage")
+		}
+		if _, duplicate := seen[feature.Instance]; duplicate {
+			return errors.New("duplicate feature lineage instance")
+		}
+		seen[feature.Instance] = struct{}{}
+		for _, input := range feature.Inputs {
+			if !allowedInputs[input] {
+				return errors.New("invalid feature lineage input")
+			}
+		}
+		for _, character := range feature.DefinitionSHA256 {
+			if !strings.ContainsRune("0123456789abcdef", character) {
+				return errors.New("invalid feature lineage hash")
+			}
+		}
+	}
+	return nil
 }
 
 func readExperimentBars(path string) ([]ExperimentBar, error) {

@@ -76,3 +76,6 @@ reads only validated `run.json` metadata and is bounded to 200 records. Exact
 `symbol`, `interval`, and `strategy` filters are available;
 `archived=exclude|include|only` defaults to `exclude`. Archive timestamps live
 under the API state root and never modify or delete experiment artifacts.
+For new v3 artifacts, Experiment detail also validates and returns each resolved
+feature instance. Older v2 Run detail remains readable with an empty feature
+lineage array.
