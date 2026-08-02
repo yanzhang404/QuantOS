@@ -1,103 +1,103 @@
 {
-  "bundle_version": "47a8b29be444e2ba",
+  "bundle_version": "c165549a7700426a",
   "market_type": "spot",
   "member_count": 10,
   "members": [
     {
-      "content_sha256": "388072a44861aadb0ef32fb3ac43464f8716d19fb4e5f6919bf62135ba0f22dd",
-      "dataset_version": "388072a44861aadb",
+      "content_sha256": "12055d3a71d24131067dcc246abd659a2e264d221d99e685520d1591cdbb134e",
+      "dataset_version": "12055d3a71d24131",
       "interval": "5m",
       "missing_interval_count": 213,
-      "row_count": 586731,
+      "row_count": 587019,
       "status": "verified",
       "symbol": "BTCUSDT"
     },
     {
-      "content_sha256": "748ff5346e3cf38a54b1a1cfe2ac7bb6db78be836e2a6f1d2fa308da0aa3a646",
-      "dataset_version": "748ff5346e3cf38a",
+      "content_sha256": "f34ff574a7c88974fe756e54025124178772ffd7816016c8e485ce6a435fd13e",
+      "dataset_version": "f34ff574a7c88974",
       "interval": "15m",
       "missing_interval_count": 70,
-      "row_count": 195578,
+      "row_count": 195674,
       "status": "verified",
       "symbol": "BTCUSDT"
     },
     {
-      "content_sha256": "444a02e51134c59d2f4cddc1319315a30433405adb1153aee19ac47b7f1ed5bc",
-      "dataset_version": "444a02e51134c59d",
+      "content_sha256": "66502c98b2f0fab36710fde18dbef16af586dd60fcd981a34bc614a67ec86d06",
+      "dataset_version": "66502c98b2f0fab3",
       "interval": "1h",
       "missing_interval_count": 14,
-      "row_count": 48898,
+      "row_count": 48922,
       "status": "verified",
       "symbol": "BTCUSDT"
     },
     {
-      "content_sha256": "a696344f75a0851741c955bcbd9f6942c8fece176949e86e70d2e04a42c1815a",
-      "dataset_version": "a696344f75a08517",
+      "content_sha256": "367267df8ba2362f454382a832cc60d791999c2ac0729dbf35f2d45a7369c642",
+      "dataset_version": "367267df8ba2362f",
       "interval": "4h",
       "missing_interval_count": 0,
-      "row_count": 12228,
+      "row_count": 12234,
       "status": "verified",
       "symbol": "BTCUSDT"
     },
     {
-      "content_sha256": "30015f093a330f1652525c9673bfb5831b7be78a9ed1907c29af804a94401c95",
-      "dataset_version": "30015f093a330f16",
+      "content_sha256": "670127fc91fcd8234025d64357b0fcde4257a993394fa4aa78793777094a91a4",
+      "dataset_version": "670127fc91fcd823",
       "interval": "1d",
       "missing_interval_count": 0,
-      "row_count": 2038,
+      "row_count": 2039,
       "status": "verified",
       "symbol": "BTCUSDT"
     },
     {
-      "content_sha256": "51b62bdbe9f167e9be4c3ab2153353d609d937b27b5c3a1eb254f0010205866c",
-      "dataset_version": "51b62bdbe9f167e9",
+      "content_sha256": "dc54ff29eaf735f7f52c25098ecf9bcd5cd59bf5f57e4ffb8a747283c5891e7c",
+      "dataset_version": "dc54ff29eaf735f7",
       "interval": "5m",
       "missing_interval_count": 213,
-      "row_count": 586731,
+      "row_count": 587019,
       "status": "verified",
       "symbol": "ETHUSDT"
     },
     {
-      "content_sha256": "d3931e1d9f346ea86e718fd9e587313b6c180c323225cb41dc0feeeb65cd7e14",
-      "dataset_version": "d3931e1d9f346ea8",
+      "content_sha256": "cc5fadb9b76ed41606fb7a192d2f969a0225b770b3eed012515face94216f710",
+      "dataset_version": "cc5fadb9b76ed416",
       "interval": "15m",
       "missing_interval_count": 70,
-      "row_count": 195578,
+      "row_count": 195674,
       "status": "verified",
       "symbol": "ETHUSDT"
     },
     {
-      "content_sha256": "92f042d5fcbf459c0a8f18f609e1e5dbdc9f308f9d47a6f2481c0d3602e78fd7",
-      "dataset_version": "92f042d5fcbf459c",
+      "content_sha256": "328d4f728533792cb9188c99ea9d3c6bb9647b0bbadf7071cecf0d4041eed19d",
+      "dataset_version": "328d4f728533792c",
       "interval": "1h",
       "missing_interval_count": 14,
-      "row_count": 48898,
+      "row_count": 48922,
       "status": "verified",
       "symbol": "ETHUSDT"
     },
     {
-      "content_sha256": "8a0256c3961c86727d1095736daf12945e7753721b021194a2672a279dc1601c",
-      "dataset_version": "8a0256c3961c8672",
+      "content_sha256": "969981904a5315c21d3373db4195973772f5ac3df780c376aa84164adbdc856f",
+      "dataset_version": "969981904a5315c2",
       "interval": "4h",
       "missing_interval_count": 0,
-      "row_count": 12228,
+      "row_count": 12234,
       "status": "verified",
       "symbol": "ETHUSDT"
     },
     {
-      "content_sha256": "ecebf2b06eba35c57282511a0ba4e0de7bb0476d9504767fadf85b877ef0e9bc",
-      "dataset_version": "ecebf2b06eba35c5",
+      "content_sha256": "2180254ccf9e1d1cacb96f9f01d82f339846c32059351b125b09c66677cde824",
+      "dataset_version": "2180254ccf9e1d1c",
       "interval": "1d",
       "missing_interval_count": 0,
-      "row_count": 2038,
+      "row_count": 2039,
       "status": "verified",
       "symbol": "ETHUSDT"
     }
   ],
   "missing_interval_count": 594,
-  "requested_end": "2026-08-01T00:00:00Z",
+  "requested_end": "2026-08-02T00:00:00Z",
   "requested_start": "2021-01-01T00:00:00Z",
   "schema_version": "dataset-coverage.v1",
   "source": "https://data-api.binance.vision/api/v3/klines",
-  "total_row_count": 1690946
+  "total_row_count": 1691776
 }
