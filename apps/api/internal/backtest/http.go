@@ -12,6 +12,7 @@ import (
 type HTTPHandler struct {
 	orchestrator  *Orchestrator
 	experiments   *ExperimentStore
+	features      *FeatureDatasetStore
 	archives      *ExperimentArchiveStore
 	allowedOrigin string
 	mux           *http.ServeMux
@@ -20,6 +21,7 @@ type HTTPHandler struct {
 func NewHTTPHandler(
 	orchestrator *Orchestrator,
 	experiments *ExperimentStore,
+	features *FeatureDatasetStore,
 	allowedOrigin string,
 	archives ...*ExperimentArchiveStore,
 ) http.Handler {
@@ -30,12 +32,14 @@ func NewHTTPHandler(
 	handler := &HTTPHandler{
 		orchestrator:  orchestrator,
 		experiments:   experiments,
+		features:      features,
 		archives:      archiveStore,
 		allowedOrigin: allowedOrigin,
 		mux:           http.NewServeMux(),
 	}
 	handler.mux.HandleFunc("GET /healthz", handler.health)
 	handler.mux.HandleFunc("GET /api/v1/strategies", handler.strategies)
+	handler.mux.HandleFunc("GET /api/v1/feature-datasets", handler.featureDatasets)
 	handler.mux.HandleFunc("POST /api/v1/backtests", handler.submit)
 	handler.mux.HandleFunc("GET /api/v1/tasks", handler.list)
 	handler.mux.HandleFunc("GET /api/v1/tasks/{task_id}", handler.get)
@@ -44,6 +48,27 @@ func NewHTTPHandler(
 	handler.mux.HandleFunc("PUT /api/v1/experiment-archives/{run_id}", handler.archiveExperiment)
 	handler.mux.HandleFunc("DELETE /api/v1/experiment-archives/{run_id}", handler.restoreExperiment)
 	return handler
+}
+
+func (h *HTTPHandler) featureDatasets(response http.ResponseWriter, request *http.Request) {
+	query := request.URL.Query()
+	spot := DatasetRef{
+		Version: query.Get("spot_dataset_version"), ContentSHA256: query.Get("spot_content_sha256"),
+		Symbol: query.Get("symbol"), Interval: query.Get("interval"),
+	}
+	series := query.Get("series")
+	if h.features == nil || series != "funding-rate" || spot.validate() != nil {
+		writeAPIError(response, http.StatusUnprocessableEntity, "invalid_feature_query", "Invalid feature dataset query.")
+		return
+	}
+	items, err := h.features.List(series, spot)
+	if err != nil {
+		writeAPIError(response, http.StatusInternalServerError, "feature_catalog_failed", "Feature dataset catalog failed.")
+		return
+	}
+	writeJSON(response, http.StatusOK, map[string]any{
+		"schema_version": SchemaVersion, "feature_datasets": items,
+	})
 }
 
 func (h *HTTPHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {

@@ -89,7 +89,7 @@ export function CandidateQueue({ locale }: { locale: Locale }) {
     <article className="panel overview-status-card candidate-card">
       <p className="eyebrow">{t.eyebrow}</p>
       <div className="candidate-summary">
-        <strong>{connected === undefined ? "—" : String(records.length).padStart(2, "0")}</strong>
+        <strong>{connected === undefined ? "-" : String(records.length).padStart(2, "0")}</strong>
         <div>
           <span>{latest ? t.latest : t.empty}</span>
           {latest ? <b>{latest.proposal.title}</b> : null}

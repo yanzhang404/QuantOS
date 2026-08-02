@@ -43,14 +43,14 @@ const copy = {
       data: "Data & reproducibility",
     },
     overviewIntro:
-      "Start with market context and the latest reproducible evidence. Sentiment is context—not a trading signal.",
+      "Start with market context and the latest reproducible evidence. Sentiment is context, not a trading signal.",
     latestEvidence: "Latest strategy evidence",
     openStrategy: "Open strategy workspace",
     candidateQueue: "Candidate queue",
     candidateNote: "Agent proposals require tests, robustness review, and owner approval.",
     datasetHealth: "Dataset coverage",
     datasetNote:
-      "BTC/ETH 5m–1d are verified through the latest complete UTC day. Source maintenance gaps remain visible and are never filled with synthetic bars.",
+      "BTC/ETH 5m-1d are verified through the latest complete UTC day. Source maintenance gaps remain visible and are never filled with synthetic bars.",
     coverageWindow: "Verified coverage window",
     bundle: "Dataset bundle",
     barsUnit: "bars",
@@ -79,7 +79,7 @@ const copy = {
     unproven: "unproven",
     modest: "modest",
     hero:
-      "The strategy preserved substantially more capital than passive exposure. It remains a research candidate—not a production signal.",
+      "The strategy preserved substantially more capital than passive exposure. It remains a research candidate, not a production signal.",
     tags: ["Long only", "Next-open fills", "20% vol target"],
     filters: "Research filters",
     market: "Market",

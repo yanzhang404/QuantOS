@@ -149,6 +149,10 @@ The Go boundary resolves that version under the trusted data root, verifies its
 causal manifest against the exact Spot input, and only then invokes Python.
 Client-supplied feature paths are not part of the API. See
 [ADR-0026](docs/adr/0026-resolve-external-feature-versions-at-api-boundary.md).
+The read-only feature catalog is filtered by the exact Spot identity and returns
+only manifests that the worker can resolve, so availability is known before a
+Run is submitted. See
+[ADR-0027](docs/adr/0027-discover-compatible-feature-datasets.md).
 
 Each strategy owns separate implementation code and a versioned manifest
 describing its category, lifecycle stage, supported intervals, and editable

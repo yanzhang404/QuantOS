@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "QuantOS — Strategy Research Workspace";
+  const title = "QuantOS | Strategy Research Workspace";
   const description =
     "Inspect reproducible crypto strategy evidence, costs, drawdowns, and research findings.";
 

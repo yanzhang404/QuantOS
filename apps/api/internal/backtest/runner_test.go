@@ -54,13 +54,17 @@ func TestCommandRunnerResolvesMatchingFundingFeatureDataset(t *testing.T) {
 	manifest := map[string]any{
 		"dataset_version": version, "schema_version": "aligned-derivatives.v1",
 		"alignment_policy_version": "asof-closed-bar.v1", "series": "funding-rate",
-		"symbol": "BTCUSDT", "spot_interval": "4h",
-		"spot_dataset_version": request.Dataset.Version,
-		"spot_content_sha256":  request.Dataset.ContentSHA256,
-		"content_sha256":       featureHash,
-		"file_sha256":          request.Dataset.ContentSHA256,
-		"row_count":            3, "matched_count": 2, "stale_count": 1,
+		"exchange": "binance", "symbol": "BTCUSDT", "spot_interval": "4h",
+		"spot_dataset_version":       request.Dataset.Version,
+		"spot_content_sha256":        request.Dataset.ContentSHA256,
+		"derivative_dataset_version": "aaaabbbbccccdddd",
+		"derivative_content_sha256":  featureHash,
+		"requested_start":            "2026-01-01T00:00:00Z", "requested_end": "2026-02-01T00:00:00Z",
+		"content_sha256": featureHash,
+		"file_sha256":    request.Dataset.ContentSHA256,
+		"row_count":      3, "matched_count": 2, "stale_count": 1,
 		"no_prior_count": 0, "max_age_ms": 28800000,
+		"created_at": "2026-02-01T01:00:00Z", "producer": "quantos-market-data/0.1.0",
 	}
 	payload, _ := json.Marshal(manifest)
 	if err := os.WriteFile(filepath.Join(feature, "manifest.json"), payload, 0o600); err != nil {

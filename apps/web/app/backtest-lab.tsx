@@ -6,8 +6,10 @@ import {
   type BacktestSubmission,
   type BacktestTask,
   type ExperimentVisualization,
+  type FeatureDataset,
   getExperiment,
   getTask,
+  listCompatibleFeatureDatasets,
   listTasks,
   submitBacktest,
 } from "./backtest-api";
@@ -88,6 +90,9 @@ const copy = {
     featureVersion: "Funding feature version",
     featureVersionHint: "16-character immutable version already published on the research server.",
     invalidFeatureVersion: "Enter a 16-character lowercase feature version.",
+    featureLoading: "Finding compatible versions…",
+    featureEmpty: "No compatible funding feature is published for this Spot dataset yet.",
+    featureCoverage: "matched / stale / unavailable",
   },
   zh: {
     eyebrow: "回测实验室",
@@ -131,6 +136,9 @@ const copy = {
     featureVersion: "资金费率特征版本",
     featureVersionHint: "填写已发布到研究服务器的 16 位不可变版本号。",
     invalidFeatureVersion: "请输入 16 位小写十六进制特征版本号。",
+    featureLoading: "正在查找兼容版本…",
+    featureEmpty: "研究服务器尚未发布与当前现货数据匹配的资金费率特征。",
+    featureCoverage: "已匹配 / 过期 / 不可用",
   },
 } as const;
 
@@ -149,6 +157,8 @@ export function BacktestLab({
   const [liquidateAtEnd, setLiquidateAtEnd] = useState(true);
   const [label, setLabel] = useState("");
   const [featureDatasetVersion, setFeatureDatasetVersion] = useState("");
+  const [featureDatasets, setFeatureDatasets] = useState<FeatureDataset[]>([]);
+  const [featureLoading, setFeatureLoading] = useState(false);
   const [tasks, setTasks] = useState<BacktestTask[]>([]);
   const [experiments, setExperiments] = useState<
     Record<string, ExperimentVisualization>
@@ -198,6 +208,31 @@ export function BacktestLab({
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!definition.external_feature) {
+      setFeatureDatasets([]);
+      setFeatureDatasetVersion("");
+      setFeatureLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setFeatureLoading(true);
+    setFeatureDatasetVersion("");
+    void listCompatibleFeatureDatasets(dataset, controller.signal)
+      .then((records) => {
+        if (controller.signal.aborted) return;
+        setFeatureDatasets(records);
+        setFeatureDatasetVersion(records[0]?.dataset_version ?? "");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFeatureDatasets([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setFeatureLoading(false);
+      });
+    return () => controller.abort();
+  }, [dataset, definition.external_feature]);
 
   useEffect(() => {
     const missingRunIDs = visibleTasks
@@ -414,17 +449,32 @@ export function BacktestLab({
         {definition.external_feature ? (
           <label className="feature-version-field">
             <span>{t.featureVersion}</span>
-            <input
-              autoComplete="off"
-              maxLength={16}
-              onChange={(event) => setFeatureDatasetVersion(event.target.value.trim())}
-              pattern="[0-9a-f]{16}"
-              placeholder="0123456789abcdef"
-              spellCheck={false}
-              type="text"
+            <select
+              disabled={featureLoading || featureDatasets.length === 0}
+              onChange={(event) => setFeatureDatasetVersion(event.target.value)}
               value={featureDatasetVersion}
-            />
-            <small>{t.featureVersionHint}</small>
+            >
+              {featureLoading ? <option value="">{t.featureLoading}</option> : null}
+              {!featureLoading && featureDatasets.length === 0 ? (
+                <option value="">{t.featureEmpty}</option>
+              ) : null}
+              {featureDatasets.map((feature) => (
+                <option key={feature.dataset_version} value={feature.dataset_version}>
+                  {feature.dataset_version} · {feature.matched_count}/{feature.row_count} matched
+                </option>
+              ))}
+            </select>
+            {featureDatasetVersion ? (
+              <small>
+                {t.featureCoverage}: {featureDatasets.find((item) => item.dataset_version === featureDatasetVersion)?.matched_count ?? 0}
+                {" / "}
+                {featureDatasets.find((item) => item.dataset_version === featureDatasetVersion)?.stale_count ?? 0}
+                {" / "}
+                {featureDatasets.find((item) => item.dataset_version === featureDatasetVersion)?.no_prior_count ?? 0}
+              </small>
+            ) : (
+              <small>{featureLoading ? t.featureLoading : t.featureEmpty}</small>
+            )}
           </label>
         ) : null}
 
@@ -509,7 +559,8 @@ export function BacktestLab({
               submitting ||
               loadingExperiment ||
               activeTask?.status === "queued" ||
-              activeTask?.status === "running"
+              activeTask?.status === "running" ||
+              (definition.external_feature !== undefined && !featureDatasetVersion)
             }
             onClick={submit}
             type="button"

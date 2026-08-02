@@ -23,6 +23,7 @@ func TestHTTPBacktestSubmissionIsIdempotentAndQueryable(t *testing.T) {
 	handler := NewHTTPHandler(
 		orchestrator,
 		NewExperimentStore(t.TempDir()),
+		NewFeatureDatasetStore(t.TempDir()),
 		"http://localhost:3000",
 	)
 	payload, _ := json.Marshal(validSubmission())
@@ -75,7 +76,9 @@ func TestHTTPRejectsUnknownFieldsAndIdempotencyConflict(t *testing.T) {
 	}
 	orchestrator := NewOrchestrator(store, runner, 2, nil)
 	defer orchestrator.Close()
-	handler := NewHTTPHandler(orchestrator, NewExperimentStore(t.TempDir()), "")
+	handler := NewHTTPHandler(
+		orchestrator, NewExperimentStore(t.TempDir()), NewFeatureDatasetStore(t.TempDir()), "",
+	)
 
 	request := validSubmission()
 	payload, _ := json.Marshal(request)

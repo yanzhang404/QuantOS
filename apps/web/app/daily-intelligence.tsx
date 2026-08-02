@@ -131,8 +131,8 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
       : health.state === "failed"
         ? t.refreshFailed
         : health.stale
-          ? `${t.refreshStale} ${successDate ?? "—"}`
-          : `${t.refreshHealthy} ${successDate ?? "—"}`;
+          ? `${t.refreshStale} ${successDate ?? "-"}`
+          : `${t.refreshHealthy} ${successDate ?? "-"}`;
   const healthTone = !health
     ? "unknown"
     : health.state === "failed" || health.stale
@@ -182,7 +182,7 @@ export function DailyIntelligence({ locale }: { locale: Locale }) {
             <span>{t.previous}</span>
             <strong className={(snapshot.change ?? 0) < 0 ? "negative" : "positive"}>
               {snapshot.change === null
-                ? "—"
+                ? "-"
                 : `${snapshot.change >= 0 ? "+" : ""}${snapshot.change.toFixed(1)}`}
             </strong>
           </div>

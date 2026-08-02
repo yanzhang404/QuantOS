@@ -54,6 +54,32 @@ export type BacktestTask = {
   } | null;
 };
 
+export type FeatureDataset = {
+  dataset_version: string;
+  schema_version: "aligned-derivatives.v1";
+  alignment_policy_version: "asof-closed-bar.v1";
+  series: "funding-rate" | "open-interest";
+  exchange: string;
+  symbol: string;
+  spot_interval: string;
+  derivative_period: string | null;
+  spot_dataset_version: string;
+  spot_content_sha256: string;
+  derivative_dataset_version: string;
+  derivative_content_sha256: string;
+  requested_start: string;
+  requested_end: string;
+  max_age_ms: number;
+  row_count: number;
+  matched_count: number;
+  stale_count: number;
+  no_prior_count: number;
+  content_sha256: string;
+  created_at: string;
+  producer: string;
+  file_sha256: string;
+};
+
 export type ExperimentVisualization = {
   schema_version: "1.0";
   run_id: string;
@@ -72,31 +98,7 @@ export type ExperimentVisualization = {
     warmup_bars: number;
     uses_current_closed_bar: boolean;
   }>;
-  feature_datasets?: Array<{
-    dataset_version: string;
-    schema_version: "aligned-derivatives.v1";
-    alignment_policy_version: "asof-closed-bar.v1";
-    series: "funding-rate" | "open-interest";
-    exchange: string;
-    symbol: string;
-    spot_interval: string;
-    derivative_period: string | null;
-    spot_dataset_version: string;
-    spot_content_sha256: string;
-    derivative_dataset_version: string;
-    derivative_content_sha256: string;
-    requested_start: string;
-    requested_end: string;
-    max_age_ms: number;
-    row_count: number;
-    matched_count: number;
-    stale_count: number;
-    no_prior_count: number;
-    content_sha256: string;
-    created_at: string;
-    producer: string;
-    file_sha256: string;
-  }>;
+  feature_datasets?: FeatureDataset[];
   config: BacktestSubmission["config"];
   engine_version: string;
   metrics_version: string;
@@ -162,6 +164,11 @@ type ExperimentList = {
   experiments: ExperimentSummary[];
 };
 
+type FeatureDatasetList = {
+  schema_version: "1.0";
+  feature_datasets: FeatureDataset[];
+};
+
 export const apiBase =
   process.env.NEXT_PUBLIC_QUANTOS_API_URL ?? "http://localhost:8080";
 
@@ -208,6 +215,25 @@ export async function listTasks(
 ): Promise<BacktestTask[]> {
   const response = await requestJSON<TaskList>("/api/v1/tasks", {}, signal);
   return response.tasks;
+}
+
+export async function listCompatibleFeatureDatasets(
+  dataset: BacktestSubmission["dataset"],
+  signal?: AbortSignal,
+): Promise<FeatureDataset[]> {
+  const query = new URLSearchParams({
+    series: "funding-rate",
+    symbol: dataset.symbol,
+    interval: dataset.interval,
+    spot_dataset_version: dataset.version,
+    spot_content_sha256: dataset.content_sha256,
+  });
+  const response = await requestJSON<FeatureDatasetList>(
+    `/api/v1/feature-datasets?${query.toString()}`,
+    {},
+    signal,
+  );
+  return response.feature_datasets;
 }
 
 export async function getExperiment(

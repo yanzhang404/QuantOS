@@ -44,7 +44,7 @@ const copy = {
     trades: "Trades",
     fee: "Fees",
     selected: "selected",
-    selectHint: "Select 2–4 Runs to compare.",
+    selectHint: "Select 2-4 Runs to compare.",
     chartTitle: "Normalized portfolio return",
     chartHint:
       "Every line starts at 0%. The horizontal axis is evaluation progress; exact windows remain visible below.",
@@ -78,7 +78,7 @@ const copy = {
     trades: "交易",
     fee: "手续费",
     selected: "项已选择",
-    selectHint: "请选择 2–4 个 Run 进行对比。",
+    selectHint: "请选择 2-4 个 Run 进行对比。",
     chartTitle: "归一化组合收益",
     chartHint: "每条线都从 0% 开始；横轴表示各自评估进度，具体时间窗口列在下方。",
     progress: "评估进度",
@@ -237,7 +237,7 @@ export function RunLibrary({ locale }: { locale: Locale }) {
               </div>
               <RunMetric label={t.return} tone={run.metrics.total_return} value={formatPercent(run.metrics.total_return, localeTag)} />
               <RunMetric label={t.drawdown} tone={-run.metrics.max_drawdown} value={formatPercent(-run.metrics.max_drawdown, localeTag)} />
-              <RunMetric label={t.sharpe} value={run.metrics.sharpe_ratio === null ? "—" : run.metrics.sharpe_ratio.toFixed(2)} />
+              <RunMetric label={t.sharpe} value={run.metrics.sharpe_ratio === null ? "-" : run.metrics.sharpe_ratio.toFixed(2)} />
               <RunMetric label={t.final} value={formatMoney(run.metrics.final_equity, localeTag)} />
               <button className="run-archive-action" onClick={() => void toggleArchive(run)} type="button">
                 {run.archived_at ? t.restore : t.archive}
@@ -360,7 +360,7 @@ function formatParameters(parameters: Record<string, string | number>): string {
 function formatWindow(run: ExperimentVisualization, locale: string): string {
   const start = run.dataset.data_start ?? run.equity.at(0)?.time;
   const end = run.dataset.data_end ?? run.equity.at(-1)?.time;
-  if (!start || !end) return "—";
+  if (!start || !end) return "-";
   const formatter = new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" });
-  return `${formatter.format(new Date(start))} – ${formatter.format(new Date(end))}`;
+  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`;
 }

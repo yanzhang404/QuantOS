@@ -29,7 +29,7 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>QuantOS — Strategy Research Workspace<\/title>/i);
+  assert.match(html, /<title>QuantOS \| Strategy Research Workspace<\/title>/i);
   assert.match(html, /Donchian ATR/);
   assert.match(html, /Research mode/);
   assert.match(html, /Live trading disabled/);
@@ -165,6 +165,9 @@ test("shows resolved feature lineage for a loaded Run", async () => {
   assert.match(catalog, /asof-closed-bar\.v1/);
   assert.match(lab, /feature_dataset_version/);
   assert.match(lab, /\^\[0-9a-f\]\{16\}\$/);
+  assert.match(api, /\/api\/v1\/feature-datasets/);
+  assert.match(lab, /listCompatibleFeatureDatasets\(dataset/);
+  assert.match(lab, /feature\.matched_count/);
 });
 
 test("manages immutable Runs with filters, archives, and four-way comparison", async () => {

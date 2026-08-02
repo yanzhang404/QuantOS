@@ -156,7 +156,13 @@ func main() {
 	)
 	rootHandler.Handle(
 		"/",
-		backtest.NewHTTPHandler(orchestrator, experiments, *allowedOrigin, archives),
+		backtest.NewHTTPHandler(
+			orchestrator,
+			experiments,
+			backtest.NewFeatureDatasetStore(filepath.Clean(*dataRoot)),
+			*allowedOrigin,
+			archives,
+		),
 	)
 
 	server := &http.Server{

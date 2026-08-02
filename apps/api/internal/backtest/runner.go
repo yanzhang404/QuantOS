@@ -88,66 +88,18 @@ func (r CommandRunner) Run(ctx context.Context, request Submission) (RunResult, 
 }
 
 func (r CommandRunner) resolveFeatureDataset(request Submission) (string, error) {
-	version := *request.FeatureDatasetVersion
-	path := filepath.Join(
-		r.DataRoot,
-		"features",
-		"derivatives-aligned",
-		"series=funding-rate",
-		"symbol="+request.Dataset.Symbol,
-		"spot_interval="+request.Dataset.Interval,
-		"version="+version,
+	path, _, err := NewFeatureDatasetStore(r.DataRoot).Resolve(
+		"funding-rate", request.Dataset, *request.FeatureDatasetVersion,
 	)
-	handle, err := os.Open(filepath.Join(path, "manifest.json"))
-	if err != nil {
+	if errors.Is(err, ErrFeatureDatasetNotFound) {
 		return "", &RunError{
 			Code: "feature_dataset_not_found", Message: "The selected immutable feature dataset is unavailable.",
 			Retryable: false,
 		}
 	}
-	defer handle.Close()
-	var manifest struct {
-		DatasetVersion         string `json:"dataset_version"`
-		SchemaVersion          string `json:"schema_version"`
-		AlignmentPolicyVersion string `json:"alignment_policy_version"`
-		Series                 string `json:"series"`
-		Symbol                 string `json:"symbol"`
-		SpotInterval           string `json:"spot_interval"`
-		SpotDatasetVersion     string `json:"spot_dataset_version"`
-		SpotContentSHA256      string `json:"spot_content_sha256"`
-		ContentSHA256          string `json:"content_sha256"`
-		FileSHA256             string `json:"file_sha256"`
-		RowCount               int    `json:"row_count"`
-		MatchedCount           int    `json:"matched_count"`
-		StaleCount             int    `json:"stale_count"`
-		NoPriorCount           int    `json:"no_prior_count"`
-		MaxAgeMS               int64  `json:"max_age_ms"`
-	}
-	decoder := json.NewDecoder(io.LimitReader(handle, 1<<20))
-	if err := decoder.Decode(&manifest); err != nil ||
-		manifest.DatasetVersion != version ||
-		manifest.SchemaVersion != "aligned-derivatives.v1" ||
-		manifest.AlignmentPolicyVersion != "asof-closed-bar.v1" ||
-		manifest.Series != "funding-rate" ||
-		manifest.Symbol != request.Dataset.Symbol ||
-		manifest.SpotInterval != request.Dataset.Interval ||
-		manifest.SpotDatasetVersion != request.Dataset.Version ||
-		manifest.SpotContentSHA256 != request.Dataset.ContentSHA256 ||
-		!hex64Pattern.MatchString(manifest.ContentSHA256) ||
-		manifest.ContentSHA256[:16] != manifest.DatasetVersion ||
-		!hex64Pattern.MatchString(manifest.FileSHA256) ||
-		manifest.RowCount < 1 ||
-		manifest.MatchedCount < 0 || manifest.StaleCount < 0 || manifest.NoPriorCount < 0 ||
-		manifest.MatchedCount+manifest.StaleCount+manifest.NoPriorCount != manifest.RowCount ||
-		manifest.MaxAgeMS < 1 {
+	if err != nil {
 		return "", &RunError{
 			Code: "feature_dataset_identity_mismatch", Message: "The selected feature dataset does not match the Spot input.",
-			Retryable: false,
-		}
-	}
-	if info, err := os.Stat(filepath.Join(path, "part-00000.parquet")); err != nil || !info.Mode().IsRegular() {
-		return "", &RunError{
-			Code: "feature_dataset_invalid", Message: "The selected feature dataset payload is unavailable.",
 			Retryable: false,
 		}
 	}

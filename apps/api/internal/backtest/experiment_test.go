@@ -50,7 +50,7 @@ func TestExperimentStoreDerivesNormalizedVisualization(t *testing.T) {
 func TestExperimentHTTPReturnsDetailAndSafeErrors(t *testing.T) {
 	root := t.TempDir()
 	writeExperimentFixture(t, root, "336fe16f3f221153")
-	handler := NewHTTPHandler(nil, NewExperimentStore(root), "")
+	handler := NewHTTPHandler(nil, NewExperimentStore(root), NewFeatureDatasetStore(t.TempDir()), "")
 
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(
@@ -100,7 +100,9 @@ func TestExperimentCatalogFiltersAndArchivesWithoutChangingArtifacts(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler := NewHTTPHandler(nil, NewExperimentStore(root), "", archives)
+	handler := NewHTTPHandler(
+		nil, NewExperimentStore(root), NewFeatureDatasetStore(t.TempDir()), "", archives,
+	)
 
 	list := httptest.NewRecorder()
 	handler.ServeHTTP(list, httptest.NewRequest(
@@ -193,7 +195,9 @@ func TestExperimentCatalogRejectsInvalidFiltersAndArchiveTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler := NewHTTPHandler(nil, NewExperimentStore(root), "", archives)
+	handler := NewHTTPHandler(
+		nil, NewExperimentStore(root), NewFeatureDatasetStore(t.TempDir()), "", archives,
+	)
 	for _, target := range []string{
 		"/api/v1/experiments?interval=1minute",
 		"/api/v1/experiments?archived=yes",

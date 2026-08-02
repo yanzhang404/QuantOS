@@ -1638,13 +1638,14 @@ h1 {
   font-size: 9px;
 }
 
-.feature-version-field input {
+.feature-version-field select {
   background: transparent;
   border: 0;
   color: var(--ink);
   font-family: var(--font-plex-mono), monospace;
   font-size: 12px;
   outline: 0;
+  width: 100%;
 }
 
 .advanced-settings {
@@ -3652,5 +3653,635 @@ footer {
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * 2026 research-console refinement
+ *
+ * The workspace accumulated several local visual treatments while its product
+ * boundaries were still forming. These final semantic overrides make the four
+ * views read as one instrument without changing their information architecture.
+ */
+
+:root {
+  --ink: #18221b;
+  --muted: #59675e;
+  --subtle: #748078;
+  --background: #f4f7f4;
+  --surface: #fbfcfb;
+  --surface-raised: #eef3ef;
+  --line: #d8e0d9;
+  --line-bright: #aebfb1;
+  --lime: #2f6f47;
+  --mint: #177347;
+  --red: #b7443e;
+  --amber: #94631d;
+  --surface-radius: 8px;
+  --control-radius: 6px;
+  --focus-ring: 0 0 0 3px rgba(47, 111, 71, 0.16);
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+button,
+input,
+select,
+summary,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active,
+a:active {
+  transform: translateY(1px);
+}
+
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.app-header {
+  backdrop-filter: none;
+  background: rgba(251, 252, 251, 0.98);
+  box-shadow: none;
+  gap: 24px;
+  min-height: 58px;
+  padding: 8px clamp(16px, 2.2vw, 32px);
+}
+
+.brand {
+  font-size: 17px;
+  gap: 9px;
+}
+
+.brand-mark {
+  border-radius: var(--control-radius);
+  font-size: 14px;
+  height: 28px;
+  width: 28px;
+}
+
+.nav-item {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 13px;
+  min-height: 40px;
+  padding: 9px 12px 7px;
+}
+
+.nav-item:hover,
+.nav-item:focus-visible {
+  background: transparent;
+}
+
+.nav-item.active {
+  background: transparent;
+  border-bottom-color: var(--lime);
+  color: var(--ink);
+}
+
+.app-header-actions {
+  gap: 14px;
+}
+
+.rail-status strong {
+  font-size: 12px;
+}
+
+.rail-status span:last-child {
+  font-size: 10px;
+}
+
+.language-switch {
+  background: transparent;
+  border-color: var(--line);
+  border-radius: var(--control-radius);
+  font-size: 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.language-switch span {
+  font-size: 10px;
+}
+
+.content {
+  max-width: 1540px;
+  padding: 24px clamp(18px, 2.4vw, 36px) 30px;
+}
+
+.topbar {
+  align-items: end;
+  min-height: 50px;
+}
+
+.eyebrow,
+.control-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+h1 {
+  font-size: clamp(28px, 3vw, 40px);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.as-of span {
+  font-size: 10px;
+}
+
+.as-of strong {
+  font-size: 12px;
+}
+
+.view-intro {
+  font-size: 14px;
+  line-height: 1.55;
+  margin-top: 8px;
+  max-width: 720px;
+}
+
+.panel,
+.verdict-card,
+.control-card,
+.metric-strip,
+.parameter-panel,
+.task-history,
+.result-summary,
+.strategy-library,
+.timeframe-picker,
+.workbench-filters label,
+.run-filterbar,
+.run-catalog-card,
+.run-comparison-panel,
+.robustness-empty,
+.robustness-evidence {
+  border-radius: var(--surface-radius);
+  box-shadow: none;
+}
+
+.panel,
+.verdict-card,
+.control-card,
+.metric-strip {
+  background: var(--surface);
+}
+
+.panel {
+  padding: 16px;
+}
+
+.panel-heading {
+  margin-bottom: 12px;
+}
+
+.panel-heading h3 {
+  font-size: 19px;
+}
+
+.intelligence {
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.intelligence-heading h2 {
+  font-size: clamp(19px, 1.8vw, 25px);
+}
+
+.intelligence-status,
+.verified,
+.badge,
+.review-count,
+.api-state,
+.side-tag,
+.candidate-stages span,
+.strategy-folder button small {
+  border-radius: 4px;
+}
+
+.intelligence-status {
+  font-size: 10px;
+  padding: 6px 8px;
+}
+
+.intelligence-health,
+.intelligence-kpis span,
+.intelligence-kpis small,
+.daily-brief ul,
+.news-links span {
+  font-size: 10px;
+}
+
+.daily-brief > p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.overview-grid {
+  gap: 10px;
+  grid-template-columns: minmax(430px, 1.55fr) repeat(2, minmax(230px, 0.7fr));
+  margin-top: 12px;
+}
+
+.overview-evidence,
+.overview-status-card {
+  min-height: 154px;
+}
+
+.overview-evidence h2 {
+  font-size: 24px;
+}
+
+.overview-evidence dt,
+.overview-evidence > div > span,
+.overview-status-card > span,
+.overview-status-card > p:last-child,
+.interval-coverage > p,
+.candidate-summary span,
+.candidate-card code {
+  font-size: 10px;
+}
+
+.overview-evidence dd {
+  font-size: 19px;
+}
+
+.candidate-summary b,
+.text-action {
+  font-size: 12px;
+}
+
+.workbench {
+  background: transparent;
+  border: 0;
+  gap: 10px 12px;
+  grid-template-columns: 236px minmax(540px, 1fr) minmax(330px, 0.48fr);
+  margin-top: 18px;
+  padding: 0;
+}
+
+.result-summary {
+  border-color: var(--line-bright);
+}
+
+.result-summary-header {
+  padding: 12px 16px;
+}
+
+.result-summary-header span,
+.result-summary-header small,
+.result-metrics span,
+.result-metrics small {
+  font-size: 10px;
+}
+
+.result-summary-header > div:first-child > strong {
+  font-size: 17px;
+}
+
+.result-metrics {
+  grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr));
+}
+
+.result-metrics > div {
+  gap: 6px;
+  padding: 13px 16px;
+}
+
+.result-metrics .primary-return {
+  background: #edf4ef;
+}
+
+.result-metrics strong {
+  font-size: clamp(18px, 1.8vw, 25px);
+}
+
+.result-metrics .primary-return strong {
+  font-size: clamp(32px, 3.8vw, 48px);
+}
+
+.strategy-library {
+  background: #f8faf8;
+}
+
+.library-title {
+  gap: 7px;
+  padding: 12px;
+}
+
+.library-title strong {
+  font-size: 13px;
+}
+
+.library-title small,
+.folder-label,
+.implementation-ref span,
+.implementation-ref code {
+  font-size: 10px;
+}
+
+.strategy-folder {
+  padding: 7px;
+}
+
+.folder-label {
+  padding: 6px 7px;
+}
+
+.strategy-folder button {
+  border-radius: var(--control-radius);
+  min-height: 38px;
+  padding: 8px 7px 8px 15px;
+}
+
+.strategy-folder button > span {
+  font-size: 11px;
+}
+
+.strategy-folder button small {
+  font-size: 8px;
+  padding: 3px 5px;
+}
+
+.strategy-folder > p {
+  font-size: 10px;
+}
+
+.timeframe-picker {
+  padding: 7px 9px;
+}
+
+.timeframe-picker > span,
+.workbench-filters label > span,
+.parameter-fields label > span,
+.run-basics label > span,
+.feature-version-field > span,
+.feature-version-field > small,
+.advanced-settings summary span,
+.advanced-settings summary small,
+.run-context code,
+.lab-message,
+.lab-message button,
+.lab-message code {
+  font-size: 10px;
+}
+
+.timeframe-picker button,
+.workbench-filters select,
+.parameter-fields input,
+.run-basics input {
+  font-size: 12px;
+}
+
+.timeframe-picker button,
+.view-filters button {
+  border-radius: var(--control-radius);
+  min-height: 34px;
+}
+
+.workbench-filters label {
+  min-width: 136px;
+}
+
+.parameter-panel {
+  padding: 14px;
+}
+
+.lab-heading h3,
+.history-heading h3 {
+  font-size: 15px;
+}
+
+.api-state {
+  font-size: 9px;
+}
+
+.parameter-fields label,
+.run-basics > label,
+.feature-version-field {
+  border-radius: var(--control-radius);
+}
+
+.checkbox-label {
+  font-size: 10px;
+}
+
+.run-actions {
+  background: var(--surface);
+  border-radius: var(--surface-radius);
+}
+
+.run-backtest {
+  border-radius: var(--control-radius);
+  font-size: 11px;
+  min-height: 40px;
+}
+
+.chart-panel {
+  border-radius: var(--surface-radius);
+}
+
+.chart-heading strong,
+.fills-heading strong {
+  font-size: 12px;
+}
+
+.chart-heading span,
+.chart-heading small,
+.fills-heading p,
+.fills-heading code,
+.empty-fills {
+  font-size: 10px;
+}
+
+.range-picker button {
+  font-size: 10px;
+  min-height: 30px;
+}
+
+.fills-table th {
+  font-size: 9px;
+}
+
+.fills-table td {
+  font-size: 10px;
+}
+
+.run-library {
+  gap: 14px;
+}
+
+.run-library-heading h2 {
+  font-size: clamp(24px, 2.5vw, 34px);
+}
+
+.run-filterbar {
+  background: var(--surface);
+  padding: 8px;
+}
+
+.run-filterbar select,
+.run-filterbar button {
+  border-radius: var(--control-radius);
+  font-size: 12px;
+}
+
+.run-catalog-card {
+  background: var(--surface);
+  padding: 12px 14px;
+}
+
+.run-catalog-card.selected {
+  box-shadow: inset 3px 0 var(--lime);
+}
+
+.run-card-identity strong,
+.run-card-metric strong {
+  font-size: 13px;
+}
+
+.run-card-identity span,
+.run-card-identity code,
+.run-card-metric span,
+.run-compare-toggle,
+.run-archive-action {
+  font-size: 10px;
+}
+
+.run-comparison-panel,
+.robustness-empty,
+.robustness-evidence {
+  background: var(--surface);
+  padding: 16px;
+}
+
+.data-layout {
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.feature-grid > div {
+  border-radius: var(--surface-radius);
+}
+
+.feature-grid strong {
+  font-size: 13px;
+}
+
+.feature-grid code,
+.feature-grid span,
+.feature-grid small,
+.coverage-table strong,
+.coverage-table span,
+.coverage-meta dt,
+.coverage-meta dd {
+  font-size: 10px;
+}
+
+.feature-grid p,
+.provenance dt,
+.provenance-explanation,
+.panel-note,
+.provenance-note {
+  font-size: 12px;
+}
+
+footer {
+  font-size: 10px;
+}
+
+@media (max-width: 1350px) {
+  .overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .overview-evidence {
+    grid-column: 1 / -1;
+  }
+
+  .workbench {
+    grid-template-columns: 236px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .content {
+    padding-inline: 16px;
+  }
+
+  .topbar,
+  .result-summary-header,
+  .run-library-heading,
+  .run-comparison-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .result-run-ref {
+    text-align: left;
+  }
+
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .result-summary,
+  .workbench > :not(.result-summary):not(.strategy-library),
+  .strategy-library,
+  .workbench > .backtest-lab {
+    grid-column: 1;
+  }
+
+  .strategy-library {
+    grid-row: auto;
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    gap: 7px;
+    padding-inline: 10px;
+  }
+
+  .nav-item {
+    font-size: 10px;
+    padding-inline: 7px;
+  }
+
+  .result-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .result-metrics > div:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .result-metrics > div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+
+  .result-metrics .primary-return {
+    grid-column: 1 / -1;
+  }
+
+  .overview-grid,
+  .overview-evidence,
+  .feature-grid,
+  .data-layout {
+    grid-template-columns: 1fr;
   }
 }

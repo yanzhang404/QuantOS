@@ -48,7 +48,7 @@ const intervals: StrategyInterval[] = ["5m", "15m", "1h", "4h", "1d"];
 const copy = {
   en: {
     eyebrow: "Strategy workbench",
-    title: "Price, decisions, and risk—on one clock.",
+    title: "Price, decisions, and risk on one clock.",
     intro:
       "Inspect the exact fills and portfolio path behind every aggregate result.",
     strategy: "Strategy",
@@ -367,7 +367,7 @@ export function StrategyWorkbench({
             <small>
               {locale === "zh" ? "夏普比率" : "Sharpe"}{" "}
               {run.metrics.sharpe_ratio === null
-                ? "—"
+                ? "-"
                 : run.metrics.sharpe_ratio.toFixed(2)}
             </small>
           </div>
@@ -908,7 +908,7 @@ function PerformanceChart({
               ? `${last.position.toFixed(4)} ${labels.units}`
               : labels.flat}
           </strong>
-          <small>{last ? formatMoney(last.equity, localeTag) : "—"}</small>
+          <small>{last ? formatMoney(last.equity, localeTag) : "-"}</small>
         </div>
       </div>
       <svg

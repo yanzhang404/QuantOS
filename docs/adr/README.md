@@ -41,3 +41,4 @@ Accepted decisions:
 - [ADR-0024: Materialize derivatives features at the closed-bar decision time](0024-materialize-causal-derivatives-alignment.md)
 - [ADR-0025: Feed versioned feature observations through MarketEvent](0025-feed-versioned-features-through-market-events.md)
 - [ADR-0026: Resolve external feature versions at the API boundary](0026-resolve-external-feature-versions-at-api-boundary.md)
+- [ADR-0027: Discover only compatible external feature datasets](0027-discover-compatible-feature-datasets.md)
