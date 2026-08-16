@@ -1,9 +1,37 @@
 name: quantos
 
-# Phase 0 intentionally provisions no persistent infrastructure. This opt-in
-# smoke service keeps the Compose contract testable without running by default.
+# No service runs by default. Profiles keep foundation checks and the read-only
+# radar opt-in while preserving a quiet local checkout.
 services:
   foundation-check:
     image: alpine:3.20
     profiles: ["tools"]
     command: ["/bin/sh", "-c", "echo 'QuantOS Phase 0 foundation is ready'"]
+
+  us-market-radar:
+    profiles: ["us-radar"]
+    build:
+      context: .
+      dockerfile: deployments/docker/market-radar.Dockerfile
+    restart: unless-stopped
+    environment:
+      APCA_API_KEY_ID: ${APCA_API_KEY_ID:-}
+      APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
+    command:
+      - live
+      - --feed
+      - ${ALPACA_FEED:-sip}
+      - --push-interval
+      - "300"
+      - --output-jsonl
+      - /app/data/us-market-radar/reports.jsonl
+      - --options-feed
+      - ${ALPACA_OPTIONS_FEED:-opra}
+      - --option-top
+      - "10"
+      - --webhook-url
+      - ${RADAR_WEBHOOK_URL:-}
+      - --webhook-format
+      - ${RADAR_WEBHOOK_FORMAT:-slack}
+    volumes:
+      - ./data:/app/data

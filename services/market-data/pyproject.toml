@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantos-market-data"
+version = "0.1.0"
+description = "QuantOS market-data domain services"
+requires-python = ">=3.10"
+dependencies = ["tzdata>=2025.2", "websockets>=12,<16"]
+
+[project.scripts]
+quantos-market-radar = "quantos_market_data.cli:main"
+quantos-us-radar = "quantos_market_data.us_cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -14,6 +14,14 @@ Dates are intentionally omitted until implementation capacity is known.
 - Apply fees and fixed slippage.
 - Calculate returns, Sharpe ratio, maximum drawdown, trades, and equity curve.
 - Persist experiment inputs, versions, metrics, artifacts, and reports.
+- Observe A-share full-market snapshots through a provider contract and produce
+  versioned stock-anomaly and theme heat/acceleration reports.
+- Stream US equity minute bars, rank direction-neutral underlying heat, persist
+  reports, and deliver rate-limited notifications without trading authority.
+- Enrich only top US equity candidates with option snapshots and reject stale,
+  wide-spread, or unverifiably illiquid contracts.
+- Evaluate every saved US radar alert at explicit forward horizons before
+  optimizing heat or tradability thresholds.
 
 Exit criterion: a clean environment can reproduce one documented experiment
 from data download through report generation.
@@ -25,6 +33,8 @@ from data download through report generation.
 - Funding-rate and open-interest datasets.
 - Bias, leakage, and sensitivity review checks.
 - Richer experiment comparison and artifact browsing.
+- Compare saved US radar alerts with forward returns, adverse excursion, spread,
+  and signal decay before considering targeted option WebSocket subscriptions.
 
 Exit criterion: researchers can compare runs and identify common validity risks.
 

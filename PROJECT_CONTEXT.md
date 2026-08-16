@@ -2,15 +2,17 @@
 
 ## Mission
 
-QuantOS is an AI-native crypto quantitative research operating system. It
-prioritizes a correct, reproducible, and extensible research workflow over
-short-term trading automation.
+QuantOS is an AI-native quantitative research operating system. Its first
+historical research loop targets crypto, with a separate read-only A-share
+market-observation capability. It prioritizes a correct, reproducible, and
+extensible research workflow over short-term trading automation.
 
 ## Current phase
 
-The repository is in Phase 0: architecture initialization. The next product
-milestone is V0.1, a local research loop for Binance Klines, EMA cross
-backtesting, experiment tracking, and report generation.
+The Phase 0 architecture foundation now includes runnable read-only market-radar
+workflows. The next core product milestone remains a V0.1 local research loop
+for Binance Klines, EMA cross backtesting, experiment tracking, and report
+generation.
 
 ## Product principles
 
@@ -43,6 +45,12 @@ In scope:
 - Core performance metrics and trade/equity artifacts
 - Experiment metadata and Markdown/HTML reports
 - Local Docker Compose, tests, documentation, and CI
+- Read-only A-share full-market snapshots, anomaly detection, theme heat, and
+  heat acceleration
+- Read-only live US equity heat ranking and notification as the first stage of
+  an intraday-options research funnel
+- Bounded option-chain snapshot enrichment and contract tradability scoring for
+  top US equity candidates
 
 Out of scope:
 
