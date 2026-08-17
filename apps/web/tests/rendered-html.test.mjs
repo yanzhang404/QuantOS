@@ -234,8 +234,8 @@ test("renders verified BTC and ETH coverage from an immutable bundle", async () 
   assert.equal(evidence.schema_version, "dataset-coverage.v1");
   assert.equal(evidence.member_count, 10);
   assert.equal(evidence.requested_start, "2021-01-01T00:00:00Z");
-  assert.equal(evidence.requested_end, "2026-08-16T00:00:00Z");
-  assert.equal(evidence.total_row_count, 1703396);
+  assert.equal(evidence.requested_end, "2026-08-17T00:00:00Z");
+  assert.equal(evidence.total_row_count, 1704226);
   assert.equal(evidence.missing_interval_count, 594);
   assert.deepEqual(
     [...new Set(evidence.members.map((member) => member.interval))],
