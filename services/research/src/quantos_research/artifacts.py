@@ -15,6 +15,7 @@ from typing import Any
 
 from quantos_market_data.storage import DatasetManifest
 
+from .adapters import adapter_for
 from .errors import ResearchError
 from .models import ResearchStudy, RobustnessReview
 
@@ -134,6 +135,7 @@ def compare_runs(paths: list[Path]) -> list[dict[str, Any]]:
 
 def _study_id(study: ResearchStudy, dataset: DatasetManifest) -> str:
     identity = {
+        "strategy": [study.strategy_name, study.strategy_version],
         "dataset_version": dataset.dataset_version,
         "dataset_content_sha256": dataset.content_sha256,
         "config": study.config.to_dict(),
@@ -179,6 +181,7 @@ def _study_payload(
         }
 
     return {
+        "schema_version": "research-study.v2",
         "study_id": study_id,
         "status": "completed",
         "created_at": _isoformat(created_at),
@@ -189,6 +192,10 @@ def _study_payload(
             "symbol": dataset.symbol,
             "interval": dataset.interval,
         },
+        "strategy": {
+            "name": study.strategy_name,
+            "version": study.strategy_version,
+        },
         "config": study.config.to_dict(),
         "splits": {
             "train": split_payload(study.split.train),
@@ -196,8 +203,7 @@ def _study_payload(
             "test": split_payload(study.split.test),
         },
         "winner": {
-            "fast_period": study.winner.fast_period,
-            "slow_period": study.winner.slow_period,
+            "parameters": study.winner.parameters.to_dict(),
             "validation_run_id": study.winner.validation_run_id,
             "test_run_id": study.test_run_id,
             "stress_run_id": study.stress_run_id,
@@ -213,8 +219,7 @@ def _write_leaderboard(path: Path, study: ResearchStudy) -> None:
         writer.writerow(
             [
                 "rank",
-                "fast_period",
-                "slow_period",
+                "parameters_json",
                 "train_run_id",
                 "train_return",
                 "validation_run_id",
@@ -226,8 +231,7 @@ def _write_leaderboard(path: Path, study: ResearchStudy) -> None:
             writer.writerow(
                 [
                     rank,
-                    item.fast_period,
-                    item.slow_period,
+                    json.dumps(item.parameters.to_dict(), sort_keys=True, separators=(",", ":")),
                     item.train_run_id,
                     item.train.metrics.total_return,
                     item.validation_run_id,
@@ -249,8 +253,7 @@ def _write_walk_forward(path: Path, review: RobustnessReview) -> None:
                 "validation_end",
                 "test_start",
                 "test_end",
-                "fast_period",
-                "slow_period",
+                "parameters_json",
                 "validation_run_id",
                 "test_run_id",
                 "test_return",
@@ -268,8 +271,11 @@ def _write_walk_forward(path: Path, review: RobustnessReview) -> None:
                     _isoformat(fold.validation[-1].open_time),
                     _isoformat(fold.test[0].open_time),
                     _isoformat(fold.test[-1].open_time),
-                    fold.winner_fast_period,
-                    fold.winner_slow_period,
+                    json.dumps(
+                        fold.winner_parameters.to_dict(),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
                     fold.validation_run_id,
                     fold.test_run_id,
                     fold.test_result.metrics.total_return,
@@ -287,6 +293,7 @@ def _review_markdown(
     findings = "\n".join(
         f"- **{item.severity.upper()} `{item.code}`** — {item.message}" for item in study.findings
     )
+    winner = adapter_for(study.config).label(study.winner.parameters)
     return f"""# QuantOS Research Review
 
 ## Study
@@ -295,7 +302,7 @@ def _review_markdown(
 - Dataset: `{dataset.dataset_version}` (`{dataset.content_sha256}`)
 - Symbol / interval: `{dataset.symbol}` / `{dataset.interval}`
 - Selection: validation Sharpe only
-- Winner: EMA({study.winner.fast_period}, {study.winner.slow_period})
+- Winner: {winner}
 - Validation run: `{study.winner.validation_run_id}`
 - Untouched holdout run: `{study.test_run_id}`
 - Doubled-cost stress run: `{study.stress_run_id}`
@@ -322,18 +329,15 @@ def _robustness_payload(
     created_at: datetime,
 ) -> dict[str, Any]:
     return {
-        "schema_version": "robustness-review.v1",
+        "schema_version": "robustness-review.v2",
         "review_id": review_id,
         "status": "completed",
         "created_at": _isoformat(created_at),
         "passed": review.passed,
         "strategy": {
-            "name": "ema-cross",
-            "version": review.primary_study.test.strategy_version,
-            "winner": {
-                "fast_period": review.primary_study.winner.fast_period,
-                "slow_period": review.primary_study.winner.slow_period,
-            },
+            "name": review.primary_study.strategy_name,
+            "version": review.primary_study.strategy_version,
+            "winner": review.primary_study.winner.parameters.to_dict(),
         },
         "datasets": [
             {
@@ -350,10 +354,7 @@ def _robustness_payload(
         "walk_forward": [
             {
                 "fold": fold.index,
-                "winner": {
-                    "fast_period": fold.winner_fast_period,
-                    "slow_period": fold.winner_slow_period,
-                },
+                "winner": fold.winner_parameters.to_dict(),
                 "train": _range_payload(fold.train),
                 "validation": _range_payload(fold.validation),
                 "test": _range_payload(fold.test),
@@ -381,10 +382,7 @@ def _robustness_run_payload(item) -> dict[str, Any]:
     return {
         "label": item.label,
         "symbol": item.symbol,
-        "parameters": {
-            "fast_period": item.fast_period,
-            "slow_period": item.slow_period,
-        },
+        "parameters": item.parameters.to_dict(),
         "run_id": item.run_id,
         "metrics": item.result.metrics.to_dict(),
     }
@@ -404,9 +402,7 @@ def _robustness_markdown(
         f"- `{item.symbol}` / `{item.interval}`: `{item.dataset_version}` (`{item.content_sha256}`)"
         for item in datasets
     )
-    winner = (
-        f"EMA({review.primary_study.winner.fast_period}, {review.primary_study.winner.slow_period})"
-    )
+    winner = adapter_for(review.research_config).label(review.primary_study.winner.parameters)
     return f"""# QuantOS Robustness Review
 
 ## Result

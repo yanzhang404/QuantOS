@@ -221,6 +221,8 @@ test("shows deterministic robustness promotion gates without automatic promotion
   assert.match(component, /neighboring_parameters/);
   assert.match(component, /doubled_costs/);
   assert.match(component, /multiple_markets/);
+  assert.match(component, /Donchian\(/);
+  assert.match(api, /robustness-review\.v2/);
   assert.match(component, /never promotes or trades automatically/);
 });
 

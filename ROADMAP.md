@@ -33,7 +33,8 @@ from data download through report generation.
 - Versioned external features in backtests. **Implemented with immutable event
   delivery, v4 Run binding, and the first fail-closed funding-filtered EMA
   research strategy, plus safe API/workspace version controls and visible
-  external lineage; chronological robustness evidence remains.**
+  external lineage; strategy-specific chronological robustness for this
+  external-feature strategy remains.**
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
 - Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 
@@ -57,7 +58,9 @@ The accepted delivery order for the remaining V0.3 work is:
 1. split and simplify the four product views; **Implemented.**
 2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d; **Implemented from 2021-01-01 through the latest complete UTC day, with immutable incremental refresh.**
 3. add immutable Run filtering, archival, and up-to-four comparison; **Implemented.**
-4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market gates; **Implemented for the EMA research workflow.**
+4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market
+   gates; **Implemented through strategy-specific adapters for EMA Cross and
+   Donchian ATR.**
 5. add candidate strategy lifecycle and bounded Agent proposal contracts; **Implemented with atomic records, guarded transitions, read-only API, and workspace queue.**
 6. schedule at most one or two explainable candidates per week through draft PRs; **Implemented as rate-limited review packages and a read-only queue; remote draft opening remains deliberately human-triggered.**
 7. replace the sample intelligence input with public, read-only daily collectors. **Implemented with allow-listed sources, atomic daily history, bounded headline metadata, and 30-observation empirical calibration.**

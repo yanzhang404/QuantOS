@@ -13,7 +13,13 @@ from quantos_backtest.artifacts import ExperimentStore
 from quantos_market_data.storage import DatasetStore
 
 from .artifacts import RobustnessStore, StudyStore, compare_runs
-from .models import ResearchConfig, RobustnessConfig
+from .errors import ResearchConfigurationError
+from .models import (
+    DonchianResearchConfig,
+    ResearchConfig,
+    ResearchConfigLike,
+    RobustnessConfig,
+)
 from .robustness import RobustnessRunner
 from .workflow import ResearchRunner
 
@@ -26,11 +32,10 @@ def register_parser(commands: Any) -> None:
     experiment_commands = experiment.add_subparsers(dest="command", required=True)
     sweep = experiment_commands.add_parser(
         "sweep",
-        help="select EMA parameters chronologically and test the winner out of sample",
+        help="select strategy parameters chronologically and test the winner out of sample",
     )
     sweep.add_argument("--dataset", required=True, type=Path)
-    sweep.add_argument("--fast", required=True, type=_periods)
-    sweep.add_argument("--slow", required=True, type=_periods)
+    _add_strategy_arguments(sweep)
     sweep.add_argument("--train-ratio", type=_decimal, default=Decimal("0.6"))
     sweep.add_argument("--validation-ratio", type=_decimal, default=Decimal("0.2"))
     sweep.add_argument("--min-bars", type=int, default=20)
@@ -47,8 +52,7 @@ def register_parser(commands: Any) -> None:
     )
     robustness.add_argument("--dataset", required=True, type=Path)
     robustness.add_argument("--peer-dataset", required=True, action="append", type=Path)
-    robustness.add_argument("--fast", required=True, type=_periods)
-    robustness.add_argument("--slow", required=True, type=_periods)
+    _add_strategy_arguments(robustness)
     robustness.add_argument("--train-ratio", type=_decimal, default=Decimal("0.6"))
     robustness.add_argument("--validation-ratio", type=_decimal, default=Decimal("0.2"))
     robustness.add_argument("--min-bars", type=int, default=20)
@@ -84,12 +88,8 @@ def run(args: argparse.Namespace) -> int:
     dataset_store.verify(args.dataset)
     manifest = dataset_store.load_manifest(args.dataset)
     klines = dataset_store.load_klines(args.dataset)
-    config = ResearchConfig(
-        fast_periods=args.fast,
-        slow_periods=args.slow,
-        train_ratio=args.train_ratio,
-        validation_ratio=args.validation_ratio,
-        min_bars_per_split=args.min_bars,
+    config = _research_config(
+        args,
         backtest=BacktestConfig(
             initial_cash=args.initial_cash,
             fee_bps=args.fee_bps,
@@ -154,10 +154,8 @@ def run(args: argparse.Namespace) -> int:
                 "study_id": study_id,
                 "artifacts": str(path),
                 "reused": reused,
-                "winner": {
-                    "fast_period": study.winner.fast_period,
-                    "slow_period": study.winner.slow_period,
-                },
+                "strategy": study.strategy_name,
+                "winner": study.winner.parameters.to_dict(),
                 "test_run_id": study.test_run_id,
                 "stress_run_id": study.stress_run_id,
                 "findings": [item.to_dict() for item in study.findings],
@@ -174,6 +172,76 @@ def _load_dataset(path: Path):
     return store.load_klines(path), store.load_manifest(path)
 
 
+def _add_strategy_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--strategy",
+        choices=("ema-cross", "donchian-atr"),
+        default="ema-cross",
+    )
+    parser.add_argument("--fast", type=_periods)
+    parser.add_argument("--slow", type=_periods)
+    parser.add_argument("--entry", type=_periods)
+    parser.add_argument("--exit", dest="exit_periods", type=_periods)
+    parser.add_argument("--atr", type=_periods)
+    parser.add_argument("--target-annual-volatility", type=_decimal)
+    parser.add_argument("--max-exposure", type=_decimal)
+    parser.add_argument("--rebalance-threshold", type=_decimal)
+
+
+def _research_config(
+    args: argparse.Namespace,
+    *,
+    backtest: BacktestConfig,
+) -> ResearchConfigLike:
+    common = {
+        "train_ratio": args.train_ratio,
+        "validation_ratio": args.validation_ratio,
+        "min_bars_per_split": args.min_bars,
+        "backtest": backtest,
+    }
+    if args.strategy == "ema-cross":
+        if any(
+            value is not None
+            for value in (
+                args.entry,
+                args.exit_periods,
+                args.atr,
+                args.target_annual_volatility,
+                args.max_exposure,
+                args.rebalance_threshold,
+            )
+        ):
+            raise ResearchConfigurationError("EMA research does not accept Donchian ATR parameters")
+        if args.fast is None or args.slow is None:
+            raise ResearchConfigurationError("EMA research requires --fast and --slow")
+        return ResearchConfig(
+            fast_periods=args.fast,
+            slow_periods=args.slow,
+            **common,
+        )
+    if args.fast is not None or args.slow is not None:
+        raise ResearchConfigurationError("Donchian ATR research does not accept EMA parameters")
+    if args.entry is None or args.exit_periods is None or args.atr is None:
+        raise ResearchConfigurationError(
+            "Donchian ATR research requires --entry, --exit, and --atr"
+        )
+    return DonchianResearchConfig(
+        entry_periods=args.entry,
+        exit_periods=args.exit_periods,
+        atr_periods=args.atr,
+        target_annual_volatility=(
+            args.target_annual_volatility
+            if args.target_annual_volatility is not None
+            else Decimal("0.20")
+        ),
+        max_exposure=(args.max_exposure if args.max_exposure is not None else Decimal("1")),
+        rebalance_threshold=(
+            args.rebalance_threshold if args.rebalance_threshold is not None else Decimal("0.05")
+        ),
+        **common,
+    )
+
+
 def _periods(value: str) -> tuple[int, ...]:
     try:
         periods = tuple(int(item.strip()) for item in value.split(",") if item.strip())
@@ -185,6 +253,8 @@ def _periods(value: str) -> tuple[int, ...]:
 
 
 def _decimal(value: str) -> Decimal:
+    if len(value) > 64:
+        raise argparse.ArgumentTypeError("decimal value is too long")
     try:
         return Decimal(value)
     except InvalidOperation as exc:

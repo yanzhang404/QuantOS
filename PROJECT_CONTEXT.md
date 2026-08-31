@@ -28,8 +28,10 @@ and an initial funding-filtered EMA research strategy fails flat on stale or
 missing inputs. The versioned API and workspace now expose that candidate's
 specific parameters, accept only an immutable feature version rather than a
 client path, verify its manifest against the selected Spot input, and show the
-consumed v4 feature lineage in Run detail. Chronological strategy evaluation
-and strategy-specific robustness adapters remain.
+consumed v4 feature lineage in Run detail. Chronological selection and the four
+robustness gates now run through bounded strategy-specific adapters for EMA
+Cross and Donchian ATR; the funding-filtered external-feature strategy remains
+to be brought through the same evidence path.
 The workspace is split into Overview, Strategies, Runs, and Data views. A real
 public Binance Spot bundle now versions BTCUSDT and ETHUSDT at 5m, 15m, 1h, 4h,
 and 1d from 2021-01-01 through the latest complete UTC day. Current-data sync
@@ -39,9 +41,10 @@ bundle members, and each new immutable Run carries a bounded Kline projection
 for synchronized price, fill, equity, and drawdown views. A Run catalog now
 filters immutable experiment summaries, stores reversible archive markers
 outside Run artifacts, and compares up to four normalized portfolio curves
-with their exact inputs. Deterministic EMA robustness reviews now link
-walk-forward, neighboring-parameter, doubled-cost, and aligned BTC/ETH evidence
-through ordinary immutable Runs and expose promotion gates in the workspace.
+with their exact inputs. Deterministic EMA and Donchian ATR robustness reviews
+now link walk-forward, neighboring-parameter, doubled-cost, and aligned BTC/ETH
+evidence through ordinary immutable Runs and expose promotion gates in the
+workspace.
 Candidate discovery now uses bounded Agent proposals and an atomic lifecycle
 that separates implementation evidence, strategy-matched robustness reviews,
 and explicit human decisions. The Go API and Overview queue expose these

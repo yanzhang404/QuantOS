@@ -36,9 +36,14 @@ def proposal_with(slug: str, title: str) -> CandidateProposal:
     return CandidateProposal.from_dict(payload)
 
 
-def review_payload(*, strategy: str = "volatility-breakout", passed: bool = True) -> dict:
+def review_payload(
+    *,
+    strategy: str = "volatility-breakout",
+    passed: bool = True,
+    schema_version: str = "robustness-review.v1",
+) -> dict:
     return {
-        "schema_version": "robustness-review.v1",
+        "schema_version": schema_version,
         "review_id": "0123456789abcdef",
         "status": "completed",
         "passed": passed,
@@ -98,12 +103,31 @@ def test_candidate_lifecycle_requires_matching_evidence_and_human_approval(tmp_p
             record.proposal_id,
             write_review(tmp_path / "mismatch.json", strategy="another-strategy"),
         )
+    with pytest.raises(CandidateError, match="passed every gate"):
+        store.attach_robustness(
+            record.proposal_id,
+            write_review(tmp_path / "future.json", schema_version="robustness-review.v3"),
+        )
 
     review_path = write_review(tmp_path / "passed.json")
     ready = store.attach_robustness(record.proposal_id, review_path)
     assert ready.status == "review_ready"
     assert ready.robustness_review_id == "0123456789abcdef"
     assert len(ready.robustness_sha256 or "") == 64
+
+    second = CandidateStore(tmp_path / "v2", now=Clock())
+    proposed, _ = second.propose(proposal())
+    second.mark_implemented(
+        proposed.proposal_id,
+        implementation_ref="quantos_strategy.volatility.VolatilityBreakout",
+        test_ids=("tests.strategy.test_volatility_entries",),
+        actor_name="implementation-agent",
+    )
+    v2 = second.attach_robustness(
+        proposed.proposal_id,
+        write_review(tmp_path / "passed-v2.json", schema_version="robustness-review.v2"),
+    )
+    assert v2.status == "review_ready"
 
     approved = store.decide(
         record.proposal_id,

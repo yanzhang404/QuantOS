@@ -50,6 +50,10 @@ neighboring-parameter, doubled-cost, and multiple-market gates. Finally,
 20–500-character rationale. Approval changes research state only; it never
 registers code, places orders, or enables live trading.
 
+The attachment boundary accepts legacy EMA `robustness-review.v1` and generic
+`robustness-review.v2` evidence. A v2 review still has to name the proposal's
+exact strategy slug; schema migration does not weaken gate or human authority.
+
 `quantos candidate list` reads the atomic records. The Go API and workspace use
 the same versioned read model but expose no lifecycle mutation endpoint.
 

@@ -6,14 +6,15 @@ import statistics
 
 from quantos_backtest import BacktestEngine
 from quantos_backtest.artifacts import ExperimentStore
-from quantos_backtest.strategies import EmaCrossStrategy
 from quantos_market_data.models import Kline
 from quantos_market_data.storage import DatasetManifest
 
+from .adapters import StrategyResearchAdapter, adapter_for
 from .errors import ResearchConfigurationError
 from .models import (
     CandidateResult,
-    ResearchConfig,
+    ParameterSet,
+    ResearchConfigLike,
     ResearchStudy,
     RobustnessConfig,
     RobustnessGate,
@@ -62,25 +63,34 @@ class RobustnessRunner:
         *,
         primary_manifest: DatasetManifest,
         primary_study: ResearchStudy,
-        research_config: ResearchConfig,
+        research_config: ResearchConfigLike,
         robustness_config: RobustnessConfig,
         experiment_store: ExperimentStore,
         peer_datasets: tuple[tuple[list[Kline], DatasetManifest], ...],
     ) -> RobustnessReview:
+        adapter = adapter_for(research_config)
         if primary_manifest.symbol != primary_klines[0].symbol:
             raise ResearchConfigurationError("primary manifest does not match Kline symbol")
+        if (
+            primary_study.strategy_name != adapter.name
+            or primary_study.strategy_version != adapter.version
+            or primary_study.config != research_config
+        ):
+            raise ResearchConfigurationError("primary study does not match research adapter")
         folds = self._walk_forward(
             primary_klines,
             manifest=primary_manifest,
             research_config=research_config,
             robustness_config=robustness_config,
             experiment_store=experiment_store,
+            adapter=adapter,
         )
         neighbors = self._neighbors(
             primary_study,
             manifest=primary_manifest,
             research_config=research_config,
             experiment_store=experiment_store,
+            adapter=adapter,
         )
         markets = self._markets(
             primary_study,
@@ -88,6 +98,7 @@ class RobustnessRunner:
             research_config=research_config,
             experiment_store=experiment_store,
             peer_datasets=peer_datasets,
+            adapter=adapter,
         )
         gates = (
             _walk_forward_gate(folds, robustness_config),
@@ -110,9 +121,10 @@ class RobustnessRunner:
         klines: list[Kline],
         *,
         manifest: DatasetManifest,
-        research_config: ResearchConfig,
+        research_config: ResearchConfigLike,
         robustness_config: RobustnessConfig,
         experiment_store: ExperimentStore,
+        adapter: StrategyResearchAdapter,
     ) -> tuple[WalkForwardFold, ...]:
         windows = walk_forward_windows(
             klines,
@@ -122,15 +134,14 @@ class RobustnessRunner:
         folds: list[WalkForwardFold] = []
         for index, (train, validation, test) in enumerate(windows, start=1):
             candidates: list[CandidateResult] = []
-            for fast, slow in research_config.candidates:
-                train_result = self._backtest(train, fast, slow, research_config)
-                validation_result = self._backtest(validation, fast, slow, research_config)
+            for parameters in adapter.candidates:
+                train_result = self._backtest(train, parameters, research_config, adapter)
+                validation_result = self._backtest(validation, parameters, research_config, adapter)
                 train_artifact = experiment_store.publish(train_result, dataset=manifest)
                 validation_artifact = experiment_store.publish(validation_result, dataset=manifest)
                 candidates.append(
                     CandidateResult(
-                        fast_period=fast,
-                        slow_period=slow,
+                        parameters=parameters,
                         train=train_result,
                         validation=validation_result,
                         train_run_id=train_artifact.run_id,
@@ -139,13 +150,13 @@ class RobustnessRunner:
                 )
             winner = sorted(
                 candidates,
-                key=lambda item: (-item.score, item.fast_period, item.slow_period),
+                key=lambda item: (-item.score, adapter.rank_key(item.parameters)),
             )[0]
             test_result = self._backtest(
                 test,
-                winner.fast_period,
-                winner.slow_period,
+                winner.parameters,
                 research_config,
+                adapter,
             )
             test_artifact = experiment_store.publish(test_result, dataset=manifest)
             folds.append(
@@ -154,8 +165,7 @@ class RobustnessRunner:
                     train=train,
                     validation=validation,
                     test=test,
-                    winner_fast_period=winner.fast_period,
-                    winner_slow_period=winner.slow_period,
+                    winner_parameters=winner.parameters,
                     validation_run_id=winner.validation_run_id,
                     test_run_id=test_artifact.run_id,
                     test_result=test_result,
@@ -168,34 +178,19 @@ class RobustnessRunner:
         study: ResearchStudy,
         *,
         manifest: DatasetManifest,
-        research_config: ResearchConfig,
+        research_config: ResearchConfigLike,
         experiment_store: ExperimentStore,
+        adapter: StrategyResearchAdapter,
     ) -> tuple[RobustnessRun, ...]:
-        winner = (study.winner.fast_period, study.winner.slow_period)
-        fast_values = sorted(set(research_config.fast_periods))
-        slow_values = sorted(set(research_config.slow_periods))
-        candidates = set(research_config.candidates)
-        neighbors: set[tuple[int, int]] = set()
-        for values, coordinate in ((fast_values, 0), (slow_values, 1)):
-            current = winner[coordinate]
-            position = values.index(current)
-            for neighbor_position in (position - 1, position + 1):
-                if 0 <= neighbor_position < len(values):
-                    pair = list(winner)
-                    pair[coordinate] = values[neighbor_position]
-                    candidate = (pair[0], pair[1])
-                    if candidate in candidates:
-                        neighbors.add(candidate)
         results: list[RobustnessRun] = []
-        for fast, slow in sorted(neighbors):
-            result = self._backtest(study.split.test, fast, slow, research_config)
+        for parameters in adapter.neighbors(study.winner.parameters):
+            result = self._backtest(study.split.test, parameters, research_config, adapter)
             artifact = experiment_store.publish(result, dataset=manifest)
             results.append(
                 RobustnessRun(
-                    label=f"EMA({fast}, {slow})",
+                    label=adapter.label(parameters),
                     symbol=manifest.symbol,
-                    fast_period=fast,
-                    slow_period=slow,
+                    parameters=parameters,
                     run_id=artifact.run_id,
                     result=result,
                 )
@@ -207,18 +202,17 @@ class RobustnessRunner:
         study: ResearchStudy,
         *,
         primary_manifest: DatasetManifest,
-        research_config: ResearchConfig,
+        research_config: ResearchConfigLike,
         experiment_store: ExperimentStore,
         peer_datasets: tuple[tuple[list[Kline], DatasetManifest], ...],
+        adapter: StrategyResearchAdapter,
     ) -> tuple[RobustnessRun, ...]:
-        fast = study.winner.fast_period
-        slow = study.winner.slow_period
+        parameters = study.winner.parameters
         results = [
             RobustnessRun(
                 label=primary_manifest.symbol,
                 symbol=primary_manifest.symbol,
-                fast_period=fast,
-                slow_period=slow,
+                parameters=parameters,
                 run_id=study.test_run_id,
                 result=study.test,
             )
@@ -234,18 +228,20 @@ class RobustnessRunner:
                     "peer dataset interval must match primary interval"
                 )
             aligned = tuple(item for item in klines if start <= item.open_time <= end)
-            if len(aligned) < max(research_config.min_bars_per_split, slow):
+            if len(aligned) < max(
+                research_config.min_bars_per_split,
+                adapter.minimum_bars(parameters),
+            ):
                 raise ResearchConfigurationError(
                     f"peer dataset {manifest.symbol} has insufficient aligned holdout bars"
                 )
-            result = self._backtest(aligned, fast, slow, research_config)
+            result = self._backtest(aligned, parameters, research_config, adapter)
             artifact = experiment_store.publish(result, dataset=manifest)
             results.append(
                 RobustnessRun(
                     label=manifest.symbol,
                     symbol=manifest.symbol,
-                    fast_period=fast,
-                    slow_period=slow,
+                    parameters=parameters,
                     run_id=artifact.run_id,
                     result=result,
                 )
@@ -256,15 +252,16 @@ class RobustnessRunner:
     def _backtest(
         self,
         klines: tuple[Kline, ...],
-        fast: int,
-        slow: int,
-        config: ResearchConfig,
+        parameters: ParameterSet,
+        config: ResearchConfigLike,
+        adapter: StrategyResearchAdapter,
     ):
-        if slow > len(klines):
+        minimum = adapter.minimum_bars(parameters)
+        if minimum > len(klines):
             raise ResearchConfigurationError(
-                f"slow period {slow} exceeds a window containing {len(klines)} bars"
+                f"strategy warmup {minimum} exceeds a window containing {len(klines)} bars"
             )
-        strategy = EmaCrossStrategy(fast_period=fast, slow_period=slow)
+        strategy = adapter.build(parameters)
         return self.engine.run(
             list(klines),
             strategy=strategy,

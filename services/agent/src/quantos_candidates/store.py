@@ -28,6 +28,7 @@ _GATE_NAMES = frozenset(
     {"walk_forward", "neighboring_parameters", "doubled_costs", "multiple_markets"}
 )
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_ROBUSTNESS_SCHEMAS = frozenset({"robustness-review.v1", "robustness-review.v2"})
 
 
 class CandidateStore:
@@ -135,7 +136,7 @@ class CandidateStore:
                 raise CandidateError("robustness review is invalid")
             gate_names = {gate["name"] for gate in gates}
             if (
-                review["schema_version"] != "robustness-review.v1"
+                review["schema_version"] not in _ROBUSTNESS_SCHEMAS
                 or review["status"] != "completed"
                 or review["passed"] is not True
                 or review["strategy"]["name"] != record.proposal.strategy_slug

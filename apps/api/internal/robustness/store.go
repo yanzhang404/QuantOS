@@ -1,10 +1,12 @@
 package robustness
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,21 +22,17 @@ var (
 	hex16Pattern      = regexp.MustCompile(`^[0-9a-f]{16}$`)
 	hex64Pattern      = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	versionPattern    = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
+	decimalPattern    = regexp.MustCompile(`^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?$`)
 )
 
 type Store struct {
 	root string
 }
 
-type Winner struct {
-	FastPeriod int `json:"fast_period"`
-	SlowPeriod int `json:"slow_period"`
-}
-
 type Strategy struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Winner  Winner `json:"winner"`
+	Name    string          `json:"name"`
+	Version string          `json:"version"`
+	Winner  json.RawMessage `json:"winner"`
 }
 
 type Dataset struct {
@@ -159,13 +157,13 @@ func (s *Store) Get(reviewID string) (Review, error) {
 }
 
 func (r Review) validate(expectedID string) error {
-	if r.SchemaVersion != "robustness-review.v1" || r.ReviewID != expectedID ||
+	if (r.SchemaVersion != "robustness-review.v1" &&
+		r.SchemaVersion != "robustness-review.v2") || r.ReviewID != expectedID ||
 		r.Status != "completed" || r.CreatedAt.IsZero() {
 		return errors.New("invalid review identity")
 	}
-	if r.Strategy.Name != "ema-cross" || !versionPattern.MatchString(r.Strategy.Version) ||
-		r.Strategy.Winner.FastPeriod < 1 ||
-		r.Strategy.Winner.SlowPeriod <= r.Strategy.Winner.FastPeriod {
+	if !versionPattern.MatchString(r.Strategy.Version) ||
+		validateWinner(r.SchemaVersion, r.Strategy) != nil {
 		return errors.New("invalid review strategy")
 	}
 	if len(r.Datasets) < 2 || len(r.Datasets) > 8 {
@@ -216,4 +214,76 @@ func (r Review) validate(expectedID string) error {
 		return errors.New("invalid robustness review detail")
 	}
 	return nil
+}
+
+type emaWinner struct {
+	FastPeriod int `json:"fast_period"`
+	SlowPeriod int `json:"slow_period"`
+}
+
+type donchianWinner struct {
+	EntryPeriod            int    `json:"entry_period"`
+	ExitPeriod             int    `json:"exit_period"`
+	ATRPeriod              int    `json:"atr_period"`
+	TargetAnnualVolatility string `json:"target_annual_volatility"`
+	MaxExposure            string `json:"max_exposure"`
+	RebalanceThreshold     string `json:"rebalance_threshold"`
+}
+
+func validateWinner(schemaVersion string, strategy Strategy) error {
+	if strategy.Name == "ema-cross" {
+		var winner emaWinner
+		if err := decodeStrict(strategy.Winner, &winner); err != nil ||
+			winner.FastPeriod < 1 || winner.SlowPeriod <= winner.FastPeriod {
+			return errors.New("invalid EMA winner")
+		}
+		return nil
+	}
+	if schemaVersion != "robustness-review.v2" || strategy.Name != "donchian-atr" {
+		return errors.New("unsupported robustness strategy")
+	}
+	var winner donchianWinner
+	if err := decodeStrict(strategy.Winner, &winner); err != nil ||
+		winner.EntryPeriod < 2 || winner.ExitPeriod < 1 ||
+		winner.ExitPeriod > winner.EntryPeriod || winner.ATRPeriod < 2 ||
+		!decimalInRange(winner.TargetAnnualVolatility, "0", "", false, false) ||
+		!decimalInRange(winner.MaxExposure, "0", "1", false, true) ||
+		!decimalInRange(winner.RebalanceThreshold, "0", "1", true, true) {
+		return errors.New("invalid Donchian ATR winner")
+	}
+	return nil
+}
+
+func decodeStrict(raw json.RawMessage, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		return errors.New("unexpected trailing JSON")
+	}
+	return nil
+}
+
+func decimalInRange(value, minimum, maximum string, includeMinimum, includeMaximum bool) bool {
+	if !decimalPattern.MatchString(value) {
+		return false
+	}
+	number, ok := new(big.Rat).SetString(value)
+	if !ok {
+		return false
+	}
+	lower, _ := new(big.Rat).SetString(minimum)
+	comparison := number.Cmp(lower)
+	if comparison < 0 || (comparison == 0 && !includeMinimum) {
+		return false
+	}
+	if maximum == "" {
+		return true
+	}
+	upper, _ := new(big.Rat).SetString(maximum)
+	comparison = number.Cmp(upper)
+	return comparison < 0 || (comparison == 0 && includeMaximum)
 }

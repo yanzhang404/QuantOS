@@ -25,7 +25,8 @@ The Backtest Lab connects to the local Go API and supports:
 - selecting two to four Runs for normalized return, parameter, cost, and metric
   comparison;
 - reading the latest four-gate robustness review with explicit PASS/FAIL
-  reasons and no automatic promotion;
+  reasons, strategy-specific EMA/Donchian winner parameters, and no automatic
+  promotion;
 - reading the guarded candidate queue, its current stage, parameter count, and
   evidence identity without exposing mutation controls in the browser;
 - showing how many of the newest UTC ISO week's one or two candidate review

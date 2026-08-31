@@ -54,6 +54,11 @@ symbol, interval, strategy, and archive-state filters. Archive operations write
 only a reversible marker below the Task state root; they never change or remove
 the immutable Run directory.
 
+Robustness endpoints retain validated EMA `robustness-review.v1` compatibility
+and expose generic `robustness-review.v2` summaries for EMA Cross and Donchian
+ATR. The API rejects strategy/schema mismatches, unknown winner fields, invalid
+period relationships, and out-of-range decimal risk parameters.
+
 This local file store supports one API process. PostgreSQL replaces it before
 multi-user or multi-process operation.
 

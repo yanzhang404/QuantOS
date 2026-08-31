@@ -28,8 +28,43 @@ func TestStoreListsAndReadsValidatedRobustnessReviews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if review.Strategy.Winner.FastPeriod != 20 || len(review.Datasets) != 2 {
+	var winner emaWinner
+	if err := json.Unmarshal(review.Strategy.Winner, &winner); err != nil {
+		t.Fatal(err)
+	}
+	if winner.FastPeriod != 20 || len(review.Datasets) != 2 {
 		t.Fatalf("review = %#v", review)
+	}
+}
+
+func TestStoreReadsV2DonchianReviewAndRejectsInvalidWinner(t *testing.T) {
+	root := t.TempDir()
+	review := validReview("336fe16f3f221153")
+	review["schema_version"] = "robustness-review.v2"
+	review["strategy"] = map[string]any{
+		"name": "donchian-atr", "version": "1.0.0",
+		"winner": map[string]any{
+			"entry_period": 20, "exit_period": 10, "atr_period": 14,
+			"target_annual_volatility": "0.20", "max_exposure": "1",
+			"rebalance_threshold": "0.05",
+		},
+	}
+	writeReview(t, root, review)
+	stored, err := NewStore(root).Get("336fe16f3f221153")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Strategy.Name != "donchian-atr" {
+		t.Fatalf("strategy = %#v", stored.Strategy)
+	}
+
+	invalidRoot := t.TempDir()
+	strategy := review["strategy"].(map[string]any)
+	winner := strategy["winner"].(map[string]any)
+	winner["exit_period"] = 30
+	writeReview(t, invalidRoot, review)
+	if _, err := NewStore(invalidRoot).Get("336fe16f3f221153"); err == nil {
+		t.Fatal("expected invalid Donchian winner to fail")
 	}
 }
 

@@ -186,7 +186,12 @@ Candidate evidence passes through four deterministic robustness gates before a
 promotion proposal: walk-forward consistency, neighboring-parameter
 sensitivity, doubled-cost retention, and aligned multi-market results. Each
 gate links ordinary immutable Run IDs; passing never changes lifecycle state by
-itself. See [ADR-0017](docs/adr/0017-deterministic-robustness-gates.md).
+itself. A bounded strategy adapter owns only the canonical parameter grid,
+construction, warmup, neighbor rules, tie-break, and label; the shared runner
+retains split, Run publication, cost, market, and gate authority. EMA Cross and
+Donchian ATR are the first registered adapters. See
+[ADR-0017](docs/adr/0017-deterministic-robustness-gates.md) and
+[ADR-0029](docs/adr/0029-strategy-specific-research-adapters.md).
 
 Before artifact publication, built-in strategy parameters resolve through the
 feature registry into concrete EMA, prior-bar channel, and ATR instances. Their

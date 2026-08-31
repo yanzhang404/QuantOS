@@ -43,6 +43,10 @@ The first artifact set is `robustness.json`, `walk-forward.csv`, and
 `review.md`. Dataset manifests and Run artifacts remain immutable and external
 to the review directory.
 
+ADR-0029 subsequently generalizes the runner through bounded strategy-specific
+adapters. The four gates and their authority remain unchanged; new reviews use
+`robustness-review.v2`, while the read-only boundary retains EMA v1 support.
+
 ## Consequences
 
 Positive:
@@ -54,7 +58,7 @@ Positive:
 
 Tradeoffs:
 
-- the first runner supports EMA parameter grids only;
+- only explicitly registered strategy adapters can enter the shared runner;
 - post-selection neighbor analysis consumes the original holdout for
   robustness review, so it cannot be used to retune the winner;
 - strict all-market positivity may reject useful diversifying strategies;

@@ -104,7 +104,9 @@ Run without changing its immutable experiment artifacts.
 The same view reads the latest validated robustness review and shows four
 explicit promotion gates. Green/red status always includes PASS/FAIL text and a
 reason. Passing supports a later human promotion decision and never changes a
-strategy lifecycle state automatically.
+strategy lifecycle state automatically. Both legacy EMA and generic v2 reviews
+render the named strategy's own winner parameters; Donchian evidence is not
+mislabelled as an EMA pair.
 
 The Overview candidate card reads `GET /api/v1/candidates`. It replaces the
 previous hard-coded candidate count with validated lifecycle records and shows

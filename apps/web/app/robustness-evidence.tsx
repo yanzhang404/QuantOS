@@ -81,7 +81,7 @@ export function RobustnessEvidence({ locale }: { locale: Locale }) {
           <p className="eyebrow">{t.eyebrow}</p>
           <h3>{t.title}</h3>
           <span>
-            EMA({review.strategy.winner.fast_period}, {review.strategy.winner.slow_period}) ·{" "}
+            {strategyLabel(review)} ·{" "}
             {review.datasets.map((dataset) => dataset.symbol.replace("USDT", "")).join(" / ")} ·{" "}
             {review.datasets[0]?.interval}
           </span>
@@ -104,4 +104,15 @@ export function RobustnessEvidence({ locale }: { locale: Locale }) {
       <p className="robustness-warning">{t.warning}</p>
     </section>
   );
+}
+
+function strategyLabel(review: RobustnessSummary): string {
+  const winner = review.strategy.winner;
+  if (review.strategy.name === "ema-cross" && "fast_period" in winner) {
+    return `EMA(${winner.fast_period}, ${winner.slow_period})`;
+  }
+  if ("entry_period" in winner) {
+    return `Donchian(${winner.entry_period} / ${winner.exit_period} / ATR ${winner.atr_period})`;
+  }
+  return review.strategy.name;
 }

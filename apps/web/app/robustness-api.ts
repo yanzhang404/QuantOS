@@ -13,14 +13,23 @@ export type RobustnessGate = {
 };
 
 export type RobustnessSummary = {
-  schema_version: "robustness-review.v1";
+  schema_version: "robustness-review.v1" | "robustness-review.v2";
   review_id: string;
   created_at: string;
   passed: boolean;
   strategy: {
-    name: "ema-cross";
+    name: "ema-cross" | "donchian-atr";
     version: string;
-    winner: { fast_period: number; slow_period: number };
+    winner:
+      | { fast_period: number; slow_period: number }
+      | {
+          entry_period: number;
+          exit_period: number;
+          atr_period: number;
+          target_annual_volatility: string;
+          max_exposure: string;
+          rebalance_threshold: string;
+        };
   };
   datasets: Array<{
     version: string;

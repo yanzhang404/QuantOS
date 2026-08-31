@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
+
 from quantos_backtest import BacktestResult
 
-from .models import CandidateResult, ResearchConfig, ReviewFinding
+from .models import CandidateResult, ResearchConfigLike, ReviewFinding
 
 
 def review_study(
     *,
-    config: ResearchConfig,
+    config: ResearchConfigLike,
     candidates: tuple[CandidateResult, ...],
     winner: CandidateResult,
     test: BacktestResult,
@@ -71,16 +73,36 @@ def review_study(
                 f"doubled costs reduce holdout return by {deterioration:.2%}.",
             )
         )
-    fast_values = sorted({item.fast_period for item in candidates})
-    slow_values = sorted({item.slow_period for item in candidates})
-    if (len(fast_values) > 1 and winner.fast_period in {fast_values[0], fast_values[-1]}) or (
-        len(slow_values) > 1 and winner.slow_period in {slow_values[0], slow_values[-1]}
-    ):
+    boundary_parameters = _boundary_parameters(candidates, winner)
+    if boundary_parameters:
         findings.append(
             ReviewFinding(
                 "warning",
                 "BOUNDARY_WINNER",
-                "selected parameters lie on the search-grid boundary; expand the grid.",
+                "selected parameters lie on the search-grid boundary "
+                f"({', '.join(boundary_parameters)}); expand the grid.",
             )
         )
     return tuple(findings)
+
+
+def _boundary_parameters(
+    candidates: tuple[CandidateResult, ...], winner: CandidateResult
+) -> tuple[str, ...]:
+    winner_values = winner.parameters.to_dict()
+    boundaries: list[str] = []
+    for name, selected in winner_values.items():
+        values = {item.parameters.to_dict()[name] for item in candidates}
+        if len(values) <= 1:
+            continue
+        ordered = sorted(values, key=_parameter_sort_key)
+        if selected in {ordered[0], ordered[-1]}:
+            boundaries.append(name)
+    return tuple(boundaries)
+
+
+def _parameter_sort_key(value: int | str) -> tuple[int, Decimal | str]:
+    try:
+        return (0, Decimal(str(value)))
+    except InvalidOperation:
+        return (1, str(value))

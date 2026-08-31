@@ -27,7 +27,7 @@ proposed → implemented → review_ready → approved
   credentials, order instructions, or arbitrary extra fields.
 - `implemented` requires a repository-owned implementation reference and named
   deterministic test evidence. It does not claim the strategy works.
-- `review_ready` requires a real `robustness-review.v1` artifact whose strategy
+- `review_ready` requires a real `robustness-review.v1` or `.v2` artifact whose strategy
   slug matches the proposal and whose overall gate and every component gate
   pass. The transition records the immutable review ID and file digest; a caller
   cannot provide a boolean substitute or reuse another strategy's evidence.
@@ -56,6 +56,6 @@ Positive:
 Tradeoffs:
 
 - transitions require CLI access;
-- the current EMA-only robustness runner cannot validate arbitrary new strategy
-  implementations until strategy-specific robustness adapters are added;
+- a new strategy implementation still needs a reviewed strategy-specific
+  robustness adapter before it can produce matching evidence;
 - an approved candidate still needs a reviewed catalog/code change.
