@@ -54,7 +54,13 @@ Run the Go API from the repository root before submitting a manual backtest.
 ```bash
 npm run lint
 npm test
+npm audit --omit=dev
 ```
+
+The production dependency lock pins Next.js 16.3.3, which clears the production
+advisories reported against the previous 16.2.6 release. Development-tool
+advisories are reviewed separately and must not be hidden with a forced audit
+rewrite.
 
 The current dashboard imports the structured research artifact from
 `examples/backtest/donchian-atr-study/results.json`. A versioned read-only API
