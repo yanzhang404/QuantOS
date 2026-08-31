@@ -119,6 +119,27 @@ operation is an explicit locked job; failures preserve the last valid snapshot
 and expose bounded health without hidden API-startup collection. See
 [ADR-0021](docs/adr/0021-observable-daily-intelligence-refresh.md).
 
+## Intraday market-radar flow
+
+```mermaid
+flowchart LR
+    L["Allow-listed public A-share snapshot"] --> N["Validated market-radar.v1 input"]
+    N --> S["Deterministic stock heat"]
+    S --> T["Theme aggregation"]
+    H["Immutable 10-minute snapshots"] --> A["30m / 60m acceleration"]
+    T --> A
+    A --> P["Atomic latest snapshot"]
+    P --> API["Go read-only API"]
+    API --> W["Overview Market Radar"]
+```
+
+The radar treats external events and catalyst text as untrusted input. Optional
+volume, turnover, momentum, and new-high observations stay absent when the
+provider does not supply them; the scorer exposes reduced data coverage rather
+than estimating values. Collection is a single-writer scheduled job and never
+runs at API startup. See
+[ADR-0028](docs/adr/0028-deterministic-a-share-market-radar.md).
+
 ## Backtest event flow
 
 ```mermaid

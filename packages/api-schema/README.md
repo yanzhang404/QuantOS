@@ -24,6 +24,12 @@ source-linked commentary.
 single-writer job status exposed beside the latest snapshot. Staleness is
 derived by the Go API and is not persisted by the writer.
 
+`schemas/market-radar.v1.schema.json` defines normalized A-share mover inputs
+and deterministic stock/theme heat snapshots. Optional quantitative inputs
+stay nullable, while component coverage and 30/60-minute baselines remain
+explicit. `schemas/market-radar-refresh-health.v1.schema.json` defines the
+bounded intraday refresh state served beside the latest radar snapshot.
+
 `schemas/candidate.v1.schema.json` defines the bounded Agent proposal input;
 `schemas/candidate-record.v1.schema.json` defines its durable transition record.
 They contain hypotheses, manifest-shaped parameters, research plans, public

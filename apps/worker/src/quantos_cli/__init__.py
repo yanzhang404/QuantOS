@@ -13,6 +13,8 @@ from quantos_intelligence import cli as intelligence_cli
 from quantos_intelligence.errors import IntelligenceError
 from quantos_market_data import cli as data_cli
 from quantos_market_data.errors import MarketDataError
+from quantos_radar import cli as radar_cli
+from quantos_radar.errors import RadarError
 from quantos_research import cli as research_cli
 from quantos_research.errors import ResearchError
 
@@ -25,6 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     research_cli.register_parser(commands)
     intelligence_cli.register_parser(commands)
     candidate_cli.register_parser(commands)
+    radar_cli.register_parser(commands)
     return parser
 
 
@@ -42,12 +45,15 @@ def main(argv: list[str] | None = None) -> int:
             return intelligence_cli.run(args)
         if args.module == "candidate":
             return candidate_cli.run(args)
+        if args.module == "radar":
+            return radar_cli.run(args)
     except (
         MarketDataError,
         BacktestError,
         ResearchError,
         IntelligenceError,
         CandidateError,
+        RadarError,
         OSError,
     ) as exc:
         print(f"error: {exc}", file=sys.stderr)

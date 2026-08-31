@@ -18,6 +18,7 @@ type Checker struct {
 	ArtifactRoot       string
 	StateRoot          string
 	IntelligenceRoot   string
+	RadarRoot          string
 	RobustnessRoot     string
 	CandidateRoot      string
 	CandidateDraftRoot string
@@ -59,6 +60,7 @@ func (checker Checker) Check() map[string]bool {
 		"candidate_draft_root": directoryExists(checker.CandidateDraftRoot),
 		"data_root":            directoryExists(checker.DataRoot),
 		"intelligence_root":    directoryExists(checker.IntelligenceRoot),
+		"radar_root":           directoryExists(checker.RadarRoot),
 		"robustness_root":      directoryExists(checker.RobustnessRoot),
 		"state_root":           directoryExists(checker.StateRoot),
 		"uv_binary":            executableExists(checker.UVBinary),

@@ -47,6 +47,9 @@ test("server-renders the QuantOS research workspace", async () => {
   assert.match(html, /Sample snapshot · not current market data/);
   assert.match(html, /Market score/);
   assert.match(html, /Source-linked news/);
+  assert.match(html, /A-share Market Radar/);
+  assert.match(html, /Sample snapshot · not current market data/);
+  assert.match(html, /30m acceleration/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
@@ -80,6 +83,23 @@ test("connects daily intelligence to the validated API snapshot", async () => {
   assert.match(component, /className="sentiment-meter"/);
   assert.match(api, /\/api\/v1\/intelligence\/latest/);
   assert.match(api, /\/api\/v1\/intelligence\/health/);
+});
+
+test("connects Market Radar to deterministic snapshots and visible partial coverage", async () => {
+  const [component, api] = await Promise.all([
+    readFile(new URL("../app/market-radar.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/radar-api.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(component, /getLatestRadar\(controller\.signal\)/);
+  assert.match(component, /getRadarHealth\(controller\.signal\)/);
+  assert.match(component, /刷新失败 · 已保留上一份快照/);
+  assert.match(component, /数据源未提供/);
+  assert.match(component, /observed_breadth/);
+  assert.match(component, /acceleration_30m/);
+  assert.match(component, /sampleSnapshot/);
+  assert.match(api, /\/api\/v1\/radar\/latest/);
+  assert.match(api, /\/api\/v1\/radar\/health/);
 });
 
 test("ships an accessible Chinese and English language switch", async () => {

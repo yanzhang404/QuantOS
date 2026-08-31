@@ -38,6 +38,7 @@ packages = [
   "services/market-data/src/quantos_market_data",
   "services/research/src/quantos_research",
   "services/agent/src/quantos_intelligence",
+  "services/agent/src/quantos_radar",
   "services/agent/src/quantos_candidates",
 ]
 
@@ -62,6 +63,7 @@ source = [
   "quantos_events",
   "quantos_intelligence",
   "quantos_market_data",
+  "quantos_radar",
   "quantos_metrics",
   "quantos_research",
   "quantos_strategy",

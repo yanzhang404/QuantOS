@@ -65,6 +65,11 @@ The accepted delivery order for the remaining V0.3 work is:
    last-success health. **Implemented with a single-writer refresh command,
    one-shot Compose job, persistent systemd timer, read-only health endpoint,
    and bilingual freshness state.**
+9. add an A-share intraday Market Radar for current leaders and accelerating
+   themes. **Implemented with a versioned input, bounded public A-share snapshot
+   collection, deterministic stock/theme heat, immutable 10-minute snapshots,
+   30/60-minute acceleration, read-only API, and bilingual overview; richer
+   full-tape RVOL and turnover coverage remains a provider extension.**
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

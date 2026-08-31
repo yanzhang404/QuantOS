@@ -4285,3 +4285,315 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Intraday A-share heat monitor. Kept separate from daily sentiment semantics. */
+.market-radar {
+  background:
+    linear-gradient(125deg, rgba(63, 127, 73, 0.06), transparent 36%),
+    var(--surface);
+  margin-top: 18px;
+}
+
+.radar-heading,
+.radar-subheading,
+.radar-pulse,
+.radar-state,
+.stock-rows summary,
+.stock-detail footer {
+  align-items: center;
+  display: flex;
+}
+
+.radar-heading {
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.radar-heading h2 {
+  font-size: clamp(21px, 2.2vw, 31px);
+  letter-spacing: -0.035em;
+  margin: 4px 0 0;
+}
+
+.radar-state {
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.radar-state small,
+.radar-subheading span,
+.radar-note,
+.theme-rows > div > span,
+.stock-rows summary small,
+.stock-detail footer,
+.stock-metrics span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.radar-status {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--lime);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.radar-status.sample,
+.radar-status.partial,
+.radar-health.warning {
+  color: var(--amber);
+}
+
+.radar-health.succeeded {
+  color: var(--mint);
+}
+
+.radar-pulse {
+  border-block: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+}
+
+.radar-pulse > div {
+  display: grid;
+  gap: 4px;
+  padding: 15px 18px;
+}
+
+.radar-pulse > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.radar-pulse span {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.radar-pulse strong {
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+
+.radar-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(330px, 0.88fr) minmax(480px, 1.42fr);
+  margin-top: 20px;
+}
+
+.radar-subheading {
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.radar-subheading h3 {
+  font-size: 14px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.radar-subheading a {
+  color: var(--lime);
+  font-size: 12px;
+}
+
+.theme-rows,
+.stock-rows {
+  border-top: 1px solid var(--line);
+}
+
+.theme-rows > div {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 28px minmax(120px, 1fr) auto 34px 34px;
+  min-height: 58px;
+}
+
+.theme-rank,
+.stock-rows summary > span {
+  color: var(--subtle);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+}
+
+.theme-rows > div > div {
+  display: grid;
+  gap: 6px;
+}
+
+.theme-rows i {
+  background: var(--surface-raised);
+  border-radius: 999px;
+  display: block;
+  height: 4px;
+  overflow: hidden;
+}
+
+.theme-rows i b {
+  background: linear-gradient(90deg, var(--lime), var(--mint));
+  display: block;
+  height: 100%;
+}
+
+.theme-rows em {
+  font-size: 12px;
+  font-style: normal;
+  text-align: right;
+}
+
+.radar-note {
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+
+.stock-rows details {
+  border-bottom: 1px solid var(--line);
+}
+
+.stock-rows summary {
+  cursor: pointer;
+  gap: 11px;
+  list-style: none;
+  min-height: 58px;
+}
+
+.stock-rows summary::-webkit-details-marker {
+  display: none;
+}
+
+.stock-rows summary > div:nth-of-type(1) {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+.stock-rows summary > em {
+  color: var(--mint);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.stock-heat {
+  align-items: baseline;
+  display: flex;
+  gap: 4px;
+  min-width: 66px;
+}
+
+.stock-heat span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.stock-rows summary > b {
+  color: var(--mint);
+  font-size: 12px;
+  min-width: 27px;
+  text-align: right;
+}
+
+.stock-detail {
+  background: rgba(237, 244, 236, 0.55);
+  border-radius: 8px;
+  margin: 0 0 10px 38px;
+  padding: 12px;
+}
+
+.stock-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.stock-metrics > div {
+  display: grid;
+  gap: 3px;
+}
+
+.stock-metrics strong {
+  font-size: 12px;
+}
+
+.stock-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.stock-tags span {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--lime);
+  font-size: 10px;
+  padding: 3px 7px;
+}
+
+.stock-detail > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0;
+}
+
+.stock-detail footer {
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.stock-detail footer a {
+  color: var(--lime);
+}
+
+@media (max-width: 980px) {
+  .radar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .radar-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .radar-state {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .radar-pulse {
+    grid-template-columns: 1fr;
+  }
+
+  .radar-pulse > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .theme-rows > div {
+    grid-template-columns: 24px minmax(100px, 1fr) 32px 32px;
+  }
+
+  .theme-rows > div > span:nth-of-type(2) {
+    display: none;
+  }
+
+  .stock-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stock-detail {
+    margin-left: 0;
+  }
+}

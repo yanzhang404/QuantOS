@@ -15,6 +15,7 @@ import (
 	"github.com/yanzhang404/QuantOS/apps/api/internal/backtest"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/candidates"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/intelligence"
+	"github.com/yanzhang404/QuantOS/apps/api/internal/radar"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/readiness"
 	"github.com/yanzhang404/QuantOS/apps/api/internal/robustness"
 )
@@ -33,6 +34,11 @@ func main() {
 			"intelligence-root",
 			envOrDefault("QUANTOS_INTELLIGENCE_ROOT", "var/quantos/intelligence"),
 			"trusted daily intelligence snapshot root",
+		)
+		radarRoot = flag.String(
+			"radar-root",
+			envOrDefault("QUANTOS_RADAR_ROOT", "var/quantos/radar"),
+			"trusted market radar snapshot root",
 		)
 		robustnessRoot = flag.String(
 			"robustness-root",
@@ -84,6 +90,7 @@ func main() {
 	for _, root := range []string{
 		*artifactRoot,
 		*intelligenceRoot,
+		*radarRoot,
 		*robustnessRoot,
 		*candidateRoot,
 		*candidateDraftRoot,
@@ -98,6 +105,7 @@ func main() {
 		ArtifactRoot:       filepath.Clean(*artifactRoot),
 		StateRoot:          filepath.Clean(*stateRoot),
 		IntelligenceRoot:   filepath.Clean(*intelligenceRoot),
+		RadarRoot:          filepath.Clean(*radarRoot),
 		RobustnessRoot:     filepath.Clean(*robustnessRoot),
 		CandidateRoot:      filepath.Clean(*candidateRoot),
 		CandidateDraftRoot: filepath.Clean(*candidateDraftRoot),
@@ -137,6 +145,13 @@ func main() {
 		"/api/v1/intelligence/",
 		intelligence.NewHTTPHandler(
 			intelligence.NewStore(filepath.Clean(*intelligenceRoot)),
+			*allowedOrigin,
+		),
+	)
+	rootHandler.Handle(
+		"/api/v1/radar/",
+		radar.NewHTTPHandler(
+			radar.NewStore(filepath.Clean(*radarRoot)),
 			*allowedOrigin,
 		),
 	)

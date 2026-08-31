@@ -113,3 +113,39 @@ preserves the prior `latest.json` on failure, and atomically publishes
 `refresh-health.json`. The deployment timer invokes this command explicitly;
 API startup never triggers collection. See
 [ADR-0021](../../docs/adr/0021-observable-daily-intelligence-refresh.md).
+
+## A-share Market Radar
+
+Market Radar monitors which positive A-share movers and source-labelled themes
+are hot now and compares their deterministic scores with the nearest immutable
+30- and 60-minute snapshots. The first collector sends one fixed, bounded
+request to Eastmoney's public A-share snapshot endpoint. It accepts no
+caller-selected URL, credentials, account data, or trading action.
+
+```bash
+uv run quantos radar collect \
+  --output var/quantos/radar-inputs/current.json
+uv run quantos radar build \
+  --input var/quantos/radar-inputs/current.json \
+  --output-root var/quantos/radar
+```
+
+The collector uses price change, volume ratio, turnover, and one industry label.
+It does not invent 30-minute momentum, 20-day-high observations, full concept
+membership, or catalysts when the endpoint omits them. Such inputs and
+snapshots stay `partial`; every stock exposes the resulting component coverage.
+A richer provider may fill those fields through the same contract later.
+
+For scheduled operation, use the ten-minute single-writer job:
+
+```bash
+uv run quantos radar refresh
+```
+
+It pins the first input for each UTC ten-minute bucket, publishes a timestamped
+snapshot plus `latest.json`, preserves the prior latest snapshot on failure,
+and writes bounded `refresh-health.json`. Published buckets are write-once,
+identical retries are idempotent, and older inputs cannot move `latest.json`
+backward. An empty or wholly invalid provider response is a failed collection
+and cannot replace the prior snapshot. API startup performs no collection.
+See [ADR-0028](../../docs/adr/0028-deterministic-a-share-market-radar.md).

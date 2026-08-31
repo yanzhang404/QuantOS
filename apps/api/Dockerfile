@@ -23,7 +23,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     QUANTOS_CANDIDATE_ROOT=/var/lib/quantos/candidates \
     QUANTOS_CANDIDATE_DRAFT_ROOT=/var/lib/quantos/candidate-drafts \
     QUANTOS_STATE_ROOT=/var/lib/quantos/tasks \
-    QUANTOS_INTELLIGENCE_ROOT=/var/lib/quantos/intelligence
+    QUANTOS_INTELLIGENCE_ROOT=/var/lib/quantos/intelligence \
+    QUANTOS_RADAR_ROOT=/var/lib/quantos/radar
 
 WORKDIR /app
 COPY --from=uv /uv /uvx /usr/local/bin/
@@ -46,6 +47,8 @@ RUN useradd --create-home --uid 10001 quantos \
         /var/lib/quantos/intelligence \
         /var/lib/quantos/intelligence-inputs \
         /var/lib/quantos/intelligence-observations \
+        /var/lib/quantos/radar \
+        /var/lib/quantos/radar-inputs \
     && chown -R quantos:quantos /var/lib/quantos
 
 USER quantos

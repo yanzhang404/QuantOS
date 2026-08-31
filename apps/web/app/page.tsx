@@ -11,6 +11,7 @@ import {
   studyAsOf,
 } from "./research-data";
 import { DailyIntelligence } from "./daily-intelligence";
+import { MarketRadar } from "./market-radar";
 import {
   coverageIntervals,
   getCoverageMember,
@@ -407,6 +408,7 @@ export default function Home() {
           <>
             <p className="view-intro">{t.overviewIntro}</p>
             <DailyIntelligence locale={locale} />
+            <MarketRadar locale={locale} />
             <section className="overview-grid">
               <article className="panel overview-evidence">
                 <div>

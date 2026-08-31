@@ -1,0 +1,14 @@
+[Unit]
+Description=QuantOS A-share Market Radar refresh
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/QuantOS
+ExecStart=/usr/bin/docker compose --profile research-admin run --rm radar-refresh
+TimeoutStartSec=3min
+
+# The container has public read-only network access and no exchange credentials.
+NoNewPrivileges=true

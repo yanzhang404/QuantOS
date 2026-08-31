@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantos.local/schemas/market-radar.v1.schema.json",
+  "title": "QuantOS A-share Market Radar API v1",
+  "oneOf": [
+    { "$ref": "#/$defs/radar_input" },
+    { "$ref": "#/$defs/radar_snapshot" }
+  ],
+  "$defs": {
+    "status": { "enum": ["complete", "partial", "sample"] },
+    "symbol": { "type": "string", "pattern": "^[0-9]{6}\\.(SH|SZ|BJ)$" },
+    "nullable_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "nullable_acceleration": {
+      "type": ["number", "null"],
+      "minimum": -100,
+      "maximum": 100
+    },
+    "catalyst": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "source", "url"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "source": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "stock_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "name",
+        "last_price",
+        "change_pct",
+        "themes",
+        "signals",
+        "source_url",
+        "observed_at"
+      ],
+      "properties": {
+        "symbol": { "$ref": "#/$defs/symbol" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "last_price": { "type": "number", "exclusiveMinimum": 0 },
+        "change_pct": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "relative_volume": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "turnover_pct": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "change_30m_pct": { "type": ["number", "null"], "minimum": -100, "maximum": 100 },
+        "new_high_20d": { "type": ["boolean", "null"] },
+        "themes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 }
+        },
+        "signals": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "source_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "catalyst": { "oneOf": [{ "$ref": "#/$defs/catalyst" }, { "type": "null" }] }
+      }
+    },
+    "radar_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "market", "as_of", "status", "provider", "stocks"],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "market": { "const": "CN" },
+        "as_of": { "type": "string", "format": "date-time" },
+        "status": { "$ref": "#/$defs/status" },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "stocks": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/stock_input" }
+        }
+      }
+    },
+    "heat_components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price_move", "relative_volume", "turnover", "momentum_30m", "new_high_20d"],
+      "properties": {
+        "price_move": { "type": "number", "minimum": 0, "maximum": 100 },
+        "relative_volume": { "$ref": "#/$defs/nullable_score" },
+        "turnover": { "$ref": "#/$defs/nullable_score" },
+        "momentum_30m": { "$ref": "#/$defs/nullable_score" },
+        "new_high_20d": { "$ref": "#/$defs/nullable_score" }
+      }
+    },
+    "stock_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol", "name", "last_price", "change_pct", "relative_volume",
+        "turnover_pct", "change_30m_pct", "new_high_20d", "themes", "signals",
+        "source_url", "observed_at", "catalyst", "rank", "heat_score",
+        "data_coverage", "heat_components", "acceleration_30m", "acceleration_60m"
+      ],
+      "properties": {
+        "symbol": { "$ref": "#/$defs/symbol" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "last_price": { "type": "number", "exclusiveMinimum": 0 },
+        "change_pct": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "relative_volume": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "turnover_pct": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "change_30m_pct": { "type": ["number", "null"], "minimum": -100, "maximum": 100 },
+        "new_high_20d": { "type": ["boolean", "null"] },
+        "themes": {
+          "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 }
+        },
+        "signals": {
+          "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "source_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "catalyst": { "oneOf": [{ "$ref": "#/$defs/catalyst" }, { "type": "null" }] },
+        "rank": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "heat_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "data_coverage": { "type": "number", "minimum": 0.3, "maximum": 1 },
+        "heat_components": { "$ref": "#/$defs/heat_components" },
+        "acceleration_30m": { "$ref": "#/$defs/nullable_acceleration" },
+        "acceleration_60m": { "$ref": "#/$defs/nullable_acceleration" }
+      }
+    },
+    "theme_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rank",
+        "name",
+        "heat_score",
+        "leader_score",
+        "breadth_score",
+        "data_coverage",
+        "observed_breadth",
+        "leaders",
+        "acceleration_30m",
+        "acceleration_60m"
+      ],
+      "properties": {
+        "rank": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "heat_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "leader_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "breadth_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "data_coverage": { "type": "number", "minimum": 0.3, "maximum": 1 },
+        "observed_breadth": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "leaders": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/symbol" }
+        },
+        "acceleration_30m": { "$ref": "#/$defs/nullable_acceleration" },
+        "acceleration_60m": { "$ref": "#/$defs/nullable_acceleration" }
+      }
+    },
+    "radar_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "methodology_version",
+        "market",
+        "as_of",
+        "status",
+        "stocks",
+        "themes",
+        "summary",
+        "provenance"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "methodology_version": { "const": "quantos-market-radar-v1.0.0" },
+        "market": { "const": "CN" },
+        "as_of": { "type": "string", "format": "date-time" },
+        "status": { "$ref": "#/$defs/status" },
+        "stocks": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/stock_result" } },
+        "themes": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/theme_result" } },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hottest_theme", "fastest_rising_theme", "leader_symbol"],
+          "properties": {
+            "hottest_theme": { "type": ["string", "null"], "maxLength": 40 },
+            "fastest_rising_theme": { "type": ["string", "null"], "maxLength": 40 },
+            "leader_symbol": { "oneOf": [{ "$ref": "#/$defs/symbol" }, { "type": "null" }] }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input_sha256", "generator_version", "provider", "stock_count", "theme_count"],
+          "properties": {
+            "input_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "generator_version": { "const": "0.1.0" },
+            "provider": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "stock_count": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "theme_count": { "type": "integer", "minimum": 0, "maximum": 100 }
+          }
+        }
+      }
+    }
+  }
+}

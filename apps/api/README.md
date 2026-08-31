@@ -36,6 +36,8 @@ The server listens on `127.0.0.1:8080` by default and exposes:
 - `DELETE /api/v1/experiment-archives/{run_id}`
 - `GET /api/v1/intelligence/latest`
 - `GET /api/v1/intelligence/health`
+- `GET /api/v1/radar/latest`
+- `GET /api/v1/radar/health`
 
 Task metadata is stored as atomic JSON files. The API first verifies that a
 submitted dataset identity belongs to its immutable Bundle, then resolves the
@@ -64,8 +66,9 @@ artifacts. Mount `/var/lib/quantos` on persistent storage and configure:
 - `QUANTOS_ALLOWED_ORIGIN`: exact HTTPS workspace origin;
 - `QUANTOS_REQUIRED_BUNDLE`: optional 16-character bundle version required by
   `/readyz`;
-- `QUANTOS_DATA_ROOT`, `QUANTOS_ARTIFACT_ROOT`, `QUANTOS_STATE_ROOT`, and
-  `QUANTOS_INTELLIGENCE_ROOT`: persistent paths when the defaults are unsuitable;
+- `QUANTOS_DATA_ROOT`, `QUANTOS_ARTIFACT_ROOT`, `QUANTOS_STATE_ROOT`,
+  `QUANTOS_INTELLIGENCE_ROOT`, and `QUANTOS_RADAR_ROOT`: persistent paths when
+  the defaults are unsuitable;
 - `QUANTOS_ROBUSTNESS_ROOT`: content-addressed robustness review artifacts;
 - `QUANTOS_CANDIDATE_ROOT`: guarded candidate lifecycle records;
 - `QUANTOS_CANDIDATE_DRAFT_ROOT`: rate-limited candidate review packages;
@@ -93,6 +96,12 @@ fields, invalid sources, and scores that do not match the fixed methodology.
 Refresh health is loaded from the adjacent `refresh-health.json`; the API
 validates its bounded state and derives `stale=true` after 36 hours without a
 successful publication.
+
+Market Radar is read-only and loaded from `var/quantos/radar/latest.json` by
+default. Its adjacent refresh health becomes stale after 30 minutes. The API
+recomputes the stock and theme heat formulas and rejects mismatched rankings,
+memberships, components, symlinks, oversized files, and unknown fields. It
+never starts intraday collection itself.
 
 Candidate records are also read-only. The API validates proposal identity,
 bounded fields, transition order, actor authority, and evidence identifiers

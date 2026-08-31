@@ -44,6 +44,8 @@ Paper and live trading are not implemented.
   CoinDesk endpoints without credentials or article-body storage.
 - Display the sentiment result, factor detail, daily brief, and citations on
   the bilingual workspace homepage.
+- Monitor A-share movers and themes through deterministic stock heat, theme
+  breadth, and 30/60-minute heat acceleration with visible input coverage.
 - Download and verify public Binance funding-rate and open-interest histories as
   separate, immutable, content-addressed Parquet datasets.
 - Materialize those histories at closed-bar decision times with explicit
@@ -162,6 +164,26 @@ uv run quantos intelligence build \
 
 The first 29 daily collections are visibly `partial` while empirical factor
 percentiles accumulate. See [`services/agent`](services/agent/README.md).
+
+Build the deterministic A-share Market Radar sample:
+
+```bash
+uv run quantos radar build \
+  --input examples/radar/sample-input.v1.json \
+  --output-root var/quantos/radar
+```
+
+For a current public A-share snapshot, run one explicit ten-minute refresh:
+
+```bash
+uv run quantos radar refresh
+```
+
+The first collector supplies price moves, volume ratio, turnover, and one
+industry label. Fields it does not provide—such as 30-minute return, a 20-day
+high flag, full concept membership, or catalyst metadata—remain absent and
+lower visible data coverage. See
+[ADR-0028](docs/adr/0028-deterministic-a-share-market-radar.md).
 
 Create a bounded strategy proposal without promoting or registering code:
 
