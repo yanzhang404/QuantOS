@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantos.local/schemas/intelligence.v1.schema.json",
+  "title": "QuantOS Daily Intelligence API v1",
+  "oneOf": [
+    { "$ref": "#/$defs/daily_input" },
+    { "$ref": "#/$defs/daily_snapshot" }
+  ],
+  "$defs": {
+    "factor_key": {
+      "enum": [
+        "crypto_volatility",
+        "options_positioning",
+        "perpetual_positioning",
+        "momentum_volume",
+        "liquidation_balance",
+        "market_breadth",
+        "macro_risk"
+      ]
+    },
+    "factor_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "raw_value", "unit", "percentile", "source", "observed_at"],
+      "properties": {
+        "key": { "$ref": "#/$defs/factor_key" },
+        "raw_value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "percentile": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "observed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "news_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "url",
+        "source",
+        "published_at",
+        "assets",
+        "sentiment",
+        "confidence",
+        "relevance"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9._:-]{4,128}$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "title_zh": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "summary_zh": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "source": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "published_at": { "type": "string", "format": "date-time" },
+        "assets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Z0-9-]{2,20}$" }
+        },
+        "sentiment": { "type": "number", "minimum": -1, "maximum": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "relevance": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "daily_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "date", "as_of", "status", "factors", "news"],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "date": { "type": "string", "format": "date" },
+        "as_of": { "type": "string", "format": "date-time" },
+        "status": { "enum": ["complete", "partial", "sample"] },
+        "factors": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": { "$ref": "#/$defs/factor_input" }
+        },
+        "news": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/news_input" }
+        },
+        "previous_score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 }
+      }
+    },
+    "factor_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "raw_value",
+        "unit",
+        "percentile",
+        "source",
+        "observed_at",
+        "weight",
+        "direction",
+        "score",
+        "contribution"
+      ],
+      "properties": {
+        "key": { "$ref": "#/$defs/factor_key" },
+        "raw_value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "percentile": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "direction": { "enum": ["fear_when_high", "greed_when_high"] },
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "contribution": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "title_zh",
+        "summary",
+        "summary_zh",
+        "highlights",
+        "highlights_zh",
+        "news"
+      ],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "title_zh": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "summary_zh": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "highlights": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "type": "string", "minLength": 1, "maxLength": 280 }
+        },
+        "highlights_zh": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "type": "string", "minLength": 1, "maxLength": 280 }
+        },
+        "news": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/news_input" }
+        }
+      }
+    },
+    "daily_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "methodology_version",
+        "date",
+        "as_of",
+        "status",
+        "score",
+        "previous_score",
+        "change",
+        "label",
+        "market_score",
+        "news_score",
+        "factors",
+        "brief",
+        "provenance"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "methodology_version": { "const": "quantos-sentiment-v1.0.0" },
+        "date": { "type": "string", "format": "date" },
+        "as_of": { "type": "string", "format": "date-time" },
+        "status": { "enum": ["complete", "partial", "sample"] },
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "previous_score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "change": { "type": ["number", "null"], "minimum": -100, "maximum": 100 },
+        "label": { "enum": ["extreme_fear", "fear", "neutral", "greed", "extreme_greed"] },
+        "market_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "news_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "factors": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": { "$ref": "#/$defs/factor_result" }
+        },
+        "brief": { "$ref": "#/$defs/brief" },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input_sha256", "generator_version", "factor_count", "news_count"],
+          "properties": {
+            "input_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "generator_version": { "const": "0.1.0" },
+            "factor_count": { "const": 7 },
+            "news_count": { "type": "integer", "minimum": 0, "maximum": 100 }
+          }
+        }
+      }
+    }
+  }
+}

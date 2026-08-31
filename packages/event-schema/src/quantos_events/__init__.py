@@ -1,6 +1,7 @@
 """Versioned event contracts shared by QuantOS research runtimes."""
 
 from .models import (
+    FeatureObservation,
     FillEvent,
     MarketEvent,
     MetricEvent,
@@ -11,6 +12,7 @@ from .models import (
 )
 
 __all__ = [
+    "FeatureObservation",
     "FillEvent",
     "MarketEvent",
     "MetricEvent",
@@ -20,4 +22,4 @@ __all__ = [
     "SignalEvent",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantos.local/schemas/market-radar-refresh-health.v1.schema.json",
+  "title": "QuantOS Market Radar Refresh Health v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "state",
+    "last_attempt_at",
+    "last_success_at",
+    "last_success_bucket",
+    "consecutive_failures",
+    "last_error_code"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "state": { "enum": ["running", "succeeded", "failed"] },
+    "last_attempt_at": { "type": "string", "format": "date-time" },
+    "last_success_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_success_bucket": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}Z$" },
+    "consecutive_failures": { "type": "integer", "minimum": 0, "maximum": 1000 },
+    "last_error_code": {
+      "type": ["string", "null"],
+      "enum": ["collection_failed", "publication_failed", null]
+    }
+  }
+}

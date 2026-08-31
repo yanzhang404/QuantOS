@@ -10,18 +10,29 @@ required_files=(
   CONTRIBUTING.md
   LICENSE
   compose.yaml
+  go.mod
   pyproject.toml
   docs/adr/0001-modular-monolith.md
   docs/adr/0002-go-python-boundary.md
   docs/adr/0003-parquet-duckdb.md
   docs/adr/0004-next-bar-open-execution.md
   docs/adr/0005-chronological-out-of-sample-selection.md
+  docs/adr/0006-read-only-research-workspace.md
+  docs/adr/0012-deterministic-daily-market-intelligence.md
+  docs/adr/0013-result-first-product-workspace.md
+  docs/adr/0014-version-multi-timeframe-dataset-bundles.md
+  packages/api-schema/schemas/intelligence.v1.schema.json
+  apps/web/package.json
+  apps/web/sites-vite-plugin.ts
   docs/market-data/kline-schema.md
 )
 
 required_directories=(
   apps/web
+  apps/web/app
   apps/api
+  apps/api/cmd/quantos-api
+  apps/api/internal/backtest
   apps/worker
   apps/worker/src/quantos_cli
   services/market-data
@@ -33,6 +44,7 @@ required_directories=(
   services/execution
   services/risk
   services/agent
+  services/agent/src/quantos_intelligence
   packages/strategy-sdk
   packages/strategy-sdk/src/quantos_strategy
   packages/event-schema
@@ -52,6 +64,7 @@ required_directories=(
   tests/market_data
   tests/backtest
   tests/research
+  tests/intelligence
 )
 
 failed=0
@@ -71,7 +84,8 @@ for path in "${required_directories[@]}"; do
 done
 
 if git ls-files -co --exclude-standard | grep -E \
-  '(^|/)(\.env($|\.)|id_rsa$|.*\.(pem|key)$)' >/dev/null; then
+  '(^|/)(\.env($|\.)|id_rsa$|.*\.(pem|key)$)' | \
+  grep -Ev '(^|/)\.env\.(example|sample|template)$' >/dev/null; then
   echo "potential secret file detected in repository contents" >&2
   failed=1
 fi

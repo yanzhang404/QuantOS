@@ -1,0 +1,274 @@
+{
+  "as_of": "2026-08-12T02:30:00Z",
+  "market": "CN",
+  "methodology_version": "quantos-market-radar-v1.0.0",
+  "provenance": {
+    "generator_version": "0.1.0",
+    "input_sha256": "4913fc0450a7ef0e671bf67d69b501248c93b92b2ccdd831516ddb2133593309",
+    "provider": "Deterministic fixture",
+    "stock_count": 6,
+    "theme_count": 4
+  },
+  "schema_version": "1.0",
+  "status": "sample",
+  "stocks": [
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": {
+        "source": "QuantOS fixture",
+        "title": "示例催化，仅用于界面和契约测试",
+        "url": "https://example.com/fixture/liquid-cooling"
+      },
+      "change_30m_pct": 4.2,
+      "change_pct": 6.8,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 84.0,
+        "new_high_20d": 100.0,
+        "price_move": 68.0,
+        "relative_volume": 70.0,
+        "turnover": 62.67
+      },
+      "heat_score": 74.1,
+      "last_price": 26.8,
+      "name": "示例液冷龙头",
+      "new_high_20d": true,
+      "observed_at": "2026-08-12T02:29:00Z",
+      "rank": 1,
+      "relative_volume": 3.1,
+      "signals": [
+        "成交额快速放大",
+        "价格波动超过 20 日均值"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "000001.SZ",
+      "themes": [
+        "液冷",
+        "算力基础设施"
+      ],
+      "turnover_pct": 9.4
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": null,
+      "change_30m_pct": 3.6,
+      "change_pct": 5.9,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 72.0,
+        "new_high_20d": 100.0,
+        "price_move": 59.0,
+        "relative_volume": 56.67,
+        "turnover": 52.0
+      },
+      "heat_score": 64.07,
+      "last_price": 18.6,
+      "name": "示例液冷二号",
+      "new_high_20d": true,
+      "observed_at": "2026-08-12T02:28:00Z",
+      "rank": 2,
+      "relative_volume": 2.7,
+      "signals": [
+        "板块多股同步走强"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "600001.SH",
+      "themes": [
+        "液冷"
+      ],
+      "turnover_pct": 7.8
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": null,
+      "change_30m_pct": 2.9,
+      "change_pct": 4.8,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 58.0,
+        "new_high_20d": 100.0,
+        "price_move": 48.0,
+        "relative_volume": 40.0,
+        "turnover": 42.67
+      },
+      "heat_score": 52.4,
+      "last_price": 31.4,
+      "name": "示例稀土资源",
+      "new_high_20d": true,
+      "observed_at": "2026-08-12T02:26:00Z",
+      "rank": 3,
+      "relative_volume": 2.2,
+      "signals": [
+        "价格快速拉升"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "600002.SH",
+      "themes": [
+        "稀土"
+      ],
+      "turnover_pct": 6.4
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": null,
+      "change_30m_pct": 3.1,
+      "change_pct": 5.1,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 62.0,
+        "new_high_20d": 0.0,
+        "price_move": 51.0,
+        "relative_volume": 46.67,
+        "turnover": 74.67
+      },
+      "heat_score": 50.57,
+      "last_price": 42.2,
+      "name": "示例算力设备",
+      "new_high_20d": false,
+      "observed_at": "2026-08-12T02:27:00Z",
+      "rank": 4,
+      "relative_volume": 2.4,
+      "signals": [
+        "放量突破日内高点"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "300001.SZ",
+      "themes": [
+        "算力基础设施"
+      ],
+      "turnover_pct": 11.2
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": null,
+      "change_30m_pct": 1.8,
+      "change_pct": 3.6,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 36.0,
+        "new_high_20d": 0.0,
+        "price_move": 36.0,
+        "relative_volume": 33.33,
+        "turnover": 55.33
+      },
+      "heat_score": 34.63,
+      "last_price": 52.1,
+      "name": "示例 PCB",
+      "new_high_20d": false,
+      "observed_at": "2026-08-12T02:24:00Z",
+      "rank": 5,
+      "relative_volume": 2.0,
+      "signals": [
+        "成交活跃度提升"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "300002.SZ",
+      "themes": [
+        "PCB"
+      ],
+      "turnover_pct": 8.3
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "catalyst": null,
+      "change_30m_pct": 2.2,
+      "change_pct": 3.9,
+      "data_coverage": 1.0,
+      "heat_components": {
+        "momentum_30m": 44.0,
+        "new_high_20d": 0.0,
+        "price_move": 39.0,
+        "relative_volume": 30.0,
+        "turnover": 34.0
+      },
+      "heat_score": 33.1,
+      "last_price": 15.7,
+      "name": "示例稀土材料",
+      "new_high_20d": false,
+      "observed_at": "2026-08-12T02:25:00Z",
+      "rank": 6,
+      "relative_volume": 1.9,
+      "signals": [
+        "同题材联动上涨"
+      ],
+      "source_url": "https://push2.eastmoney.com/api/qt/clist/get",
+      "symbol": "000002.SZ",
+      "themes": [
+        "稀土"
+      ],
+      "turnover_pct": 5.1
+    }
+  ],
+  "summary": {
+    "fastest_rising_theme": null,
+    "hottest_theme": "液冷",
+    "leader_symbol": "000001.SZ"
+  },
+  "themes": [
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "breadth_score": 40.0,
+      "data_coverage": 1.0,
+      "heat_score": 60.36,
+      "leader_score": 69.08,
+      "leaders": [
+        "000001.SZ",
+        "600001.SH"
+      ],
+      "name": "液冷",
+      "observed_breadth": 2,
+      "rank": 1
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "breadth_score": 40.0,
+      "data_coverage": 1.0,
+      "heat_score": 55.63,
+      "leader_score": 62.33,
+      "leaders": [
+        "000001.SZ",
+        "300001.SZ"
+      ],
+      "name": "算力基础设施",
+      "observed_breadth": 2,
+      "rank": 2
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "breadth_score": 40.0,
+      "data_coverage": 1.0,
+      "heat_score": 41.92,
+      "leader_score": 42.75,
+      "leaders": [
+        "600002.SH",
+        "000002.SZ"
+      ],
+      "name": "稀土",
+      "observed_breadth": 2,
+      "rank": 3
+    },
+    {
+      "acceleration_30m": null,
+      "acceleration_60m": null,
+      "breadth_score": 20.0,
+      "data_coverage": 1.0,
+      "heat_score": 30.24,
+      "leader_score": 34.63,
+      "leaders": [
+        "300002.SZ"
+      ],
+      "name": "PCB",
+      "observed_breadth": 1,
+      "rank": 4
+    }
+  ]
+}

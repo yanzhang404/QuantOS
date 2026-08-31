@@ -24,9 +24,17 @@ from data download through report generation.
 
 ## V0.2 — Research quality and review
 
-- Feature registry and dataset lineage.
+- Feature registry and dataset lineage. **Initial built-in registry and Run-level
+  resolved feature lineage implemented and exposed in API/Data/Strategies views.**
 - Parameter sweeps and train/validation/out-of-sample splits. **Implemented.**
-- Funding-rate and open-interest datasets.
+- Funding-rate and open-interest datasets. **Implemented as separate public,
+  immutable, content-verified datasets with causal closed-bar point-in-time
+  materialization and visible stale/missing states.**
+- Versioned external features in backtests. **Implemented with immutable event
+  delivery, v4 Run binding, and the first fail-closed funding-filtered EMA
+  research strategy, plus safe API/workspace version controls and visible
+  external lineage; strategy-specific chronological robustness for this
+  external-feature strategy remains.**
 - Bias, leakage, and sensitivity review checks. **Initial automated checks implemented.**
 - Richer experiment comparison and artifact browsing. **JSON comparison implemented.**
 
@@ -34,10 +42,37 @@ Exit criterion: researchers can compare runs and identify common validity risks.
 
 ## V0.3 — Product workspace
 
-- Dashboard and project navigation.
-- Dataset, strategy, backtest, and experiment views.
-- Task orchestration and progress streaming.
+- Dashboard and project navigation. **Top navigation, Research Center, result-first workspace, and folder-style Strategy Library implemented.**
+- Dataset, strategy, backtest, and experiment views. **Interactive parameter submission, Task history, and dynamic Experiment detail implemented; comparison pending.**
+- Task orchestration and progress streaming. **Local durable task API and worker implemented; streaming pending.**
 - Tool-driven AI research assistant for querying and reviewing artifacts.
+- Daily source-linked market brief and deterministic sentiment index. **Initial contract, local publisher, read-only API, and homepage view implemented.**
+- Manifest-driven strategy parameters and candidate-to-promotion lifecycle. **Initial catalog and evidence view implemented.**
+- Multi-timeframe research datasets. **BTC/ETH 5m/15m/1h/4h/1d immutable bundle, 2021-to-current coverage evidence, incremental sync, verified backtest member resolution, and Run Kline projections implemented.**
+- Hosted canonical research service. **Deployment contract, production image, environment configuration, and data-aware readiness implemented; external host provisioning remains.**
+- Result-first product information architecture. **Overview, Strategies, Runs,
+  and Data views accepted; initial workspace split in progress.**
+
+The accepted delivery order for the remaining V0.3 work is:
+
+1. split and simplify the four product views; **Implemented.**
+2. load immutable BTC/ETH datasets for 5m, 15m, 1h, 4h, and 1d; **Implemented from 2021-01-01 through the latest complete UTC day, with immutable incremental refresh.**
+3. add immutable Run filtering, archival, and up-to-four comparison; **Implemented.**
+4. add walk-forward, neighboring-parameter, doubled-cost, and multi-market
+   gates; **Implemented through strategy-specific adapters for EMA Cross and
+   Donchian ATR.**
+5. add candidate strategy lifecycle and bounded Agent proposal contracts; **Implemented with atomic records, guarded transitions, read-only API, and workspace queue.**
+6. schedule at most one or two explainable candidates per week through draft PRs; **Implemented as rate-limited review packages and a read-only queue; remote draft opening remains deliberately human-triggered.**
+7. replace the sample intelligence input with public, read-only daily collectors. **Implemented with allow-listed sources, atomic daily history, bounded headline metadata, and 30-observation empirical calibration.**
+8. schedule daily collection/publication with overlap protection and visible
+   last-success health. **Implemented with a single-writer refresh command,
+   one-shot Compose job, persistent systemd timer, read-only health endpoint,
+   and bilingual freshness state.**
+9. add an A-share intraday Market Radar for current leaders and accelerating
+   themes. **Implemented with a versioned input, bounded public A-share snapshot
+   collection, deterministic stock/theme heat, immutable 10-minute snapshots,
+   30/60-minute acceleration, read-only API, and bilingual overview; richer
+   full-tape RVOL and turnover coverage remains a provider extension.**
 
 Exit criterion: the core research loop is usable without manually coordinating
 individual command-line steps.

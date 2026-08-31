@@ -7,7 +7,7 @@ market-data and backtest milestones.
 | --- | --- | --- |
 | `exchange` | string | `binance` in V0.1 |
 | `symbol` | string | `BTCUSDT` or `ETHUSDT` |
-| `interval` | string | `1h` or `4h` |
+| `interval` | string | `5m`, `15m`, `1h`, `4h`, or `1d` |
 | `open_time` | timestamp(ms, UTC) | aligned interval start; unique key |
 | `close_time` | timestamp(ms, UTC) | next interval start minus 1 ms |
 | `open`, `high`, `low`, `close` | decimal(38,18) | positive and internally consistent |
@@ -47,3 +47,11 @@ returns the existing version rather than mutating it.
 The manifest records source URL, requested and actual time bounds, schema,
 producer version, row count, normalized content hash, validation report, and
 the size and SHA-256 checksum of each Parquet file.
+
+## Dataset bundle contract
+
+`dataset-bundle.v1` is a collection manifest over exact `kline.v1` dataset
+versions. Members are ordered by symbol and interval and each records its
+dataset version, content hash, row count, requested bounds, and local immutable
+path. Bundle publication is atomic: every declared member must verify before
+the manifest becomes visible.

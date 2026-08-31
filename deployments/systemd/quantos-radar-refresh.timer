@@ -1,0 +1,16 @@
+[Unit]
+Description=Run QuantOS Market Radar every ten minutes during A-share sessions
+
+[Timer]
+# 09:30-11:30 and 13:00-15:00 Asia/Shanghai, expressed in UTC.
+OnCalendar=Mon..Fri *-*-* 01:30,40,50:00 UTC
+OnCalendar=Mon..Fri *-*-* 02:00/10:00 UTC
+OnCalendar=Mon..Fri *-*-* 03:00,10,20,30:00 UTC
+OnCalendar=Mon..Fri *-*-* 05,06:00/10:00 UTC
+OnCalendar=Mon..Fri *-*-* 07:00:00 UTC
+# Intraday observations cannot be reconstructed after a missed deadline.
+Persistent=false
+Unit=quantos-radar-refresh.service
+
+[Install]
+WantedBy=timers.target

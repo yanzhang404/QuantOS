@@ -58,4 +58,29 @@ def test_detects_incomplete_requested_coverage(start_time) -> None:
     )
 
     assert not report.is_valid
-    assert "fully cover" in report.errors[-1]
+    assert "both requested range boundaries" in report.errors[-1]
+
+
+def test_accepts_and_counts_source_gap_with_complete_boundaries(start_time) -> None:
+    klines = [make_kline(start_time), make_kline(start_time + timedelta(hours=2))]
+
+    report = validate_klines(
+        klines,
+        requested_start=start_time,
+        requested_end=start_time + timedelta(hours=3),
+    )
+
+    assert report.is_valid
+    assert report.missing_count == 1
+
+
+def test_accepts_exchange_bar_with_shortened_close_time(start_time) -> None:
+    shortened = replace(
+        make_kline(start_time),
+        close_time=start_time + timedelta(minutes=30),
+    )
+
+    report = validate_klines([shortened])
+
+    assert report.is_valid
+    assert report.invalid_time_count == 0

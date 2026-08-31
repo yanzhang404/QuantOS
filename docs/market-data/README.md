@@ -1,14 +1,20 @@
 # Market Data
 
-The first V0.1 vertical slice is implemented as the `quantos-market-data`
-Python package. It:
+The first market-data vertical slice is implemented as the
+`quantos-market-data` Python package. It:
 
 - downloads public Binance Spot Klines through the market-data-only endpoint;
-- supports BTCUSDT/ETHUSDT and 1h/4h;
+- supports BTCUSDT/ETHUSDT and 5m/15m/1h/4h/1d;
 - uses inclusive-start, exclusive-end UTC ranges;
-- validates identity, ordering, continuity, timestamps, OHLC, and volume;
+- validates identity, ordering, timestamps, OHLC, and volume, while counting
+  exchange maintenance gaps instead of fabricating bars;
 - publishes content-addressed immutable Parquet versions and JSON manifests;
 - verifies checksums and queries a selected version through DuckDB.
+- publishes an atomic `dataset-bundle.v1` manifest only after every requested
+  symbol/interval member has been downloaded and verified.
+- downloads public USD-M Futures funding rates and open-interest statistics into
+  separate `derivatives-market.v1` Parquet datasets with recomputed content
+  verification.
 
 See the [Kline schema](kline-schema.md) and
 [ADR-0003](../adr/0003-parquet-duckdb.md).
@@ -40,3 +46,96 @@ uv run quantos data query --dataset data/market/spot/exchange=binance/... --limi
 ```
 
 Generated data stays below `data/` and is excluded from Git.
+
+Download and version the complete product matrix for one common UTC range:
+
+```bash
+uv run quantos data sync-matrix \
+  --start 2024-01-01T00:00:00Z \
+  --end 2024-02-01T00:00:00Z
+```
+
+The command prints the immutable bundle path, bundle version, and exact member
+dataset identities. The range must align to all requested intervals; the
+default matrix includes `1d`, so use UTC day boundaries. A bundle is not
+published if any matrix member is missing or invalid. Historical intervals
+absent from the exchange response remain explicit in validation evidence.
+
+Backfill once and then refresh to the latest common closed boundary:
+
+```bash
+uv run quantos data sync-current \
+  --start 2021-01-01T00:00:00Z \
+  --data-root data \
+  --coverage-output apps/web/app/multi-timeframe-coverage.v1.json
+```
+
+The first call downloads the complete matrix. Later calls discover the newest
+verified bundle with the same start, request only the missing tail, publish a
+new immutable bundle, and atomically refresh the compact workspace evidence.
+The latest common boundary is UTC midnight because `1d` belongs to the matrix.
+
+Download funding rates without credentials:
+
+```bash
+uv run quantos data derivatives \
+  --series funding-rate \
+  --symbol BTCUSDT \
+  --start 2026-07-01T00:00:00Z \
+  --end 2026-08-01T00:00:00Z
+```
+
+Download open interest at one explicit period:
+
+```bash
+uv run quantos data derivatives \
+  --series open-interest \
+  --symbol BTCUSDT \
+  --period 4h \
+  --start 2026-07-25T00:00:00Z \
+  --end 2026-08-01T00:00:00Z
+```
+
+The public open-interest endpoint only exposes the latest month, so QuantOS
+rejects request windows longer than 31 days and records `latest 1 month` in the
+manifest. Verify a printed dataset path with:
+
+```bash
+uv run quantos data validate-derivatives --dataset data/market/derivatives/...
+```
+
+Verification reloads the Parquet records and recomputes their canonical content
+hash in addition to checking file SHA-256, row count, schema, source, time range,
+and version path. These datasets are not silently aligned with Spot Klines. A
+strategy feature must later bind exact versions and use only the latest
+derivatives observation whose timestamp is at or before the closed Kline.
+
+See [ADR-0023](../adr/0023-version-public-derivatives-market-data.md).
+
+Materialize one derivatives series against an exact Spot dataset version:
+
+```bash
+uv run quantos data align-derivatives \
+  --spot-dataset data/market/spot/exchange=binance/symbol=BTCUSDT/interval=4h/version=<spot-version> \
+  --derivative-dataset data/market/derivatives/exchange=binance/series=open-interest/symbol=BTCUSDT/period=4h/version=<oi-version> \
+  --start 2026-07-25T00:00:00Z \
+  --end 2026-08-01T00:00:00Z \
+  --max-age 8h
+```
+
+The output has exactly one row per selected Spot bar. At the bar close it uses
+only the latest derivatives timestamp at or before that decision time. A row is
+`matched`, `no-prior-observation`, or `stale-observation`; stale and missing rows
+never contain feature values. `--max-age` is a required, versioned assumption
+and accepts positive `ms`, `s`, `m`, `h`, or `d` units.
+
+Verify a materialized version independently:
+
+```bash
+uv run quantos data validate-alignment --dataset data/features/derivatives-aligned/...
+```
+
+The aligned manifest binds exact Spot and derivatives dataset versions and
+content hashes, the `asof-closed-bar.v1` policy, time range, age limit, and
+availability counts. See
+[ADR-0024](../adr/0024-materialize-causal-derivatives-alignment.md).

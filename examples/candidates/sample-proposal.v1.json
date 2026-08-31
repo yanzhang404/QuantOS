@@ -1,0 +1,49 @@
+{
+  "schema_version": "candidate-proposal.v1",
+  "strategy_slug": "volatility-breakout",
+  "title": "Volatility-adjusted channel breakout",
+  "hypothesis": "A channel breakout sized by recent volatility may retain trend exposure while limiting concentration during turbulent regimes.",
+  "rationale": "The candidate is intentionally simple, explainable, and compatible with the existing close-bar backtest boundary. It still requires implementation, deterministic tests, and independent robustness evidence.",
+  "category": "trend",
+  "supported_intervals": [
+    "4h",
+    "1d"
+  ],
+  "parameters": [
+    {
+      "key": "entry_period",
+      "kind": "integer",
+      "label": "Entry channel bars",
+      "default": 55,
+      "minimum": 20,
+      "maximum": 120
+    },
+    {
+      "key": "target_volatility",
+      "kind": "decimal",
+      "label": "Target annual volatility",
+      "default": "0.20",
+      "minimum": "0.05",
+      "maximum": "0.40"
+    }
+  ],
+  "implementation_plan": [
+    "Define the signal through the shared strategy interface with close-bar inputs only.",
+    "Add deterministic fixtures for entries, exits, sizing bounds, fees, and slippage."
+  ],
+  "research_plan": [
+    "Evaluate immutable BTC and ETH datasets across multiple non-overlapping periods.",
+    "Require walk-forward, neighboring-parameter, doubled-cost, and peer-market gates."
+  ],
+  "sources": [
+    {
+      "title": "Time Series Momentum",
+      "url": "https://doi.org/10.1016/j.jfineco.2011.11.003"
+    }
+  ],
+  "proposed_by": {
+    "kind": "agent",
+    "name": "quantos-research-agent",
+    "workflow_version": "1.0.0"
+  }
+}

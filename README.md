@@ -15,7 +15,8 @@ Paper and live trading are not implemented.
 ## V0.1 capabilities
 
 - Download public Binance historical Klines for BTCUSDT and ETHUSDT.
-- Store 1h and 4h bars as versioned Parquet datasets.
+- Store 5m, 15m, 1h, 4h, and 1d bars as versioned Parquet datasets.
+- Version the complete BTC/ETH interval matrix as one immutable dataset bundle.
 - Query local datasets with DuckDB.
 - Run an event-driven EMA cross example backtest.
 - Model fees and fixed slippage.
@@ -24,10 +25,37 @@ Paper and live trading are not implemented.
 - Select EMA parameters with chronological train/validation/test splits.
 - Evaluate only the validation winner on an untouched holdout and doubled costs.
 - Compare experiment runs and generate automated validity findings.
+- Filter saved Runs, reversibly archive review clutter, and compare up to four
+  normalized portfolio curves with their exact parameters and costs.
+- Build deterministic promotion evidence from expanding walk-forward folds,
+  adjacent parameters, doubled costs, and aligned BTC/ETH holdouts.
+- Persist bounded Agent strategy proposals through implementation evidence,
+  strategy-matched robustness review, and explicit human approval or rejection.
+- Inspect the guarded candidate queue through a validated read-only API and
+  bilingual Overview card.
+- Prepare at most two narrow candidate review packages per UTC ISO week without
+  automatically opening, merging, approving, or trading from a pull request.
 - Run Buy & Hold and a formal Donchian ATR trend strategy.
+- Inspect a versioned feature registry and persist resolved EMA, Donchian, and
+  ATR lineage in every new content-addressed Run.
+- Publish a deterministic daily market-sentiment snapshot from seven market
+  factors and source-linked news classifications.
+- Collect those inputs from allow-listed public Binance, Deribit, Cboe, and
+  CoinDesk endpoints without credentials or article-body storage.
+- Display the sentiment result, factor detail, daily brief, and citations on
+  the bilingual workspace homepage.
+- Monitor A-share movers and themes through deterministic stock heat, theme
+  breadth, and 30/60-minute heat acceleration with visible input coverage.
+- Download and verify public Binance funding-rate and open-interest histories as
+  separate, immutable, content-addressed Parquet datasets.
+- Materialize those histories at closed-bar decision times with explicit
+  maximum-age and missing-data evidence, without future-nearest matching.
+- Feed exact materialized feature versions through the deterministic event clock
+  and run an initial fail-closed funding-filtered EMA research strategy.
 
-The research loop is implemented with Markdown reports. Feature lineage,
-walk-forward validation, broader market datasets, and HTML presentation remain.
+The research loop is implemented with Markdown reports and a product workspace.
+Chronological funding-strategy evaluation, workspace controls, and
+strategy-specific robustness adapters remain.
 
 ## Architecture at a glance
 
@@ -89,12 +117,16 @@ uv run quantos backtest run \
 ```
 
 See [`docs/backtest`](docs/backtest/README.md) for execution assumptions and
-artifact details. Docker Compose remains reserved for dependencies introduced
-by later phases:
+artifact details. The canonical Go/Python research service can run in its
+production container with immutable data mounted from the workspace:
 
 ```bash
-docker compose config
+docker compose --profile research up --build research-api
 ```
+
+The container never downloads data implicitly and exposes `/readyz` so a host
+can wait for the configured Bundle before sending research traffic. See
+[`apps/api`](apps/api/README.md) for deployment configuration.
 
 Run a chronological parameter study:
 
@@ -109,9 +141,92 @@ uv run quantos experiment sweep \
 See [`docs/research`](docs/research/README.md) for study, comparison, and review
 commands.
 
+Build a validated sample of the daily intelligence contract:
+
+```bash
+uv run quantos intelligence build \
+  --input examples/intelligence/sample-input.v1.json \
+  --output-root var/quantos/intelligence
+```
+
+The example is labeled as sample data. To create a current, source-linked input
+and publish it through the same deterministic methodology:
+
+```bash
+uv run quantos intelligence collect \
+  --output var/quantos/intelligence-inputs/current.json \
+  --history-root var/quantos/intelligence-observations \
+  --previous-snapshot var/quantos/intelligence/latest.json
+uv run quantos intelligence build \
+  --input var/quantos/intelligence-inputs/current.json \
+  --output-root var/quantos/intelligence
+```
+
+The first 29 daily collections are visibly `partial` while empirical factor
+percentiles accumulate. See [`services/agent`](services/agent/README.md).
+
+Build the deterministic A-share Market Radar sample:
+
+```bash
+uv run quantos radar build \
+  --input examples/radar/sample-input.v1.json \
+  --output-root var/quantos/radar
+```
+
+For a current public A-share snapshot, run one explicit ten-minute refresh:
+
+```bash
+uv run quantos radar refresh
+```
+
+The first collector supplies price moves, volume ratio, turnover, and one
+industry label. Fields it does not provide—such as 30-minute return, a 20-day
+high flag, full concept membership, or catalyst metadata—remain absent and
+lower visible data coverage. See
+[ADR-0028](docs/adr/0028-deterministic-a-share-market-radar.md).
+
+Create a bounded strategy proposal without promoting or registering code:
+
+```bash
+uv run quantos candidate propose \
+  --input examples/candidates/sample-proposal.v1.json \
+  --output-root var/quantos/candidates
+```
+
+Implementation evidence, a strategy-matched passed robustness artifact, and an
+explicit human decision are separate later transitions. See
+[`services/agent`](services/agent/README.md) and
+[ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md).
+
+Prepare the proposal for the current week's review budget:
+
+```bash
+uv run quantos candidate prepare-draft \
+  --id <proposal-id> \
+  --candidate-root var/quantos/candidates \
+  --draft-root var/quantos/candidate-drafts
+```
+
+The output package contains the immutable proposal, a review checklist, and a
+draft pull-request body. It performs no network or repository mutation. See
+[ADR-0019](docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
+
 The first predeclared strategy study and its reproducible result artifact are
 available in
 [`docs/research/donchian-atr-study.md`](docs/research/donchian-atr-study.md).
+
+Start the read-only research workspace:
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+The dashboard separates Overview, Strategies, Runs, and Data views. It presents
+daily market intelligence, the committed BTC/ETH strategy study, cost stress,
+research findings, and immutable evidence identities. See
+[`docs/frontend`](docs/frontend/README.md).
 
 ## Roadmap
 

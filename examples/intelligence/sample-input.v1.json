@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-08-01",
+  "as_of": "2026-08-01T00:00:00Z",
+  "status": "sample",
+  "previous_score": 36.5,
+  "factors": [
+    {
+      "key": "crypto_volatility",
+      "raw_value": 58.2,
+      "unit": "DVOL",
+      "percentile": 0.82,
+      "source": "https://docs.deribit.com/subscriptions/market-data/deribit_volatility_indexindex_name",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "options_positioning",
+      "raw_value": 0.95,
+      "unit": "put/call",
+      "percentile": 0.75,
+      "source": "https://www.cboe.com/data/mktstat.aspx",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "perpetual_positioning",
+      "raw_value": -0.001,
+      "unit": "funding",
+      "percentile": 0.3,
+      "source": "https://docs.coinglass.com/reference/oi-weight-ohlc-history",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "momentum_volume",
+      "raw_value": -0.04,
+      "unit": "7d return",
+      "percentile": 0.28,
+      "source": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "liquidation_balance",
+      "raw_value": -0.32,
+      "unit": "net ratio",
+      "percentile": 0.35,
+      "source": "https://docs.coinglass.com/reference/endpoint-overview",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "market_breadth",
+      "raw_value": 0.39,
+      "unit": "advancing share",
+      "percentile": 0.32,
+      "source": "https://docs.coinglass.com/reference/coins-markets",
+      "observed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "key": "macro_risk",
+      "raw_value": 18.2,
+      "unit": "VIX",
+      "percentile": 0.65,
+      "source": "https://www.cboe.com/tradable_products/vix/",
+      "observed_at": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "news": [
+    {
+      "id": "sample-deribit-dvol",
+      "title": "Sample source: Deribit volatility index documentation",
+      "title_zh": "示例来源：Deribit 波动率指数文档",
+      "summary": "Reference documentation describes the public BTC and ETH volatility index feed; this sample is not a current market headline.",
+      "summary_zh": "参考文档说明了 BTC 和 ETH 波动率指数公开数据；本条仅为示例，并非当前市场新闻。",
+      "url": "https://docs.deribit.com/subscriptions/market-data/deribit_volatility_indexindex_name",
+      "source": "Deribit Docs",
+      "published_at": "2026-08-01T00:00:00Z",
+      "assets": ["BTC", "ETH"],
+      "sentiment": -0.1,
+      "confidence": 0.9,
+      "relevance": 0.8
+    },
+    {
+      "id": "sample-cboe-statistics",
+      "title": "Sample source: Cboe daily options statistics",
+      "title_zh": "示例来源：Cboe 每日期权统计",
+      "summary": "The source publishes put/call ratios used as a small macro overlay; values in this fixture are illustrative.",
+      "summary_zh": "该来源发布 Put/Call 比率，可作为小权重宏观因子；本示例中的数值仅用于演示。",
+      "url": "https://www.cboe.com/data/mktstat.aspx",
+      "source": "Cboe",
+      "published_at": "2026-08-01T00:00:00Z",
+      "assets": ["MACRO"],
+      "sentiment": 0.0,
+      "confidence": 0.95,
+      "relevance": 0.45
+    },
+    {
+      "id": "sample-coinglass-funding",
+      "title": "Sample source: open-interest-weighted funding data",
+      "title_zh": "示例来源：未平仓量加权资金费率数据",
+      "summary": "The API contract exposes funding-rate history for reproducible derivatives positioning inputs.",
+      "summary_zh": "该接口提供资金费率历史，可用于构建可复现的衍生品仓位因子。",
+      "url": "https://docs.coinglass.com/reference/oi-weight-ohlc-history",
+      "source": "CoinGlass Docs",
+      "published_at": "2026-08-01T00:00:00Z",
+      "assets": ["BTC"],
+      "sentiment": -0.15,
+      "confidence": 0.8,
+      "relevance": 0.7
+    }
+  ]
+}

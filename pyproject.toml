@@ -30,12 +30,16 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = [
   "apps/worker/src/quantos_cli",
+  "packages/api-schema/src/quantos_api_contracts",
   "packages/event-schema/src/quantos_events",
   "packages/metrics/src/quantos_metrics",
   "packages/strategy-sdk/src/quantos_strategy",
   "services/backtest/src/quantos_backtest",
   "services/market-data/src/quantos_market_data",
   "services/research/src/quantos_research",
+  "services/agent/src/quantos_intelligence",
+  "services/agent/src/quantos_radar",
+  "services/agent/src/quantos_candidates",
 ]
 
 [tool.pytest.ini_options]
@@ -52,10 +56,14 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.coverage.run]
 branch = true
 source = [
+  "quantos_api_contracts",
   "quantos_backtest",
+  "quantos_candidates",
   "quantos_cli",
   "quantos_events",
+  "quantos_intelligence",
   "quantos_market_data",
+  "quantos_radar",
   "quantos_metrics",
   "quantos_research",
   "quantos_strategy",

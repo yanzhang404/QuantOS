@@ -52,6 +52,11 @@ flowchart LR
     R --> Q["DuckDB Query Layer"]
     B --> Q
     B --> X["Experiment Artifacts & Reports"]
+    F["Versioned Feature Registry"] --> B
+    R --> I["Daily Intelligence & Sentiment"]
+    R --> C["Guarded Candidate Records"]
+    I --> API
+    C --> API
     API --> M["Metadata Store (future)"]
     API -. "future, disabled" .-> K["Risk & Execution Boundary"]
 ```
@@ -60,21 +65,86 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    E["Exchange Adapter"] --> N["Normalize Schema"]
+    E["Public Spot Adapter"] --> N["Normalize Kline Schema"]
     N --> V["Validate / Deduplicate"]
-    V --> P["Versioned Parquet"]
-    P --> D["DuckDB Views"]
-    D --> R["Research & Backtest"]
+    F["Public Futures Adapter"] --> DS["Funding / OI Typed Schemas"]
+    DS --> V2["Validate / Deduplicate"]
+    V --> P["Versioned Spot Parquet"]
+    V2 --> P2["Separate Versioned Derivatives Parquet"]
+    P --> Q["DuckDB Views"]
+    P2 --> A["Versioned Closed-bar As-of Alignment"]
+    Q --> R["Research & Backtest"]
+    A --> R
 ```
 
 Adapters cannot leak exchange-specific response models past normalization.
 Dataset manifests will include source, symbols, intervals, time range, schema
 version, row counts, checksums, and creation metadata.
 
+Funding and open-interest observations are never implicitly joined to Spot
+Klines. Each has its own immutable dataset identity and source limitation. The
+materialized feature dataset binds exact input versions, uses the closed Kline
+as decision time, selects backward only, and exposes stale/missing states. See
+[ADR-0023](docs/adr/0023-version-public-derivatives-market-data.md) and
+[ADR-0024](docs/adr/0024-materialize-causal-derivatives-alignment.md).
+
+## Daily intelligence flow
+
+```mermaid
+flowchart LR
+    S["Allow-listed public endpoints"] --> C["Bounded collectors"]
+    C --> H["Atomic daily observation history"]
+    C --> N["Validated intelligence.v1 input"]
+    H --> N
+    N --> F["Versioned deterministic sentiment formula"]
+    N --> B["Source-linked daily brief"]
+    F --> J["Immutable daily snapshot"]
+    B --> J
+    T["External daily timer"] --> L["Single-writer refresh lock"]
+    L --> C
+    J --> API["Go read-only API"]
+    L --> O["Atomic refresh health"]
+    O --> API
+    API --> W["Homepage sentiment and daily report"]
+```
+
+The Agent may collect, deduplicate, classify, and summarize untrusted external
+content. It cannot choose index weights, modify scores after calculation,
+execute host commands, access trading credentials, or trigger trading. Every
+snapshot records factor observations, methodology version, source links,
+timestamps, and input identity. See
+[ADR-0012](docs/adr/0012-deterministic-daily-market-intelligence.md) and
+[ADR-0020](docs/adr/0020-public-read-only-intelligence-collectors.md). Daily
+operation is an explicit locked job; failures preserve the last valid snapshot
+and expose bounded health without hidden API-startup collection. See
+[ADR-0021](docs/adr/0021-observable-daily-intelligence-refresh.md).
+
+## Intraday market-radar flow
+
+```mermaid
+flowchart LR
+    L["Allow-listed public A-share snapshot"] --> N["Validated market-radar.v1 input"]
+    N --> S["Deterministic stock heat"]
+    S --> T["Theme aggregation"]
+    H["Immutable 10-minute snapshots"] --> A["30m / 60m acceleration"]
+    T --> A
+    A --> P["Atomic latest snapshot"]
+    P --> API["Go read-only API"]
+    API --> W["Overview Market Radar"]
+```
+
+The radar treats external events and catalyst text as untrusted input. Optional
+volume, turnover, momentum, and new-high observations stay absent when the
+provider does not supply them; the scorer exposes reduced data coverage rather
+than estimating values. Collection is a single-writer scheduled job and never
+runs at API startup. See
+[ADR-0028](docs/adr/0028-deterministic-a-share-market-radar.md).
+
 ## Backtest event flow
 
 ```mermaid
 flowchart LR
+    FD["Verified FeatureDatasetInput"] --> ME
     ME["MarketEvent"] --> S["Strategy"]
     S --> SE["SignalEvent"]
     SE --> RE["RiskEvent"]
@@ -88,6 +158,65 @@ flowchart LR
 The event clock is controlled by the engine. Strategy code may only observe the
 current and past state. Fills apply configured fees, slippage, and later funding
 rules before portfolio updates.
+
+External feature values enter only through immutable observations on the current
+`MarketEvent`. The engine requires exact bar/decision-time coverage and binds
+the consumed feature manifest into the Run identity. Missing or stale funding
+in the initial filtered-EMA hypothesis fails flat. See
+[ADR-0025](docs/adr/0025-feed-versioned-features-through-market-events.md).
+
+Browser clients identify an external feature dataset only by immutable version.
+The Go boundary resolves that version under the trusted data root, verifies its
+causal manifest against the exact Spot input, and only then invokes Python.
+Client-supplied feature paths are not part of the API. See
+[ADR-0026](docs/adr/0026-resolve-external-feature-versions-at-api-boundary.md).
+The read-only feature catalog is filtered by the exact Spot identity and returns
+only manifests that the worker can resolve, so availability is known before a
+Run is submitted. See
+[ADR-0027](docs/adr/0027-discover-compatible-feature-datasets.md).
+
+Each strategy owns separate implementation code and a versioned manifest
+describing its category, lifecycle stage, supported intervals, and editable
+parameters. The implementations share the same event clock, risk, execution,
+portfolio, metrics, and artifact pipeline. Research candidates require
+reproducible evidence and explicit human promotion before their lifecycle state
+can advance.
+
+Candidate evidence passes through four deterministic robustness gates before a
+promotion proposal: walk-forward consistency, neighboring-parameter
+sensitivity, doubled-cost retention, and aligned multi-market results. Each
+gate links ordinary immutable Run IDs; passing never changes lifecycle state by
+itself. A bounded strategy adapter owns only the canonical parameter grid,
+construction, warmup, neighbor rules, tie-break, and label; the shared runner
+retains split, Run publication, cost, market, and gate authority. EMA Cross and
+Donchian ATR are the first registered adapters. See
+[ADR-0017](docs/adr/0017-deterministic-robustness-gates.md) and
+[ADR-0029](docs/adr/0029-strategy-specific-research-adapters.md).
+
+Before artifact publication, built-in strategy parameters resolve through the
+feature registry into concrete EMA, prior-bar channel, and ATR instances. Their
+definition hashes, exact inputs, causality policy, warmup, and parameter
+bindings participate in new Run identities. See
+[ADR-0022](docs/adr/0022-version-strategy-feature-lineage.md).
+
+Candidate state advances through a separate guarded flow:
+
+```mermaid
+flowchart LR
+    A["Agent proposal"] --> S["Weekly scheduler (max 2)"]
+    S --> P["Proposed + review package"]
+    P --> I["Implemented + deterministic tests"]
+    I --> G["Strategy-matched robustness review"]
+    G --> H{"Human decision"}
+    H -->|approve| A2["Approved research candidate"]
+    H -->|reject| R2["Rejected"]
+```
+
+Proposal identity is content-addressed. Only the Python lifecycle command may
+append transitions; the Go API and web workspace are read-only consumers.
+Approval does not register executable strategy code and cannot enable trading.
+See [ADR-0018](docs/adr/0018-guarded-candidate-lifecycle.md) and
+[ADR-0019](docs/adr/0019-rate-limited-candidate-draft-scheduling.md).
 
 V0.1 strategies observe a bar at its close and approved targets execute at the
 next bar open. See [ADR-0004](docs/adr/0004-next-bar-open-execution.md).
@@ -123,6 +252,20 @@ switch.
 - Object storage: future reports, charts, and large experiment artifacts.
 
 Only Parquet and DuckDB are required for the initial research loop.
+
+## Research-service deployment
+
+The first hosted compute boundary packages the Go control plane and canonical
+Python research environment into one stateful container. It remains a modular
+monolith and runs as a single replica while Tasks use the file-backed store.
+Persistent storage supplies immutable datasets, Task records, experiment
+artifacts, daily-intelligence snapshots, and candidate records; none of those
+generated inputs are baked into the image.
+
+The service exposes separate liveness and data-aware readiness checks. Dataset
+synchronization is an explicit administrative command, not startup behavior.
+The Cloudflare-hosted workspace calls this service over an explicitly
+allow-listed HTTPS origin. See [ADR-0015](docs/adr/0015-deploy-canonical-research-service.md).
 
 ## Non-goals
 

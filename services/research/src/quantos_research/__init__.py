@@ -1,9 +1,17 @@
 """Chronological, reproducible research workflows."""
 
-from .models import ResearchConfig, ResearchStudy, TimeSplit
+from .models import (
+    DonchianResearchConfig,
+    ParameterSet,
+    ResearchConfig,
+    ResearchStudy,
+    TimeSplit,
+)
 from .workflow import ResearchRunner, split_chronologically
 
 __all__ = [
+    "DonchianResearchConfig",
+    "ParameterSet",
     "ResearchConfig",
     "ResearchRunner",
     "ResearchStudy",

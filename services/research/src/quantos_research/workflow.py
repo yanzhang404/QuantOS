@@ -7,16 +7,16 @@ from decimal import Decimal
 
 from quantos_backtest import BacktestEngine
 from quantos_backtest.artifacts import ExperimentStore
-from quantos_backtest.strategies import EmaCrossStrategy
 from quantos_market_data.models import Kline
 from quantos_market_data.storage import DatasetManifest
 
+from .adapters import StrategyResearchAdapter, adapter_for
 from .errors import ResearchConfigurationError
-from .models import CandidateResult, ResearchConfig, ResearchStudy, TimeSplit
+from .models import CandidateResult, ParameterSet, ResearchConfigLike, ResearchStudy, TimeSplit
 from .review import review_study
 
 
-def split_chronologically(klines: list[Kline], config: ResearchConfig) -> TimeSplit:
+def split_chronologically(klines: list[Kline], config: ResearchConfigLike) -> TimeSplit:
     total = len(klines)
     train_end = int(Decimal(total) * config.train_ratio)
     validation_end = train_end + int(Decimal(total) * config.validation_ratio)
@@ -43,20 +43,20 @@ class ResearchRunner:
         klines: list[Kline],
         *,
         manifest: DatasetManifest,
-        config: ResearchConfig,
+        config: ResearchConfigLike,
         experiment_store: ExperimentStore,
     ) -> ResearchStudy:
+        adapter = adapter_for(config)
         split = split_chronologically(klines, config)
         candidates: list[CandidateResult] = []
-        for fast, slow in config.candidates:
-            train = self._backtest(split.train, fast, slow, config)
-            validation = self._backtest(split.validation, fast, slow, config)
+        for parameters in adapter.candidates:
+            train = self._backtest(split.train, parameters, config, adapter)
+            validation = self._backtest(split.validation, parameters, config, adapter)
             train_artifacts = experiment_store.publish(train, dataset=manifest)
             validation_artifacts = experiment_store.publish(validation, dataset=manifest)
             candidates.append(
                 CandidateResult(
-                    fast_period=fast,
-                    slow_period=slow,
+                    parameters=parameters,
                     train=train,
                     validation=validation,
                     train_run_id=train_artifacts.run_id,
@@ -69,13 +69,12 @@ class ResearchRunner:
                 candidates,
                 key=lambda item: (
                     -item.score,
-                    item.fast_period,
-                    item.slow_period,
+                    adapter.rank_key(item.parameters),
                 ),
             )
         )
         winner = ranked[0]
-        test = self._backtest(split.test, winner.fast_period, winner.slow_period, config)
+        test = self._backtest(split.test, winner.parameters, config, adapter)
         stress_config = replace(
             config,
             backtest=replace(
@@ -86,9 +85,9 @@ class ResearchRunner:
         )
         stress = self._backtest(
             split.test,
-            winner.fast_period,
-            winner.slow_period,
+            winner.parameters,
             stress_config,
+            adapter_for(stress_config),
         )
         test_artifacts = experiment_store.publish(test, dataset=manifest)
         stress_artifacts = experiment_store.publish(stress, dataset=manifest)
@@ -101,6 +100,8 @@ class ResearchRunner:
         )
         return ResearchStudy(
             config=config,
+            strategy_name=adapter.name,
+            strategy_version=adapter.version,
             split=split,
             candidates=ranked,
             winner=winner,
@@ -114,15 +115,16 @@ class ResearchRunner:
     def _backtest(
         self,
         klines: tuple[Kline, ...],
-        fast: int,
-        slow: int,
-        config: ResearchConfig,
+        parameters: ParameterSet,
+        config: ResearchConfigLike,
+        adapter: StrategyResearchAdapter,
     ):
-        if slow > len(klines):
+        minimum = adapter.minimum_bars(parameters)
+        if minimum > len(klines):
             raise ResearchConfigurationError(
-                f"slow period {slow} exceeds a split containing {len(klines)} bars"
+                f"strategy warmup {minimum} exceeds a split containing {len(klines)} bars"
             )
-        strategy = EmaCrossStrategy(fast_period=fast, slow_period=slow)
+        strategy = adapter.build(parameters)
         return self.engine.run(
             list(klines),
             strategy=strategy,

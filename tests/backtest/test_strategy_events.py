@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import timedelta
 from decimal import Decimal
 
@@ -10,8 +10,9 @@ from quantos_backtest.strategies import (
     BuyAndHoldStrategy,
     DonchianAtrStrategy,
     EmaCrossStrategy,
+    FundingFilteredEmaStrategy,
 )
-from quantos_events import MarketEvent
+from quantos_events import FeatureObservation, MarketEvent
 from quantos_strategy import StrategyContext
 
 
@@ -86,6 +87,56 @@ def test_ema_strategy_emits_only_after_warmup_and_target_change(start_time) -> N
 def test_ema_strategy_rejects_invalid_periods(fast: int, slow: int) -> None:
     with pytest.raises(BacktestConfigurationError, match="EMA periods"):
         EmaCrossStrategy(fast_period=fast, slow_period=slow)
+
+
+def test_funding_filtered_ema_uses_matched_rate_and_fails_flat_when_missing(
+    start_time,
+) -> None:
+    strategy = FundingFilteredEmaStrategy(
+        fast_period=2,
+        slow_period=3,
+        max_funding_rate=Decimal("0.0001"),
+    )
+    context = StrategyContext(symbol="BTCUSDT", interval="1h")
+    strategy.initialize(context)
+
+    def with_funding(index: int, close: str, rate: str | None) -> MarketEvent:
+        event = market_event(start_time, index, close)
+        feature = FeatureObservation(
+            feature_id="aligned-funding-rate",
+            dataset_version="funding-v1",
+            availability="matched" if rate is not None else "stale-observation",
+            observation_time=event.close_time if rate is not None else None,
+            age_ms=0 if rate is not None else None,
+            values=() if rate is None else (("funding_rate", Decimal(rate)),),
+        )
+        return replace(event, features=(feature,))
+
+    signals = [
+        strategy.on_bar(context, with_funding(index, close, rate))
+        for index, (close, rate) in enumerate(
+            [
+                ("10", "0"),
+                ("9", "0"),
+                ("8", "0"),
+                ("10", "0.001"),
+                ("12", "0"),
+                ("13", None),
+            ]
+        )
+    ]
+
+    emitted = [item for item in signals if item is not None]
+    assert [item.target_exposure for item in emitted] == [Decimal("1"), Decimal("0")]
+    assert "funding 0" in emitted[0].reason
+    assert "fail flat" in emitted[1].reason
+    assert strategy.parameters["max_funding_rate"] == "0.0001"
+
+
+@pytest.mark.parametrize("value", [Decimal("NaN"), Decimal("0.02"), Decimal("-0.02")])
+def test_funding_filtered_ema_rejects_unbounded_threshold(value: Decimal) -> None:
+    with pytest.raises(BacktestConfigurationError, match="max_funding_rate"):
+        FundingFilteredEmaStrategy(fast_period=2, slow_period=3, max_funding_rate=value)
 
 
 def test_buy_and_hold_emits_one_benchmark_target(start_time) -> None:
